@@ -1,0 +1,27 @@
+flowchart LR
+
+JD[JD Analyzer]
+
+Resume[Resume Analyzer]
+
+Planner[Planner]
+
+Retriever[Retriever]
+
+Rewrite[Rewriter]
+
+Validate[Validator]
+
+ATS[ATS]
+
+JD --> Planner
+
+Resume --> Planner
+
+Planner --> Retriever
+
+Retriever --> Rewrite
+
+Rewrite --> Validate
+
+Validate --> ATS

@@ -1,0 +1,21 @@
+sequenceDiagram
+
+User->>API: Upload Resume
+
+API->>Workflow: Start
+
+Workflow->>Parser: Parse
+
+Parser-->>Workflow: Resume
+
+Workflow->>Planner: Plan
+
+Planner-->>Workflow: Tasks
+
+Workflow->>Rewriter: Rewrite
+
+Workflow->>Validator: Validate
+
+Workflow->>ATS: Score
+
+Workflow-->>User: PDF

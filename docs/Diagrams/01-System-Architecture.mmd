@@ -1,0 +1,53 @@
+flowchart TB
+
+User[User]
+
+Frontend[Next.js Frontend]
+
+API[FastAPI]
+
+Workflow[Workflow Engine]
+
+subgraph AI
+Planner[Planning Agent]
+Resume[Resume Agent]
+JD[JD Agent]
+Rewrite[Rewrite Agent]
+Validator[Validation Agent]
+ATS[ATS Agent]
+end
+
+Llama[LlamaIndex]
+
+Qdrant[(Qdrant)]
+
+Postgres[(PostgreSQL)]
+
+Storage[(Object Storage)]
+
+Ollama[LLM Provider]
+
+User --> Frontend
+
+Frontend --> API
+
+API --> Workflow
+
+Workflow --> Planner
+Workflow --> Resume
+Workflow --> JD
+Workflow --> Rewrite
+Workflow --> Validator
+Workflow --> ATS
+
+Planner --> Llama
+Resume --> Llama
+JD --> Llama
+Rewrite --> Llama
+
+Llama --> Qdrant
+Llama --> Ollama
+
+Workflow --> Postgres
+
+Workflow --> Storage

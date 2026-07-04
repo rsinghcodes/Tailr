@@ -1,0 +1,24 @@
+sequenceDiagram
+
+participant User
+participant API
+participant Workflow
+participant Agents
+participant LLM
+participant DB
+
+User->>API: Upload Resume + JD
+
+API->>Workflow: Start Workflow
+
+Workflow->>Agents: Execute
+
+Agents->>LLM: Generate
+
+LLM-->>Agents: Response
+
+Agents->>DB: Save Results
+
+Workflow-->>API: Completed
+
+API-->>User: Optimized Resume

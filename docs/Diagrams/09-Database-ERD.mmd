@@ -1,0 +1,13 @@
+erDiagram
+
+USER ||--o{ RESUME : owns
+
+RESUME ||--o{ RESUME_VERSION : has
+
+RESUME ||--o{ JOB_DESCRIPTION : targets
+
+WORKFLOW ||--o{ AGENT_EXECUTION : contains
+
+PROMPT ||--o{ PROMPT_VERSION : has
+
+WORKFLOW ||--o{ ATS_RESULT : produces

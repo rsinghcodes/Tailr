@@ -1,0 +1,21 @@
+flowchart LR
+
+Resume --> Parser
+
+Parser --> Chunks
+
+Chunks --> Embedding
+
+Embedding --> Qdrant
+
+JD --> Query
+
+Query --> EmbedQuery
+
+EmbedQuery --> Search
+
+Search --> Context
+
+Context --> LLM
+
+LLM --> Answer

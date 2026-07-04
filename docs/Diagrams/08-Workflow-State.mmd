@@ -1,0 +1,23 @@
+stateDiagram-v2
+
+[*] --> Uploaded
+
+Uploaded --> Parsed
+
+Parsed --> Indexed
+
+Indexed --> Planning
+
+Planning --> Retrieval
+
+Retrieval --> Rewrite
+
+Rewrite --> Validation
+
+Validation --> ATS
+
+ATS --> PDF
+
+PDF --> Completed
+
+Validation --> Failed

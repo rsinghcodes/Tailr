@@ -1,0 +1,13 @@
+flowchart LR
+
+Resume
+
+Resume --> Canonical
+
+Canonical --> Chunker
+
+Chunker --> Metadata
+
+Metadata --> Embeddings
+
+Embeddings --> Qdrant
