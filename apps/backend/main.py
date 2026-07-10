@@ -1,8 +1,14 @@
 from fastapi import FastAPI
 
-app = FastAPI()
+from api.routes.health import router as health_router
+from config.settings import settings
 
+app = FastAPI(
+    title=settings.APP_NAME,
+    debug=settings.DEBUG,
+)
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
+app.include_router(
+    health_router,
+    prefix=settings.API_PREFIX,
+)
