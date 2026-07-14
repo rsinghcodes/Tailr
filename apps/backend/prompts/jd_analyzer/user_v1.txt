@@ -1,0 +1,7 @@
+Please analyze the following Job Description text:
+
+TITLE: {title}
+COMPANY: {company}
+
+DESCRIPTION:
+{description}
