@@ -1,0 +1,12 @@
+CONTEXT:
+Original Resume JSON:
+{original_resume}
+
+Optimized Resume JSON:
+{optimized_resume}
+
+Job Requirements:
+{job_requirements}
+
+INSTRUCTIONS:
+Compare the resumes against the requirements and evaluate.

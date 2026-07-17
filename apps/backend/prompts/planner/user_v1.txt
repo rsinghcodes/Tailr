@@ -1,0 +1,12 @@
+CONTEXT:
+Candidate Resume JSON:
+{resume_json}
+
+Job Description Requirements:
+{job_requirements}
+
+Retrieved Candidate Background Details:
+{retrieved_context}
+
+INSTRUCTIONS:
+Generate a list of recommended plan items (actions, target elements, and reasoning) for Summary, Skills, Experience, and Projects sections.
