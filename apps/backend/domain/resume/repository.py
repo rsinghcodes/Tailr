@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
 from typing import Optional
 import uuid
 from domain.resume.models import Resume
@@ -25,3 +26,16 @@ class ResumeRepository(ABC):
     async def delete(self, resume_id: uuid.UUID) -> bool:
         """Delete a resume container and all its versions."""
         pass
+
+    @abstractmethod
+    async def list_all(self) -> list[tuple[uuid.UUID, str, int, str, datetime, datetime]]:
+        """List all parent resume containers."""
+        pass
+
+    @abstractmethod
+    async def get_versions_by_resume_id(
+        self, resume_id: uuid.UUID
+    ) -> list[tuple[uuid.UUID, int, Optional[str], datetime, datetime]]:
+        """Get all version records for a specific resume container."""
+        pass
+

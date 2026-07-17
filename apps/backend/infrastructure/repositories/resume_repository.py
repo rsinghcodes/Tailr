@@ -91,6 +91,38 @@ class ResumeRepositoryImpl(ResumeRepository):
         await self.session.commit()
         return True
 
+    async def list_all(self) -> list[tuple[uuid.UUID, str, int, str, datetime, datetime]]:
+        stmt = select(
+            ResumeModel.id,
+            ResumeModel.title,
+            ResumeModel.current_version,
+            ResumeModel.status,
+            ResumeModel.created_at,
+            ResumeModel.updated_at
+        ).order_by(ResumeModel.updated_at.desc())
+        result = await self.session.execute(stmt)
+        # Convert list of Rows to list of tuples
+        return [
+            (row.id, row.title, row.current_version, row.status, row.created_at, row.updated_at)
+            for row in result.all()
+        ]
+
+    async def get_versions_by_resume_id(
+        self, resume_id: uuid.UUID
+    ) -> list[tuple[uuid.UUID, int, Optional[str], datetime, datetime]]:
+        stmt = select(
+            ResumeVersionModel.id,
+            ResumeVersionModel.version,
+            ResumeVersionModel.latex_path,
+            ResumeVersionModel.created_at,
+            ResumeVersionModel.updated_at
+        ).where(ResumeVersionModel.resume_id == resume_id).order_by(ResumeVersionModel.version.desc())
+        result = await self.session.execute(stmt)
+        return [
+            (row.id, row.version, row.latex_path, row.created_at, row.updated_at)
+            for row in result.all()
+        ]
+
     def _to_domain(self, db_version: ResumeVersionModel) -> Resume:
         resume_data = db_version.canonical_json
         resume = Resume(**resume_data)
@@ -98,3 +130,4 @@ class ResumeRepositoryImpl(ResumeRepository):
         resume.created_at = db_version.created_at
         resume.updated_at = db_version.updated_at
         return resume
+
