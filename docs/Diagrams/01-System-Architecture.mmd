@@ -4,28 +4,34 @@ User[User]
 
 Frontend[Next.js Frontend]
 
-API[FastAPI]
+API[FastAPI API Layer]
 
 Workflow[Workflow Engine]
 
-subgraph AI
+subgraph AI[AI Layer]
 Planner[Planning Agent]
 Resume[Resume Agent]
 JD[JD Agent]
 Rewrite[Rewrite Agent]
-Validator[Validation Agent]
-ATS[ATS Agent]
 end
 
+subgraph Safety[Guardrails & Validation]
+Guardrails[Guardrails Engine]
+Validator[Validation Engine]
+ATS[ATS Engine]
+end
+
+subgraph Knowledge[Knowledge Layer]
 Llama[LlamaIndex]
+Qdrant[(Qdrant Vector DB)]
+end
 
-Qdrant[(Qdrant)]
-
+subgraph Infra[Infrastructure Layer]
 Postgres[(PostgreSQL)]
-
 Storage[(Object Storage)]
-
-Ollama[LLM Provider]
+Redis[(Redis Cache)]
+Ollama[Ollama / Qwen3]
+end
 
 User --> Frontend
 
@@ -37,8 +43,6 @@ Workflow --> Planner
 Workflow --> Resume
 Workflow --> JD
 Workflow --> Rewrite
-Workflow --> Validator
-Workflow --> ATS
 
 Planner --> Llama
 Resume --> Llama
@@ -46,8 +50,15 @@ JD --> Llama
 Rewrite --> Llama
 
 Llama --> Qdrant
-Llama --> Ollama
+
+Rewrite --> Guardrails
+
+Guardrails --> Validator
+
+Validator --> ATS
 
 Workflow --> Postgres
-
 Workflow --> Storage
+Workflow --> Redis
+
+Guardrails --> Ollama

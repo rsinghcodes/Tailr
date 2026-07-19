@@ -64,6 +64,9 @@ Planning Agent (AI)
 Rewrite Agent (AI)
 │
 ▼
+Guardrails Engine (Software)
+│
+▼
 Validation Engine (Software)
 │
 ▼
@@ -314,7 +317,76 @@ Planning has already happened.
 
 ---
 
-# 9. ATS Advisor Agent
+# 9. Guardrails Engine
+
+## Purpose
+
+Ensure every AI-generated output is safe, structurally valid, and compliant with business policies before entering the Validation Engine.
+
+The Guardrails Engine is deterministic software and is executed for every AI response.
+
+---
+
+### Inputs
+
+- Rewrite Output
+- Workflow State
+- Validation Policies
+- Resume Schema
+
+---
+
+### Outputs
+
+```json
+{
+  "valid": true,
+  "repaired": false,
+  "violations": [],
+  "metadata": {}
+}
+```
+
+---
+
+### Responsibilities
+
+Validate
+
+- JSON structure
+- Required schema
+- Resume integrity
+- Prompt injection
+- Hallucinated content
+- PII leakage
+- ATS formatting
+- Business policies
+
+---
+
+### Repair Strategy
+
+If possible the engine will
+
+- repair invalid JSON
+- remove unsupported fields
+- normalize formatting
+
+Otherwise the workflow is rejected.
+
+---
+
+### Constraints
+
+Must never rewrite resume content.
+
+Must never invent information.
+
+Must remain deterministic.
+
+---
+
+# 10. ATS Advisor Agent
 
 ## Purpose
 
@@ -362,7 +434,7 @@ Cannot modify resumes.
 
 ---
 
-# 10. Software Components
+# 11. Software Components
 
 These are **not AI agents**.
 
@@ -403,15 +475,36 @@ No LLM involved.
 
 ---
 
-## Validation Engine
+## Guardrails Engine
+
+Validates every AI response before business validation.
 
 Checks
 
+- structured JSON
+- schema compliance
+- prompt injection
 - hallucinations
-- schema
+- PII leakage
+- resume integrity
+- ATS formatting
+- output repair
+
+The Guardrails Engine is provider-independent and reusable across all AI workflows.
+
+---
+
+## Validation Engine
+
+Responsible for business validation after Guardrails have approved the AI output.
+
+Checks
+
+- factual correctness
 - unsupported claims
-- formatting
-- business rules
+- formatting rules
+- business policies
+- deterministic constraints
 
 ---
 
@@ -433,7 +526,7 @@ resume.pdf
 
 ---
 
-# 11. Shared Memory
+# 12. Shared Memory
 
 Agents communicate through a shared workflow state.
 
@@ -452,7 +545,13 @@ rewrite_plan
 
 rewritten_resume
 
-validation
+guardrail_result
+
+validation_result
+
+policy_violations
+
+repair_attempts
 
 ats_report
 ```
@@ -461,7 +560,7 @@ Every agent reads only the fields it requires.
 
 ---
 
-# 12. Context Window Strategy
+# 13. Context Window Strategy
 
 Instead of sending the entire resume,
 
@@ -491,7 +590,7 @@ Benefits
 
 ---
 
-# 13. Failure Handling
+# 14. Failure Handling
 
 Every agent defines explicit failure modes.
 
@@ -549,20 +648,80 @@ Regenerate explanation
 
 ---
 
-# 14. Agent Boundaries
+## Guardrails Engine
 
-| Agent       | May Read      | May Modify            |
-| ----------- | ------------- | --------------------- |
-| JD Analyzer | JD            | Job Requirement Model |
-| Planner     | Resume + JD   | Rewrite Plan          |
-| Rewriter    | Resume + Plan | Resume Model          |
-| ATS Advisor | Resume        | ATS Report            |
+Failure
+
+Prompt injection
+
+Recovery
+
+Reject response
+
+↓
+
+Retry with hardened prompt
+
+---
+
+Failure
+
+Invalid schema
+
+Recovery
+
+Attempt automatic repair
+
+↓
+
+Revalidate
+
+---
+
+Failure
+
+Hallucinated content
+
+Recovery
+
+Reject output
+
+↓
+
+Retry generation
+
+---
+
+Failure
+
+PII leakage
+
+Recovery
+
+Sanitize output
+
+↓
+
+Continue validation
+
+---
+
+# 15. Agent Boundaries
+
+| Agent             | May Read         | May Modify            |
+| ----------------- | ---------------- | --------------------- |
+| JD Analyzer       | JD               | Job Requirement Model |
+| Planner           | Resume + JD      | Rewrite Plan          |
+| Rewriter          | Resume + Plan    | Resume Model          |
+| ATS Advisor       | Resume           | ATS Report            |
+| Guardrails        | AI Output        | AI Output             |
+| Validation Engine | Guardrail Report | Validation Report     |
 
 No agent may directly modify another agent's output.
 
 ---
 
-# 15. Model Selection
+# 16. Model Selection
 
 Different reasoning tasks may use different models.
 
@@ -579,7 +738,7 @@ The architecture allows model replacement without changing workflows.
 
 ---
 
-# 16. Prompt Contracts
+# 17. Prompt Contracts
 
 Every AI agent follows the same contract.
 
@@ -603,9 +762,23 @@ Structured JSON.
 
 Schema validation before acceptance.
 
+## Guardrail Contract
+
+Every AI response must satisfy the following before acceptance:
+
+- Valid JSON
+- Matches schema
+- No hallucinated facts
+- No fabricated experience
+- No fabricated employers
+- No fabricated projects
+- No prompt leakage
+- No prompt injection execution
+- ATS compliant
+
 ---
 
-# 17. Observability
+# 18. Observability
 
 Each agent emits telemetry.
 
@@ -617,12 +790,17 @@ Metrics
 - success rate
 - validation failures
 - retrieval precision
+- guardrail failures
+- repair attempts
+- hallucination detections
+- prompt injection detections
+- schema violations
 
 These metrics are stored in Langfuse for monitoring and evaluation.
 
 ---
 
-# 18. Human-in-the-Loop
+# 19. Human-in-the-Loop
 
 The workflow pauses before rendering.
 
@@ -637,7 +815,7 @@ AI suggestions are never applied silently.
 
 ---
 
-# 19. Future Agents
+# 20. Future Agents
 
 The architecture supports adding specialized agents.
 
@@ -653,9 +831,20 @@ Examples
 
 Each integrates through the same workflow interface without changing existing agents.
 
+Future workflow components may also introduce specialized Guardrails modules such as:
+
+- Resume Integrity Validator
+- Prompt Injection Detector
+- Hallucination Detector
+- ATS Policy Validator
+- Citation Validator
+- Output Repair Engine
+
+These modules integrate into the Guardrails Engine without affecting existing AI agents.
+
 ---
 
-# 20. Summary
+# 21. Summary
 
 Tailr uses a hybrid architecture where deterministic software components handle structured processing while AI agents perform semantic reasoning.
 
@@ -671,3 +860,5 @@ Every AI agent has:
 - independent evaluation
 
 The result is an agentic workflow that is modular, testable, and suitable for production systems.
+
+Every AI response passes through a deterministic Guardrails Engine before business validation, ensuring structured outputs, AI safety, resume integrity, and ATS compliance while remaining independent of the underlying language model.

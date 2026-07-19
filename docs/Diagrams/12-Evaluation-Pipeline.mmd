@@ -1,11 +1,27 @@
 flowchart LR
 
-GitPush --> Tests
+GitPush --> Static
 
-Tests --> Evaluation
+Static --> Tests
 
-Evaluation --> Benchmarks
+Tests --> PromptEval
+
+PromptEval --> RAGEval
+
+RAGEval --> GuardrailEval
+
+GuardrailEval --> Benchmarks
 
 Benchmarks --> Metrics
 
-Metrics --> Deploy
+Metrics --> Gate{Quality Gate}
+
+Gate -- Pass --> Publish
+
+Publish --> Deploy
+
+Gate -- Fail --> HumanReview[Human Review]
+
+HumanReview -- Approve --> Deploy
+
+HumanReview -- Reject --> Block[Block Release]

@@ -27,6 +27,8 @@ The observability platform must:
 - Monitor LLM performance
 - Measure retrieval quality
 - Detect hallucinations
+- Detect prompt injection attempts
+- Monitor guardrail effectiveness
 - Track user satisfaction
 - Support production debugging
 - Minimize operational overhead
@@ -63,7 +65,7 @@ Traces are correlated.
 
 ## AI-Aware Monitoring
 
-Monitor prompts, retrieval, validation, and reasoning—not only APIs.
+Monitor prompts, retrieval, guardrails, validation, and reasoning—not only APIs.
 
 ---
 
@@ -101,21 +103,23 @@ Only metadata is retained.
  Prometheus       Grafana          Langfuse
                       │
                       ▼
-                Alerts & Dashboards
+            Guardrail Analytics & Alerts
 ```
 
 ---
 
 # 5. Observability Components
 
-| Component          | Purpose             |
-| ------------------ | ------------------- |
-| Prometheus         | Metrics collection  |
-| Grafana            | Dashboards          |
-| Langfuse           | LLM telemetry       |
-| OpenTelemetry      | Distributed tracing |
-| Structured Logging | Debugging           |
-| Alert Manager      | Notifications       |
+| Component           | Purpose              |
+| ------------------- | -------------------- |
+| Prometheus          | Metrics collection   |
+| Grafana             | Dashboards           |
+| Langfuse            | LLM telemetry        |
+| OpenTelemetry       | Distributed tracing  |
+| Structured Logging  | Debugging            |
+| Alert Manager       | Notifications        |
+| Guardrail Analytics | AI safety monitoring |
+| Alert Manager       | Notifications        |
 
 ---
 
@@ -156,6 +160,9 @@ Example
   "level": "INFO",
   "service": "workflow",
   "workflow_id": "wf_123",
+  "request_id": "req_456",
+  "trace_id": "trace_789",
+  "guardrail_status": "passed",
   "message": "Rewrite completed"
 }
 ```
@@ -192,16 +199,16 @@ Examples
 
 ```
 http_requests_total
-
 workflow_duration_seconds
-
 resume_parse_latency
-
 llm_tokens_total
-
 vector_search_latency
-
 validation_failures_total
+guardrail_requests_total
+guardrail_failures_total
+guardrail_repairs_total
+prompt_injection_detected_total
+hallucination_detected_total
 ```
 
 Metrics are labeled.
@@ -260,9 +267,11 @@ Langfuse records
 - Model
 - Temperature
 - Response
+- Guardrail result
 - Validation result
 - Token usage
 - Latency
+- Output repair status
 
 Each prompt execution becomes searchable.
 
@@ -287,12 +296,15 @@ Low retrieval quality often leads to poor rewrites.
 Track
 
 - Validation pass rate
+- Guardrail pass rate
+- Guardrail repair rate
 - Hallucination detections
+- Prompt injection detections
 - Schema failures
 - Business rule violations
 - Retry frequency
 
-Validation trends indicate AI quality.
+Validation and guardrail trends indicate AI quality and safety.
 
 ---
 
@@ -358,6 +370,10 @@ Rewriter
 
 ↓
 
+Guardrails
+
+↓
+
 Validator
 
 ↓
@@ -394,6 +410,12 @@ AI
 - Tokens
 - Prompt latency
 - Validation rate
+- Hallucination rate spike
+- Prompt injection spike
+- Guardrail rejection rate > 5%
+- Guardrail latency increase
+- Prompt latency increase
+- Validation failures
 
 Business
 
@@ -437,9 +459,11 @@ Every workflow stores
 - Timestamp
 - Prompt version
 - Model
+- Guardrail result
 - Validation result
 - Resume version
 - ATS score
+- Output repair status
 
 Audit trails support reproducibility.
 
@@ -468,6 +492,7 @@ Suggested retention
 | Logs             | 90 days   |
 | Traces           | 30 days   |
 | Prompt telemetry | 180 days  |
+| Guardrail events | 180 days  |
 | Audit records    | Permanent |
 
 Policies are configurable.
@@ -497,6 +522,9 @@ Verify
 - Log format
 - Dashboard queries
 - Alert rules
+- Guardrail metrics
+- Guardrail trace correlation
+- Prompt injection telemetry
 - Telemetry completeness
 
 Observability should be tested continuously.
@@ -514,26 +542,33 @@ Future capabilities
 - Predictive failure alerts
 - Cost forecasting
 - Multi-model comparison dashboards
+- Guardrail effectiveness scoring
+- Prompt injection trend analysis
+- Automated hallucination clustering
+- AI safety anomaly detection
+- Guardrail policy drift detection
 
 ---
 
 # 27. Architecture Decisions
 
-| Decision             | Rationale                  |
-| -------------------- | -------------------------- |
-| OpenTelemetry        | Vendor-neutral tracing     |
-| Prometheus           | Industry-standard metrics  |
-| Grafana              | Flexible dashboards        |
-| Langfuse             | AI-native observability    |
-| Structured JSON logs | Machine-readable debugging |
-| Correlation IDs      | End-to-end traceability    |
+| Decision                       | Rationale                             |
+| ------------------------------ | ------------------------------------- |
+| OpenTelemetry                  | Vendor-neutral tracing                |
+| Prometheus                     | Industry-standard metrics             |
+| Grafana                        | Flexible dashboards                   |
+| Langfuse                       | AI-native observability               |
+| Structured JSON logs           | Machine-readable debugging            |
+| Correlation IDs                | End-to-end traceability               |
+| Guardrail Analytics            | AI safety observability               |
+| Provider-independent telemetry | Consistent monitoring across all LLMs |
 
 ---
 
 # 28. Summary
 
-Tailr adopts an AI-native observability architecture that combines infrastructure monitoring, distributed tracing, structured logging, and LLM telemetry.
+Tailr adopts an AI-native observability architecture that combines infrastructure monitoring, distributed tracing, structured logging, LLM telemetry, and guardrail analytics.
 
-By observing every workflow, prompt, retrieval operation, validation step, and user interaction, the platform provides complete visibility into both operational health and AI behavior.
+By observing every workflow, prompt, retrieval operation, guardrail decision, validation step, and user interaction, the platform provides complete visibility into both operational health and AI safety behavior.
 
-This architecture enables faster debugging, safer deployments, better prompt optimization, and continuous improvement of the overall user experience.
+The observability stack enables faster debugging, safer deployments, better prompt optimization, continuous guardrail tuning, and ongoing improvement of the overall user experience while maintaining privacy-by-design principles.

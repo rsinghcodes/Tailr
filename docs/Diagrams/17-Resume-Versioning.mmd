@@ -1,17 +1,23 @@
 gitGraph
+   commit id: "master-resume"
 
-commit id:"v1"
+   branch jd-google
+   checkout jd-google
+   commit id: "plan-google"
+   commit id: "rewrite-google"
+   commit id: "ats-google"
+   commit id: "review-approved"
 
-commit id:"v2"
+   checkout main
+   merge jd-google tag: "resume-v2-google"
 
-branch optimization
+   branch jd-openai
+   checkout jd-openai
+   commit id: "plan-openai"
+   commit id: "rewrite-openai"
+   commit id: "ats-openai"
 
-commit id:"rewrite"
+   checkout main
+   merge jd-openai tag: "resume-v3-openai"
 
-commit id:"ats"
-
-checkout main
-
-merge optimization
-
-commit id:"v3"
+   commit id: "current-active"

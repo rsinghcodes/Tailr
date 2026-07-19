@@ -18,6 +18,7 @@ The deployment strategy enables:
 - Free student deployment
 - Production cloud deployment
 - AI model hosting
+- Guardrails enforcement
 - Monitoring
 - Automated delivery
 - Horizontal scalability
@@ -37,6 +38,7 @@ The deployment architecture must:
 - Support CI/CD
 - Enable horizontal scaling
 - Minimize operational cost
+- Enforce AI safety policies consistently
 
 ---
 
@@ -111,6 +113,13 @@ AI
 
 - Ollama
 - LlamaIndex
+
+Guardrails
+
+- Validation & Guardrails Engine
+- Prompt Injection Detection
+- Hallucination Detection
+- Output Repair Pipeline
 
 Storage
 
@@ -191,20 +200,26 @@ GPU is optional.
 
 Example
 
+```env
+POSTGRES_URL=
+QDRANT_URL=
+REDIS_URL=
+OLLAMA_URL=
+LANGFUSE_URL=
+JWT_SECRET=
+STORAGE_PATH=
 ```
-POSTGRES_URL
 
-QDRANT_URL
+Guardrails
 
-REDIS_URL
-
-OLLAMA_URL
-
-LANGFUSE_URL
-
-JWT_SECRET
-
-STORAGE_PATH
+```env
+ENABLE_GUARDRAILS=true
+ENABLE_PII_VALIDATION=true
+ENABLE_HALLUCINATION_CHECK=true
+ENABLE_PROMPT_INJECTION_CHECK=true
+ENABLE_OUTPUT_REPAIR=true
+GUARDRAIL_TIMEOUT_MS=2000
+GUARDRAIL_MAX_RETRIES=1
 ```
 
 Secrets are never committed.
@@ -281,7 +296,8 @@ Ollama hosts
 
 Example
 
-```
+````
+```text
 Backend
 
 ↓
@@ -294,8 +310,18 @@ Qwen 3
 
 ↓
 
-Response
-```
+Raw Response
+
+↓
+
+Guardrails
+
+↓
+
+Validated Response
+````
+
+````
 
 Models remain local.
 
@@ -305,16 +331,15 @@ Models remain local.
 
 Version 1
 
-```
+```text
 storage/
+  resumes/
+  pdf/
+  reports/
+  guardrails/
+  logs/
+````
 
-resumes/
-
-pdf/
-
-reports/
-
-logs/
 ```
 
 Future
@@ -365,6 +390,8 @@ Long-running tasks
 - PDF compilation
 - Workflow execution
 - ATS scoring
+- Guardrail batch validation
+- Hallucination auditing
 
 Queue
 
@@ -384,6 +411,8 @@ Application metrics
 - API throughput
 - Error rate
 - Workflow duration
+- Guardrail latency
+- Guardrail rejection rate
 
 Infrastructure metrics
 
@@ -405,6 +434,8 @@ Langfuse records
 - Model
 - Retrieval quality
 - Validation failures
+- Guardrail violations
+- Output repair events
 
 ---
 
@@ -412,15 +443,12 @@ Langfuse records
 
 Centralized logs
 
-Application
-
-Workflow
-
-Database
-
-LLM
-
-Validation
+- Application
+- Workflow
+- Database
+- LLM
+- Guardrails
+- Validation
 
 Logs remain structured JSON.
 
@@ -429,6 +457,7 @@ Logs remain structured JSON.
 # 19. CI/CD Pipeline
 
 ```
+
 GitHub
 
 ↓
@@ -445,6 +474,14 @@ Lint
 
 ↓
 
+Security Scan
+
+↓
+
+Guardrail Tests
+
+↓
+
 Docker Build
 
 ↓
@@ -454,6 +491,7 @@ Push Image
 ↓
 
 Deploy
+
 ```
 
 Deployment is automated after successful checks.
@@ -463,6 +501,7 @@ Deployment is automated after successful checks.
 # 20. Build Pipeline
 
 ```
+
 Frontend
 
 ↓
@@ -482,7 +521,22 @@ Docker Image
 ↓
 
 Registry
-```
+
+````
+
+Validation
+
+```text
+Guardrail Test Suite
+
+↓
+
+Contract Validation
+
+↓
+
+Deployment Approval
+````
 
 ---
 
@@ -495,6 +549,7 @@ Single instance
 Future
 
 ```
+
 Load Balancer
 
 ↓
@@ -504,6 +559,7 @@ Backend 1
 Backend 2
 
 Backend 3
+
 ```
 
 Redis enables shared workflow state.
@@ -531,15 +587,17 @@ These require replication strategies.
 
 Daily backups
 
-PostgreSQL
+- PostgreSQL
+- Guardrail audit tables
 
 Weekly snapshots
 
-Qdrant
+- Qdrant
 
 Persistent storage
 
-Resume files
+- Resume files
+- Guardrail reports
 
 Backups are automated.
 
@@ -552,6 +610,7 @@ Recover
 - Database
 - Vector index
 - Resume files
+- Guardrail audit logs
 - Configuration
 
 Target Recovery Time Objective
@@ -570,6 +629,10 @@ Deployment security
 - Non-root containers
 - Read-only file systems
 - Firewall rules
+- Prompt injection protection
+- PII protection
+- Guardrail enforcement
+- Structured output validation
 
 Sensitive data remains encrypted.
 
@@ -577,14 +640,15 @@ Sensitive data remains encrypted.
 
 # 26. Performance Targets
 
-| Component           | Target  |
-| ------------------- | ------- |
-| API latency         | <200 ms |
-| Resume parsing      | <500 ms |
-| Retrieval           | <100 ms |
-| ATS analysis        | <5 s    |
-| Resume optimization | <30 s   |
-| PDF generation      | <5 s    |
+| Component            | Target  |
+| -------------------- | ------- |
+| API latency          | <200 ms |
+| Resume parsing       | <500 ms |
+| Retrieval            | <100 ms |
+| ATS analysis         | <5 s    |
+| Resume optimization  | <30 s   |
+| PDF generation       | <5 s    |
+| Guardrail validation | <2 s    |
 
 ---
 
@@ -616,7 +680,7 @@ Models
 
 Ollama (GPU VM) or vLLM
 
-This minimizes operational cost.
+This minimizes operational cost while preserving full AI observability and guardrail enforcement.
 
 ---
 
@@ -625,6 +689,7 @@ This minimizes operational cost.
 Future deployment
 
 ```
+
 Ingress
 
 ↓
@@ -650,6 +715,7 @@ Qdrant
 ↓
 
 GPU Inference Pods
+
 ```
 
 Helm charts simplify deployment.
@@ -688,22 +754,24 @@ Production
 
 Cloud + Monitoring
 
-Each environment has isolated configuration.
+Each environment has isolated configuration and guardrail policies.
 
 ---
 
 # 31. Architecture Decisions
 
-| Decision       | Rationale                  |
-| -------------- | -------------------------- |
-| Docker         | Consistent environments    |
-| Docker Compose | Simple local setup         |
-| Ollama         | Free local inference       |
-| PostgreSQL     | ACID persistence           |
-| Qdrant         | Semantic retrieval         |
-| Redis          | Caching and workflow state |
-| Langfuse       | LLM observability          |
-| Nginx          | Reverse proxy and HTTPS    |
+| Decision                     | Rationale                                  |
+| ---------------------------- | ------------------------------------------ |
+| Docker                       | Consistent environments                    |
+| Docker Compose               | Simple local setup                         |
+| Ollama                       | Free local inference                       |
+| PostgreSQL                   | ACID persistence                           |
+| Qdrant                       | Semantic retrieval                         |
+| Redis                        | Caching and workflow state                 |
+| Langfuse                     | LLM observability                          |
+| Nginx                        | Reverse proxy and HTTPS                    |
+| Guardrails Layer             | Provider-independent AI safety enforcement |
+| Structured output validation | Deterministic downstream processing        |
 
 ---
 
@@ -711,6 +779,10 @@ Each environment has isolated configuration.
 
 Tailr adopts a container-first deployment architecture that supports both local development and production-scale deployments.
 
-By combining Docker, FastAPI, PostgreSQL, Redis, Qdrant, Ollama, and modern observability tooling, the platform remains reproducible, scalable, and cost-effective.
+By combining Docker, FastAPI, PostgreSQL, Redis, Qdrant, Ollama, a dedicated Guardrails layer, and modern observability tooling, the platform remains reproducible, scalable, secure, and cost-effective.
 
-The architecture enables students to run the complete AI stack on a laptop while providing a clear migration path to cloud-native production deployments without significant architectural changes.
+The architecture enables students to run the complete AI stack on a laptop while providing a clear migration path to cloud-native production deployments with enterprise-grade AI governance, structured validation, prompt injection protection, hallucination detection, and comprehensive deployment observability.
+
+```
+
+```

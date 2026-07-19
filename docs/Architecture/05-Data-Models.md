@@ -76,18 +76,30 @@ Models reference one another through identifiers rather than nested arbitrary ob
 
 ---
 
+## Policy Enforcement
+
+Every model is protected by deterministic Guardrail policies.
+
+Domain models define the data.
+
+Guardrails define what may or may not change.
+
+This separation keeps business logic independent from AI reasoning while preserving data integrity.
+
+---
+
 # 3. Model Categories
 
 ```
                     Data Models
                          │
-      ┌──────────────────┼──────────────────┐
-      │                  │                  │
-      ▼                  ▼                  ▼
- Domain Models     Workflow Models    API Models
-      │                  │                  │
-      ▼                  ▼                  ▼
-Agent Contracts   Database Models   Vector Metadata
+      ┌──────────────────┼──────────────────┬─────────────────┐
+      │                  │                  │                 │
+      ▼                  ▼                  ▼                 ▼
+ Domain Models     Workflow Models    API Models     Guardrail Models
+      │                  │                  │                 │
+      ▼                  ▼                  ▼                 ▼
+Agent Contracts   Database Models   Vector Metadata   Policy Models
 ```
 
 ---
@@ -100,12 +112,12 @@ Every entity inherits common metadata.
 BaseModel
 
 id: UUID
-
 created_at: datetime
-
 updated_at: datetime
-
 version: int
+schema_version: str
+verified: bool
+metadata: dict[str, Any]
 ```
 
 ---
@@ -357,6 +369,8 @@ These models represent runtime state.
 ```python
 WorkflowState
 
+request_id
+
 resume
 
 job_description
@@ -367,9 +381,13 @@ rewrite_plan
 
 rewritten_resume
 
+guardrail_report
+
 validation_report
 
 ats_report
+
+telemetry
 
 status
 ```
@@ -392,6 +410,8 @@ RETRIEVING
 PLANNING
 
 REWRITING
+
+GUARDRAILS
 
 VALIDATING
 
@@ -422,6 +442,10 @@ entity_id
 metadata
 
 embedding_id
+
+checksum
+
+schema_version
 ```
 
 ---
@@ -441,7 +465,13 @@ category
 
 verified
 
+owner
+
+version
+
 created_at
+
+updated_at
 ```
 
 ---
@@ -524,6 +554,10 @@ updated_resume
 modified_sections
 
 confidence
+
+citations
+
+guardrail_status
 ```
 
 ---
@@ -561,7 +595,13 @@ errors
 
 warnings
 
+business_rules
+
 hallucination_score
+
+confidence
+
+processing_time
 ```
 
 ---
@@ -584,7 +624,65 @@ recommendation
 
 ---
 
-# 11. Rendering Models
+# 11. Guardrail Models
+
+## GuardrailResult
+
+```python
+GuardrailResult
+
+passed
+
+repaired
+
+violations
+
+validator_results
+
+processing_time
+
+metadata
+```
+
+---
+
+## GuardrailViolation
+
+```python
+GuardrailViolation
+
+validator
+
+severity
+
+code
+
+message
+
+location
+
+suggestion
+```
+
+---
+
+## PolicyResult
+
+```python
+PolicyResult
+
+policy
+
+passed
+
+reason
+
+metadata
+```
+
+---
+
+# 12. Rendering Models
 
 ## RenderRequest
 
@@ -614,7 +712,7 @@ compile_logs
 
 ---
 
-# 12. API Models
+# 13. API Models
 
 ## UploadResumeRequest
 
@@ -643,11 +741,17 @@ temperature
 ## OptimizationResponse
 
 ```python
+OptimizationResponse
+
 optimization_id
 
 status
 
 estimated_completion
+
+request_id
+
+workflow_id
 ```
 
 ---
@@ -655,7 +759,13 @@ estimated_completion
 ## ResumeResponse
 
 ```python
+ResumeResponse
+
 resume
+
+guardrail_report
+
+validation_report
 
 ats_report
 
@@ -664,7 +774,7 @@ download_url
 
 ---
 
-# 13. Database Models
+# 14. Database Models
 
 ## ResumeEntity
 
@@ -722,7 +832,41 @@ comment
 
 ---
 
-# 14. Vector Metadata
+## GuardrailAuditEntity
+
+```python
+request_id
+
+validator
+
+status
+
+violations
+
+processing_time
+
+created_at
+```
+
+---
+
+## WorkflowEntity
+
+```python
+workflow_id
+
+request_id
+
+status
+
+started_at
+
+completed_at
+```
+
+---
+
+# 15. Vector Metadata
 
 Each embedded chunk stores metadata.
 
@@ -732,13 +876,17 @@ Each embedded chunk stores metadata.
   "entity_id": "...",
   "category": "AI",
   "importance": 0.96,
-  "technologies": ["Python", "LangChain", "FastAPI"]
+  "technologies": ["Python", "LangChain", "FastAPI"],
+  "verified": true,
+  "version": 3,
+  "owner": "resume",
+  "schema_version": "1.0"
 }
 ```
 
 ---
 
-# 15. Event Models
+# 16. Event Models
 
 Tailr follows an event-driven workflow.
 
@@ -762,13 +910,23 @@ ValidationCompleted
 RenderingCompleted
 
 OptimizationCompleted
+
+GuardrailsStarted
+
+GuardrailsCompleted
+
+GuardrailViolationDetected
+
+ValidationRejected
+
+WorkflowRetried
 ```
 
 Each event carries structured payloads.
 
 ---
 
-# 16. Enumerations
+# 17. Enumerations
 
 ## SkillCategory
 
@@ -828,7 +986,35 @@ Certification
 
 ---
 
-# 17. Relationships
+## ValidationStatus
+
+```
+PASSED
+
+FAILED
+
+REPAIRED
+
+SKIPPED
+```
+
+---
+
+## GuardrailSeverity
+
+```
+LOW
+
+MEDIUM
+
+HIGH
+
+CRITICAL
+```
+
+---
+
+# 18. Relationships
 
 ```
 Resume
@@ -849,6 +1035,20 @@ Resume
 
 │      └── Repository
 
+├── WorkflowState
+
+│    │
+
+│    ├── GuardrailResult
+
+│    │
+
+│    ├── ValidationResult
+
+│    │
+
+│    └── ATSReport
+
 │
 
 ├── Education
@@ -862,7 +1062,7 @@ Resume
 
 ---
 
-# 18. Serialization
+# 19. Serialization
 
 All models support:
 
@@ -874,9 +1074,11 @@ All models support:
 
 A single canonical representation prevents data inconsistencies across services.
 
----
+All serialized models are versioned and validated against their corresponding Pydantic schemas before persistence or inter-service communication.
 
-# 19. Versioning Strategy
+## This guarantees backward compatibility, deterministic processing, and safe evolution of the platform.
+
+# 20. Versioning Strategy
 
 Every model includes a schema version.
 
@@ -900,7 +1102,7 @@ Older versions remain readable through migration logic.
 
 ---
 
-# 20. Future Models
+# 21. Future Models
 
 The model layer is designed to grow without breaking existing contracts.
 
@@ -919,12 +1121,25 @@ Planned entities include:
 
 These entities will integrate with the existing workflow and knowledge graph.
 
+Additional system models may include:
+
+- GuardrailPolicy
+- PromptTemplate
+- AIModelConfiguration
+- EvaluationReport
+- ExperimentResult
+- TelemetryEvent
+- RetryPolicy
+- CostMetrics
+
 ---
 
-# 21. Summary
+# 22. Summary
 
 The Tailr Data Model establishes a unified contract between every layer of the system.
 
 By separating domain entities, workflow state, agent contracts, API objects, database entities, and vector metadata, Tailr achieves a modular architecture that is deterministic, testable, and extensible.
 
-Every component speaks the same typed language, allowing the platform to evolve without introducing coupling or ambiguity.
+Every component communicates through strongly typed contracts that are validated, versioned, and protected by deterministic Guardrail policies.
+
+This unified model enables AI agents, workflow orchestration, retrieval, validation, rendering, and observability to operate on a consistent data foundation, ensuring reliability, maintainability, and production-grade scalability.

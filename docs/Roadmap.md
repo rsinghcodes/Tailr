@@ -92,6 +92,13 @@ Deliver a complete AI-powered resume optimization workflow.
 - PDF Generation
 - Resume Versioning
 - Basic Dashboard
+- Validation & Guardrails Engine
+- Prompt Injection Detection
+- Structured Output Validation
+- Hallucination Detection
+- Resume Integrity Validation
+- PII Detection
+- Output Repair Pipeline
 
 ### Engineering Milestones
 
@@ -101,13 +108,18 @@ Deliver a complete AI-powered resume optimization workflow.
 - Langfuse observability
 - Automated testing
 - CI/CD pipeline
+- Guardrail audit logging
+- AI safety telemetry
+- Prompt security evaluation
 
 ### Success Metrics
 
 - Resume optimization <30 seconds
 - ATS score improvement ≥15%
 - Validation pass rate ≥95%
+- Guardrail pass rate ≥99%
 - Workflow success rate ≥98%
+- Prompt injection block rate = 100%
 
 ---
 
@@ -129,6 +141,10 @@ Transform Tailr into an intelligent career assistant.
 - Company Research Agent
 - Job Match Scoring
 - Career Recommendations
+- Guardrail Analytics Dashboard
+- AI Safety Policy Manager
+- Prompt Risk Scoring
+- Retrieval Trust Scoring
 
 ### AI Enhancements
 
@@ -137,6 +153,9 @@ Transform Tailr into an intelligent career assistant.
 - Improved retrieval
 - Hybrid search
 - Cross-document reasoning
+- Adaptive guardrail policies
+- Retrieval safety filtering
+- Context trust scoring
 
 ### Infrastructure
 
@@ -144,6 +163,9 @@ Transform Tailr into an intelligent career assistant.
 - Prompt caching
 - Embedding cache
 - Workflow checkpointing
+- Guardrail event store
+- AI safety monitoring
+- Prompt firewall
 
 ---
 
@@ -164,6 +186,9 @@ Assist users throughout the entire job application lifecycle.
 - Salary Benchmarking
 - Application Tracker
 - Recruiter CRM
+- Personal AI Safety Preferences
+- User-controlled privacy policies
+- Guardrail feedback loop
 
 ### AI Capabilities
 
@@ -171,6 +196,9 @@ Assist users throughout the entire job application lifecycle.
 - Multi-agent planning
 - Personalized recommendations
 - Adaptive prompt routing
+- Personalized safety policies
+- Adaptive hallucination thresholds
+- User-specific guardrail tuning
 
 ---
 
@@ -191,6 +219,9 @@ Provide a unified AI platform for career development.
 - Career Health Score
 - Hiring Market Intelligence
 - AI Career Coach
+- AI Governance Center
+- Guardrail policy analytics
+- Organization-level safety dashboards
 
 ### Platform
 
@@ -218,6 +249,10 @@ Support organizations, universities, and recruitment platforms.
 - SSO
 - Enterprise RBAC
 - Audit Center
+- AI Governance Console
+- Compliance Reporting
+- Guardrail Audit Center
+- Enterprise AI Policy Engine
 
 ### Infrastructure
 
@@ -226,18 +261,21 @@ Support organizations, universities, and recruitment platforms.
 - High availability
 - Enterprise monitoring
 - SLA management
+- Centralized guardrail management
+- Policy distribution service
+- Compliance audit storage
 
 ---
 
 # 9. AI Evolution Roadmap
 
-| Phase   | AI Capability                         |
-| ------- | ------------------------------------- |
-| Phase 1 | RAG + Multi-Agent Resume Optimization |
-| Phase 2 | Cross-document reasoning              |
-| Phase 3 | Persistent career memory              |
-| Phase 4 | Career Intelligence Graph             |
-| Phase 5 | Organization-level AI agents          |
+| Phase   | AI Capability                                           |
+| ------- | ------------------------------------------------------- |
+| Phase 1 | RAG + Multi-Agent Resume Optimization + Guardrails      |
+| Phase 2 | Cross-document reasoning + Adaptive Guardrails          |
+| Phase 3 | Persistent career memory + Personalized Safety Policies |
+| Phase 4 | Career Intelligence Graph + Governance Analytics        |
+| Phase 5 | Organization-level AI agents + Enterprise Governance    |
 
 ---
 
@@ -315,16 +353,19 @@ The data model becomes progressively richer.
 - Model routing
 - Automatic fallback
 - Hybrid inference
+- Guardrail-aware model selection
 
 ### Phase 3
 
 - Fine-tuned local models
 - Domain adapters
+- Safety-specialized classifiers
 
 ### Phase 4
 
 - Mixture of Experts (MoE)
 - Specialized planning models
+- Dedicated safety evaluation models
 
 ---
 
@@ -361,21 +402,25 @@ The workflow engine becomes increasingly autonomous.
 - Metrics
 - Logs
 - Traces
+- Guardrail telemetry
 
 ### Phase 2
 
 - Prompt analytics
 - RAG analytics
+- Guardrail analytics
 
 ### Phase 3
 
 - Agent analytics
 - User journey analytics
+- Safety trend analysis
 
 ### Phase 4
 
 - AI quality dashboards
 - Cost optimization dashboards
+- Enterprise governance dashboards
 
 ---
 
@@ -386,21 +431,25 @@ Phase 1
 - JWT
 - RBAC
 - HTTPS
+- Validation & Guardrails Engine
 
 Phase 2
 
 - Prompt firewall
 - AI Security Gateway
+- Adaptive guardrail policies
 
 Phase 3
 
 - MFA
 - Secret rotation
+- Personalized safety policies
 
 Phase 4
 
 - Enterprise identity
 - Policy-based access control
+- Organization-level AI governance
 
 ---
 
@@ -408,6 +457,10 @@ Phase 4
 
 ```
 Unit Tests
+
+↓
+
+Guardrail Tests
 
 ↓
 
@@ -424,6 +477,10 @@ AI Evaluation
 ↓
 
 Continuous Offline Evaluation
+
+↓
+
+Adversarial AI Testing
 
 ↓
 
@@ -447,22 +504,26 @@ Every release reserves engineering effort for:
 
 Target allocation:
 
-- 70% New Features
+- 65% New Features
 - 20% Technical Debt
-- 10% Experimentation
+- 10% AI Safety & Guardrails
+- 5% Experimentation
 
 ---
 
 # 18. Risks
 
-| Risk                | Mitigation                               |
-| ------------------- | ---------------------------------------- |
-| LLM quality changes | Prompt versioning + evaluation framework |
-| Model deprecation   | Provider abstraction layer               |
-| RAG accuracy        | Continuous retrieval evaluation          |
-| Infrastructure cost | Local-first architecture                 |
-| Workflow complexity | Modular agent framework                  |
-| Security threats    | AI security gateway + validation         |
+| Risk                        | Mitigation                               |
+| --------------------------- | ---------------------------------------- |
+| LLM quality changes         | Prompt versioning + evaluation framework |
+| Model deprecation           | Provider abstraction layer               |
+| RAG accuracy                | Continuous retrieval evaluation          |
+| Infrastructure cost         | Local-first architecture                 |
+| Workflow complexity         | Modular agent framework                  |
+| Prompt injection            | Prompt firewall + guardrails             |
+| Hallucinated resume content | Resume integrity validation              |
+| Guardrail bypass            | Adversarial testing + policy enforcement |
+| Data leakage                | PII detection + output sanitization      |
 
 ---
 
@@ -493,10 +554,15 @@ The same architecture should support resumes, cover letters, LinkedIn profiles, 
 - Validation Pass Rate
 - Deployment Frequency
 - Test Coverage
+- Guardrail latency
+- Guardrail availability
 
 ### AI
 
 - Hallucination Rate
+- Prompt Injection Detection Rate
+- Guardrail Pass Rate
+- Guardrail Repair Rate
 - Retrieval Precision@K
 - Prompt Success Rate
 - User Acceptance Rate
@@ -506,14 +572,15 @@ The same architecture should support resumes, cover letters, LinkedIn profiles, 
 
 # 21. Architecture Decisions
 
-| Decision                 | Rationale                               |
-| ------------------------ | --------------------------------------- |
-| Modular roadmap          | Enables incremental delivery            |
-| Local-first stack        | Accessible to students and contributors |
-| Agent-based architecture | Supports future AI capabilities         |
-| Polyglot persistence     | Scales with platform complexity         |
-| Evaluation-driven AI     | Enables safe iteration                  |
-| Platform-first design    | Prevents feature silos                  |
+| Decision                   | Rationale                               |
+| -------------------------- | --------------------------------------- |
+| Modular roadmap            | Enables incremental delivery            |
+| Local-first stack          | Accessible to students and contributors |
+| Agent-based architecture   | Supports future AI capabilities         |
+| Polyglot persistence       | Scales with platform complexity         |
+| Evaluation-driven AI       | Enables safe iteration                  |
+| Guardrails-first AI safety | Prevents unsafe or malformed outputs    |
+| Platform-first design      | Prevents feature silos                  |
 
 ---
 
@@ -521,6 +588,8 @@ The same architecture should support resumes, cover letters, LinkedIn profiles, 
 
 Tailr's roadmap is designed around platform evolution rather than isolated features.
 
-Beginning as an AI-powered resume optimizer, the platform progressively expands into a Career Copilot and ultimately a Career Intelligence Platform.
+Beginning as an AI-powered resume optimizer, the platform progressively expands into a Career Copilot and ultimately a Career Intelligence Platform with enterprise-grade AI governance.
 
-By investing early in reusable architecture, evaluation frameworks, observability, and modular AI components, Tailr can continuously evolve without major redesign while remaining accessible to students, open-source contributors, and future enterprise users.
+By investing early in reusable architecture, evaluation frameworks, observability, and a dedicated Validation & Guardrails Engine, Tailr can continuously evolve without major redesign while maintaining safe, reliable, and auditable AI behavior.
+
+The roadmap introduces progressively stronger AI safety capabilities—from structured output validation and prompt injection detection in Phase 1 to adaptive guardrail policies, governance analytics, and enterprise AI policy management in later phases—ensuring that platform intelligence grows together with security, compliance, and operational maturity.

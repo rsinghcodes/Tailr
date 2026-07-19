@@ -1,13 +1,29 @@
 flowchart LR
 
-GeneratedResume
+Generated[LLM Structured Output]
 
-GeneratedResume --> JSONValidation
+Generated --> JSON[JSON Validation]
 
-JSONValidation --> HallucinationCheck
+JSON --> Schema[Schema Validation]
 
-HallucinationCheck --> Formatting
+Schema --> Injection[Prompt Injection Detection]
 
-Formatting --> ATSValidation
+Injection --> Hallucination[Hallucination Detection]
 
-ATSValidation --> Approved
+Hallucination --> PII[PII Detection]
+
+PII --> ResumeIntegrity[Resume Integrity Validation]
+
+ResumeIntegrity --> Formatting[Formatting Validation]
+
+Formatting --> ATS[ATS Validation]
+
+ATS --> Decision{Valid?}
+
+Decision -- Yes --> Approved[Approved Output]
+
+Decision -- Repairable --> Repair[Automatic Output Repair]
+
+Repair --> Schema
+
+Decision -- No --> Rejected[Rejected Output]

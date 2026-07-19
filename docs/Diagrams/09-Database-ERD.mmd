@@ -4,10 +4,154 @@ USER ||--o{ RESUME : owns
 
 RESUME ||--o{ RESUME_VERSION : has
 
-RESUME ||--o{ JOB_DESCRIPTION : targets
+RESUME ||--o{ KNOWLEDGE_CHUNK : indexed_as
+
+RESUME_VERSION ||--o{ GENERATED_ARTIFACT : produces
+
+JOB_DESCRIPTION ||--o{ OPTIMIZATION_PLAN : drives
+
+OPTIMIZATION_PLAN ||--o{ WORKFLOW : creates
+
+WORKFLOW ||--o{ WORKFLOW_STATE : transitions
 
 WORKFLOW ||--o{ AGENT_EXECUTION : contains
 
-PROMPT ||--o{ PROMPT_VERSION : has
+WORKFLOW ||--o{ VALIDATION_RESULT : validates
 
 WORKFLOW ||--o{ ATS_RESULT : produces
+
+WORKFLOW ||--o{ GUARDRAIL_EVENT : audits
+
+KNOWLEDGE_CHUNK ||--|| EMBEDDING : embedded_as
+
+PROMPT ||--o{ PROMPT_VERSION : has
+
+AGENT_EXECUTION }o--|| PROMPT_VERSION : uses
+
+USER {
+  uuid id PK
+  string email
+  string full_name
+  datetime created_at
+}
+
+RESUME {
+  uuid id PK
+  uuid user_id FK
+  string title
+  string canonical_hash
+  datetime created_at
+}
+
+RESUME_VERSION {
+  uuid id PK
+  uuid resume_id FK
+  int version_number
+  string status
+  datetime created_at
+}
+
+JOB_DESCRIPTION {
+  uuid id PK
+  string company
+  string role
+  string source_url
+  datetime created_at
+}
+
+OPTIMIZATION_PLAN {
+  uuid id PK
+  uuid job_description_id FK
+  json plan
+  datetime created_at
+}
+
+WORKFLOW {
+  uuid id PK
+  uuid optimization_plan_id FK
+  string status
+  datetime started_at
+  datetime completed_at
+}
+
+WORKFLOW_STATE {
+  uuid id PK
+  uuid workflow_id FK
+  string state
+  datetime entered_at
+}
+
+AGENT_EXECUTION {
+  uuid id PK
+  uuid workflow_id FK
+  uuid prompt_version_id FK
+  string agent_name
+  string status
+  int latency_ms
+  int prompt_tokens
+  int completion_tokens
+}
+
+PROMPT {
+  uuid id PK
+  string name
+  string category
+}
+
+PROMPT_VERSION {
+  uuid id PK
+  uuid prompt_id FK
+  int version
+  text template
+  string model_family
+}
+
+KNOWLEDGE_CHUNK {
+  uuid id PK
+  uuid resume_id FK
+  string section
+  text content
+  json metadata
+}
+
+EMBEDDING {
+  uuid id PK
+  uuid knowledge_chunk_id FK
+  string vector_store_id
+  int dimensions
+}
+
+GUARDRAIL_EVENT {
+  uuid id PK
+  uuid workflow_id FK
+  string validator
+  string severity
+  bool repaired
+  json violations
+  datetime created_at
+}
+
+VALIDATION_RESULT {
+  uuid id PK
+  uuid workflow_id FK
+  bool passed
+  json findings
+  datetime created_at
+}
+
+ATS_RESULT {
+  uuid id PK
+  uuid workflow_id FK
+  float score
+  json recommendations
+  datetime created_at
+}
+
+GENERATED_ARTIFACT {
+  uuid id PK
+  uuid resume_version_id FK
+  string artifact_type
+  string storage_path
+  string checksum
+  datetime created_at
+}

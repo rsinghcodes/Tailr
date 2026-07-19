@@ -12,12 +12,30 @@ Planning --> Retrieval
 
 Retrieval --> Rewrite
 
-Rewrite --> Validation
+Rewrite --> Guardrails
+
+Guardrails --> Validation
 
 Validation --> ATS
 
-ATS --> PDF
+ATS --> Rendering
 
-PDF --> Completed
+Rendering --> PDF
+
+PDF --> Persisted
+
+Persisted --> Completed
 
 Validation --> Failed
+
+Guardrails --> Failed
+
+Rendering --> Failed
+
+Failed --> Retry
+
+Retry --> Rewrite
+
+Failed --> [*]
+
+Completed --> [*]

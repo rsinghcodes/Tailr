@@ -140,6 +140,16 @@ No external vector services are required.
 
 ---
 
+## Retrieval Before Generation
+
+Every AI workflow must retrieve relevant context before generation.
+
+Agents are prohibited from generating resume content solely from model knowledge.
+
+Retrieved evidence becomes the authoritative context for all downstream reasoning, reducing hallucinations and improving explainability.
+
+---
+
 # 4. Knowledge Architecture
 
 ```
@@ -157,10 +167,20 @@ No external vector services are required.
                              ▼
                      Qdrant Vector DB
                              │
+                             ▼
                Hybrid Retrieval Pipeline
                              │
                              ▼
-                       LLM Agents
+                      Context Assembler
+                             │
+                             ▼
+                         AI Agents
+                             │
+                             ▼
+                    Guardrails Engine
+                             │
+                             ▼
+                    Validation Engine
 ```
 
 ---
@@ -229,6 +249,23 @@ Future versions may incorporate recruiter feedback.
 
 ---
 
+## Guardrail Knowledge
+
+Stores deterministic validation rules used by the Guardrails Engine.
+
+Examples
+
+- Resume integrity policies
+- Prompt injection patterns
+- ATS formatting rules
+- Output schemas
+- Business validation policies
+- Reserved keywords
+
+Unlike semantic knowledge, Guardrail Knowledge is deterministic and version-controlled.
+
+---
+
 # 6. Qdrant Collections
 
 ```
@@ -247,6 +284,12 @@ qdrant
 ├── resume_versions
 
 ├── career_guides
+
+├── guardrail_rules
+
+├── ats_rules
+
+├── prompt_patterns
 
 └── feedback
 ```
@@ -308,7 +351,11 @@ Example
   "technologies": ["LangChain", "FastAPI", "Python"],
   "domain": "AI",
   "years": 2026,
-  "importance": 0.98
+  "importance": 0.98,
+  "source": "resume",
+  "owner": "user",
+  "version": 3,
+  "verified": true
 }
 ```
 
@@ -366,6 +413,10 @@ Query
 
 ↓
 
+Intent Detection
+
+↓
+
 Metadata Filter
 
 ↓
@@ -374,7 +425,7 @@ Dense Retrieval
 
 ↓
 
-BM25 Search
+Sparse Retrieval (BM25)
 
 ↓
 
@@ -386,11 +437,23 @@ Cross Encoder Reranker
 
 ↓
 
-Top K
+Context Assembler
 
 ↓
 
-Agent
+Top K Context
+
+↓
+
+AI Agent
+
+↓
+
+Guardrails
+
+↓
+
+Validation
 ```
 
 ---
@@ -495,14 +558,17 @@ Prompt Engineering
 
 Each agent retrieves different knowledge.
 
-| Agent       | Retrieval Source                |
-| ----------- | ------------------------------- |
-| JD Analyzer | Job Description                 |
-| Planner     | Resume + Skills + Career Guides |
-| Rewriter    | Resume + Rewrite Plan           |
-| ATS Advisor | Resume + JD + ATS Guides        |
+| Agent             | Retrieval Source                              |
+| ----------------- | --------------------------------------------- |
+| JD Analyzer       | Job Description                               |
+| Planner           | Resume + Skills + Career Guides               |
+| Rewriter          | Resume + Rewrite Plan                         |
+| ATS Advisor       | Resume + JD + ATS Guides                      |
+| Guardrails Engine | Guardrail Rules + ATS Rules + Prompt Patterns |
 
-No agent receives unnecessary context.
+Each agent receives only the minimum context required for its task.
+
+The Guardrails Engine retrieves deterministic policy documents instead of semantic resume content.
 
 ---
 
@@ -537,6 +603,10 @@ Retrieve
 
 ↓
 
+Context Assembly
+
+↓
+
 Reason
 
 ↓
@@ -545,7 +615,11 @@ Generate
 
 ↓
 
-Validate
+Guardrails
+
+↓
+
+Validation
 
 ↓
 
@@ -599,6 +673,22 @@ Coordinates retrieval and reasoning.
 
 ---
 
+### Context Assembler
+
+Combines retrieved nodes into a deterministic context package.
+
+Responsibilities
+
+- remove duplicates
+- preserve ordering
+- enforce token limits
+- attach metadata
+- preserve citations
+
+The assembled context becomes the only knowledge visible to downstream AI agents.
+
+---
+
 # 17. Future Knowledge Graph
 
 Future versions will augment vector search with graph reasoning.
@@ -647,6 +737,8 @@ Possible implementation
 
 Frequently accessed queries are cached.
 
+The Guardrails Engine also caches deterministic validation rules to eliminate repeated policy loading during workflow execution.
+
 Examples
 
 - Backend resume
@@ -683,6 +775,19 @@ Ragas
 
 ---
 
+Additional evaluation metrics
+
+- Context Relevance
+- Retrieval Latency
+- Citation Accuracy
+- Hallucination Rate
+- Guardrail Pass Rate
+- Policy Violation Rate
+
+These metrics help evaluate both retrieval quality and downstream AI reliability.
+
+---
+
 # 20. Security
 
 Knowledge stores contain sensitive personal information.
@@ -696,6 +801,10 @@ Requirements
 - metadata validation
 
 Resume embeddings are never shared with external services without explicit user consent.
+
+Guardrail rule sets are treated as trusted system knowledge.
+
+They are immutable during workflow execution and may only be modified through administrative configuration or version-controlled deployments.
 
 ---
 
@@ -716,19 +825,33 @@ Future knowledge bases
 
 These sources can be indexed using the same architecture.
 
+Future retrieval capabilities
+
+- Multi-query retrieval
+- Self-query retrieval
+- Agent-specific retrievers
+- Graph-enhanced retrieval
+- Temporal retrieval
+- Personalized ranking
+- Context compression
+
 ---
 
 # 22. Architecture Decisions
 
-| Decision             | Rationale                                    |
-| -------------------- | -------------------------------------------- |
-| Semantic chunking    | Preserves complete concepts                  |
-| Multiple collections | Improves retrieval quality                   |
-| Hybrid retrieval     | Combines semantic and lexical search         |
-| Local embeddings     | Zero API cost                                |
-| Qdrant               | Production-ready open-source vector database |
-| LlamaIndex           | Native indexing and retrieval framework      |
-| Reranking            | Improves context quality before generation   |
+| Decision                 | Rationale                                            |
+| ------------------------ | ---------------------------------------------------- |
+| Semantic chunking        | Preserves complete concepts                          |
+| Multiple collections     | Improves retrieval quality                           |
+| Hybrid retrieval         | Combines semantic and lexical search                 |
+| Local embeddings         | Zero API cost                                        |
+| Qdrant                   | Production-ready open-source vector database         |
+| LlamaIndex               | Native indexing and retrieval framework              |
+| Reranking                | Improves context quality before generation           |
+| Context Assembler        | Produces deterministic context packages              |
+| Guardrail Knowledge      | Separates AI safety policies from semantic knowledge |
+| Agent-specific Retrieval | Minimizes unnecessary context                        |
+| Metadata-first Filtering | Metadata-first Filtering                             |
 
 ---
 
@@ -738,6 +861,6 @@ Tailr treats the resume as a structured knowledge system rather than a document.
 
 The Knowledge Layer converts resumes, job descriptions, career guidance, and optimization history into searchable evidence.
 
-Every AI decision is grounded in retrieved knowledge, validated against the canonical resume, and explainable to the user.
+Every AI decision is grounded in retrieved knowledge, validated against the canonical resume, processed through the Guardrails Engine, and verified by deterministic business validation before being returned to the user.
 
-This architecture enables Tailr to scale from a resume optimization tool into a long-term Career Intelligence Platform without changing its foundational design.
+This layered architecture separates retrieval, reasoning, AI safety, and business validation, enabling Tailr to scale into a comprehensive Career Intelligence Platform while maintaining explainability, reliability, and production-grade robustness.

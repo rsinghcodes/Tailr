@@ -1,15 +1,43 @@
 flowchart LR
 
-Resume
+Resume[Canonical Resume]
 
-JD
+JD[Job Description]
 
-Resume --> KeywordExtraction
+Resume --> ResumeKeywords[Resume Keyword Extractor]
 
-JD --> KeywordExtraction
+JD --> JDKeywords[JD Keyword Extractor]
 
-KeywordExtraction --> Comparison
+Resume --> ResumeEmbedding[Resume Embedding]
 
-Comparison --> Score
+JD --> JDEmbedding[JD Embedding]
 
-Score --> Report
+Resume --> Structure[Structure Analyzer]
+
+Resume --> Readability[Readability Analyzer]
+
+Resume --> Impact[Impact Analyzer]
+
+ResumeKeywords --> KeywordCoverage[Keyword Coverage]
+
+JDKeywords --> KeywordCoverage
+
+ResumeEmbedding --> SemanticSimilarity[Semantic Similarity]
+
+JDEmbedding --> SemanticSimilarity
+
+Structure --> ATSCompliance[ATS Compliance]
+
+Readability --> ATSCompliance
+
+Impact --> ATSCompliance
+
+KeywordCoverage --> Scoring[Weighted Scoring Engine]
+
+SemanticSimilarity --> Scoring
+
+ATSCompliance --> Scoring
+
+Scoring --> Recommendations[Recommendation Generator]
+
+Recommendations --> Report[ATS Report]

@@ -28,6 +28,9 @@ The ATS Scoring Engine must:
 - Evaluate semantic relevance
 - Generate actionable recommendations
 - Produce deterministic scoring
+- Validate ATS compatibility before scoring
+- Support configurable scoring profiles
+- Provide auditability and historical comparison
 - Explain every score
 
 ---
@@ -85,7 +88,25 @@ The objective is improvement, not just scoring.
 
 ---
 
-# 5. Scoring Dimensions
+# 5. ATS Guardrails
+
+Before scoring, the resume is validated for ATS compatibility.
+
+Checks include:
+
+- Standard section headings
+- Chronological ordering
+- Bullet formatting consistency
+- Maximum bullet length
+- No tables or multi-column layouts
+- Safe LaTeX rendering
+- UTF-8 compliance
+- No hidden or invisible text
+- No keyword stuffing patterns
+
+If critical ATS violations are found, scoring is blocked until the resume is repaired.
+
+# 6. Scoring Dimensions
 
 The overall ATS score is composed of several independent dimensions.
 
@@ -106,7 +127,7 @@ Weights are configurable.
 
 ---
 
-# 6. Keyword Analysis
+# 7. Keyword Analysis
 
 Checks:
 
@@ -116,6 +137,10 @@ Checks:
 - Frequency
 - Placement
 - Keyword stuffing
+- Synonym coverage
+- Section distribution
+
+Keyword stuffing is penalized when the same keyword appears excessively without contextual relevance.
 
 Example
 
@@ -131,7 +156,7 @@ PASS
 
 ---
 
-# 7. Semantic Analysis
+# 8. Semantic Analysis
 
 Embedding-based comparison identifies concept matches.
 
@@ -161,7 +186,7 @@ Semantic similarity contributes to the final score.
 
 ---
 
-# 8. Skills Match
+# 9. Skills Match
 
 The engine compares:
 
@@ -195,7 +220,7 @@ DevOps
 
 ---
 
-# 9. Experience Alignment
+# 10. Experience Alignment
 
 Checks include:
 
@@ -219,7 +244,7 @@ High alignment
 
 ---
 
-# 10. Project Relevance
+# 11. Project Relevance
 
 Projects are ranked by relevance.
 
@@ -235,7 +260,7 @@ Projects with stronger alignment receive higher scores.
 
 ---
 
-# 11. Resume Structure
+# 12. Resume Structure
 
 Evaluates:
 
@@ -250,7 +275,7 @@ Missing critical sections reduce the score.
 
 ---
 
-# 12. Formatting Analysis
+# 13. Formatting Analysis
 
 Checks:
 
@@ -264,7 +289,7 @@ Tailr evaluates structure rather than visual design.
 
 ---
 
-# 13. Readability Analysis
+# 14. Readability Analysis
 
 Metrics include:
 
@@ -278,7 +303,7 @@ The goal is concise and impactful writing.
 
 ---
 
-# 14. Keyword Coverage
+# 15. Keyword Coverage
 
 Example report
 
@@ -308,7 +333,7 @@ Coverage percentage is calculated automatically.
 
 ---
 
-# 15. Recommendation Engine
+# 16. Recommendation Engine
 
 Recommendations are prioritized.
 
@@ -331,7 +356,7 @@ Low Priority
 
 ---
 
-# 16. Score Calculation
+# 17. Score Calculation
 
 ```
 Keyword Score
@@ -367,17 +392,44 @@ Scores range from:
 
 ---
 
-# 17. Report Model
+# 18. Confidence Score
+
+The engine produces a confidence score indicating scoring reliability.
+
+Factors include:
+
+- JD clarity
+- Resume completeness
+- Keyword extraction confidence
+- Semantic match confidence
+- Parsing quality
+- Validation results
+
+Example
+
+```text
+ATS Score: 88
+Confidence: 0.96
+```
+
+Low-confidence scores trigger a warning in the UI.
+
+# 19. Report Model
 
 ```json
 {
   "overall_score": 88,
+  "confidence": 0.96,
   "keyword_score": 92,
   "semantic_score": 85,
   "skills_score": 90,
   "experience_score": 84,
   "recommendations": [],
-  "missing_keywords": []
+  "missing_keywords": [],
+  "keyword_density": {
+    "python": 0.018,
+    "fastapi": 0.012
+  }
 }
 ```
 
@@ -385,7 +437,7 @@ The report is stored alongside each optimization.
 
 ---
 
-# 18. Visualization
+# 20. Visualization
 
 The frontend may display:
 
@@ -400,23 +452,19 @@ Visualizations are generated from structured data.
 
 ---
 
-# 19. Workflow Integration
+# 21. Workflow Integration
 
 The ATS Engine runs:
 
 ```
 Rewrite Completed
-
-↓
-
-Validation Passed
-
-↓
-
+        ↓
+Validation & Guardrails Passed
+        ↓
 ATS Analysis
-
-↓
-
+        ↓
+Recommendations Generated
+        ↓
 User Review
 ```
 
@@ -424,7 +472,7 @@ Only validated resumes are scored.
 
 ---
 
-# 20. Evaluation Metrics
+# 22. Evaluation Metrics
 
 The scoring engine tracks:
 
@@ -433,12 +481,16 @@ The scoring engine tracks:
 - Keyword coverage
 - Recommendation acceptance rate
 - User satisfaction
+- Confidence distribution
+- False positive rate
+- False negative rate
+- Average scoring latency
 
 Metrics support future model tuning.
 
 ---
 
-# 21. Limitations
+# 23. Limitations
 
 The ATS score is an approximation.
 
@@ -448,7 +500,7 @@ Tailr aims to optimize for broadly accepted ATS best practices rather than mimic
 
 ---
 
-# 22. Future Enhancements
+# 24. Future Enhancements
 
 Planned capabilities include:
 
@@ -463,23 +515,26 @@ Planned capabilities include:
 
 ---
 
-# 23. Architecture Decisions
+# 25. Architecture Decisions
 
-| Decision                    | Rationale                 |
-| --------------------------- | ------------------------- |
-| Weighted dimensions         | Balanced evaluation       |
-| Semantic matching           | Beyond keyword counting   |
-| Explainable recommendations | Improve user trust        |
-| Structured reports          | Easy frontend integration |
-| Configurable weights        | Future customization      |
-| Deterministic scoring       | Consistent results        |
+| Decision                    | Rationale                    |
+| --------------------------- | ---------------------------- |
+| Weighted dimensions         | Balanced evaluation          |
+| Semantic matching           | Beyond keyword counting      |
+| Explainable recommendations | Improve user trust           |
+| Structured reports          | Easy frontend integration    |
+| Configurable weights        | Future customization         |
+| Deterministic scoring       | Consistent results           |
+| Guardrails before scoring   | Prevent invalid ATS analysis |
+| Confidence scoring          | Indicate reliability         |
+| Score normalization         | Prevent inflated scores      |
 
 ---
 
-# 24. Summary
+# 26. Summary
 
-The ATS Scoring Engine provides a comprehensive evaluation of resume quality by combining deterministic analysis with semantic understanding.
+The ATS Scoring Engine provides a comprehensive evaluation of resume quality by combining deterministic analysis with semantic relevance scoring and ATS guardrails.
 
-Instead of producing a single opaque score, Tailr measures multiple quality dimensions, explains every result, and generates prioritized recommendations.
+Instead of producing a single opaque score, Tailr measures multiple quality dimensions, validates ATS compatibility, explains every result, and generates prioritized recommendations with estimated impact.
 
-This approach transforms ATS analysis from a simple keyword checker into an intelligent resume assessment system that guides users toward measurable improvements.
+This approach transforms ATS analysis from a simple keyword checker into an intelligent, auditable, and production-ready resume assessment system that guides users toward measurable improvements while maintaining factual integrity and ATS compliance.

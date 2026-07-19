@@ -12,7 +12,7 @@
 
 This document defines the security architecture of Tailr.
 
-Security protects user data, AI workflows, infrastructure, and generated artifacts from unauthorized access, malicious inputs, prompt injection, data leakage, and system abuse.
+Security protects user data, AI workflows, infrastructure, generated artifacts, and AI-generated outputs from unauthorized access, malicious inputs, prompt injection, hallucinated content, data leakage, and system abuse.
 
 Because Tailr is an AI-native application, its security model extends beyond traditional web security to include LLM security, RAG security, vector database protection, and AI workflow isolation.
 
@@ -26,9 +26,11 @@ The platform must:
 - Prevent unauthorized access
 - Secure AI interactions
 - Prevent prompt injection
+- Detect hallucinated content
 - Protect vector data
 - Ensure secure file processing
 - Prevent data leakage
+- Enforce guardrail policies
 - Support auditability
 
 ---
@@ -56,25 +58,17 @@ Every service receives only the permissions it requires.
 Security exists at multiple layers.
 
 Infrastructure
-
 ↓
-
 API
-
 ↓
-
 Application
-
 ↓
-
 AI
-
 ↓
-
+Guardrails
+↓
 Database
-
 ↓
-
 Storage
 
 ---
@@ -104,6 +98,8 @@ Major threats include
 - Unauthorized access
 - Resume theft
 - Prompt injection
+- Prompt leakage
+- Hallucinated resume content
 - Malicious LaTeX
 - API abuse
 - Vector poisoning
@@ -192,8 +188,10 @@ Validate
 - JSON schema
 - String length
 - Allowed characters
+- Prompt injection patterns
+- Embedded control instructions
 
-Reject malformed input immediately.
+Reject malformed or suspicious input immediately.
 
 ---
 
@@ -258,6 +256,8 @@ Prompt construction separates
 - retrieved context
 - user content
 
+Every model response passes through the Guardrails layer before it is accepted by the application.
+
 ---
 
 # 13. Prompt Injection Protection
@@ -278,14 +278,37 @@ Mitigation
 
 - Context isolation
 - Prompt delimiters
+- Structured output enforcement
 - Output validation
 - Retrieval filtering
+- Prompt injection detection
+- Automatic request rejection for high-risk patterns
 
-Prompt injection attempts are logged.
+Prompt injection attempts are logged and included in security telemetry.
 
 ---
 
-# 14. RAG Security
+# 14. Guardrails Security
+
+The Guardrails layer enforces AI safety policies independently of the underlying model provider.
+
+Guardrails perform
+
+- JSON schema validation
+- Prompt injection detection
+- Prompt leakage detection
+- Hallucination detection
+- Resume integrity validation
+- ATS formatting validation
+- PII detection
+- Toxicity detection
+- Output repair when possible
+
+Outputs that fail critical guardrail checks are rejected and never returned to the user.
+
+## All guardrail decisions are recorded in immutable audit logs.
+
+# 15. RAG Security
 
 Knowledge retrieval only accesses
 
@@ -297,9 +320,11 @@ Cross-user retrieval is prohibited.
 
 Every chunk includes ownership metadata.
 
+Retrieved chunks are also scanned for prompt injection markers before being inserted into the model context.
+
 ---
 
-# 15. Vector Database Security
+# 16. Vector Database Security
 
 Each vector stores
 
@@ -317,9 +342,11 @@ Queries are filtered by ownership before retrieval.
 
 Embedding similarity alone never grants access.
 
+Suspicious or poisoned embeddings can be quarantined without affecting other user collections.
+
 ---
 
-# 16. Data Privacy
+# 17. Data Privacy
 
 Sensitive data
 
@@ -335,12 +362,15 @@ Never appears in
 - Metrics
 - Exceptions
 - Monitoring dashboards
+- Raw LLM prompts
+- Raw model completions
+- Guardrail internal state
 
 PII is masked whenever possible.
 
 ---
 
-# 17. Encryption
+# 18. Encryption
 
 Data in transit
 
@@ -356,7 +386,7 @@ Secrets remain encrypted.
 
 ---
 
-# 18. Secrets Management
+# 19. Secrets Management
 
 Secrets include
 
@@ -383,7 +413,7 @@ Secrets are never committed to Git.
 
 ---
 
-# 19. Database Security
+# 20. Database Security
 
 Mitigations
 
@@ -397,7 +427,7 @@ SQL Injection is prevented through ORM usage.
 
 ---
 
-# 20. Redis Security
+# 21. Redis Security
 
 Redis
 
@@ -409,7 +439,7 @@ Redis stores only temporary data.
 
 ---
 
-# 21. Object Storage Security
+# 22. Object Storage Security
 
 Resume files
 
@@ -422,7 +452,7 @@ Deleted files are securely removed.
 
 ---
 
-# 22. Dependency Security
+# 23. Dependency Security
 
 Dependencies are monitored using
 
@@ -435,7 +465,7 @@ Outdated packages are reviewed regularly.
 
 ---
 
-# 23. Container Security
+# 24. Container Security
 
 Containers
 
@@ -449,7 +479,7 @@ Images are scanned before deployment.
 
 ---
 
-# 24. Network Security
+# 25. Network Security
 
 Internal services communicate over private Docker networks.
 
@@ -462,7 +492,7 @@ Databases remain private.
 
 ---
 
-# 25. Logging Security
+# 26. Logging Security
 
 Logs include
 
@@ -477,12 +507,15 @@ Logs exclude
 - Passwords
 - API keys
 - PII
+- Raw prompts
+- Raw LLM responses
+- Guardrail internal metadata
 
 Sensitive values are automatically redacted.
 
 ---
 
-# 26. Rate Limiting
+# 27. Rate Limiting
 
 Example limits
 
@@ -502,7 +535,7 @@ Limits reduce abuse.
 
 ---
 
-# 27. Audit Logging
+# 28. Audit Logging
 
 Security events
 
@@ -512,12 +545,16 @@ Security events
 - Workflow execution
 - Permission failure
 - Prompt injection attempt
+- Guardrail rejection
+- Hallucination detection
+- PII detection
+- Output repair event
 
 Audit records are immutable.
 
 ---
 
-# 28. Incident Response
+# 29. Incident Response
 
 Detection
 
@@ -545,7 +582,7 @@ Every security incident follows a documented process.
 
 ---
 
-# 29. Compliance Considerations
+# 30. Compliance Considerations
 
 Tailr is designed with principles aligned to
 
@@ -558,7 +595,7 @@ Formal certification is outside Version 1 scope.
 
 ---
 
-# 30. Future Enhancements
+# 31. Future Enhancements
 
 Future capabilities
 
@@ -570,10 +607,15 @@ Future capabilities
 - Differential privacy
 - Secret rotation
 - Policy-based access control (PBAC)
+- Adaptive guardrail policies
+- Automated hallucination review
+- Prompt risk scoring
+- Real-time output quarantine
+- AI safety policy engine
 
 ---
 
-# 31. Security Testing
+# 32. Security Testing
 
 Security testing includes
 
@@ -583,6 +625,10 @@ Security testing includes
 - Dependency scanning
 - Container scanning
 - Prompt injection tests
+- Hallucination detection tests
+- Guardrail policy tests
+- PII leakage tests
+- Output repair tests
 - Penetration testing
 - Fuzz testing
 
@@ -590,24 +636,28 @@ Security tests run automatically in CI/CD.
 
 ---
 
-# 32. Architecture Decisions
+# 33. Architecture Decisions
 
-| Decision                  | Rationale                        |
-| ------------------------- | -------------------------------- |
-| JWT Authentication        | Stateless authentication         |
-| RBAC                      | Fine-grained authorization       |
-| HTTPS Everywhere          | Secure communication             |
-| Prompt isolation          | Prevent LLM manipulation         |
-| Ownership-based retrieval | Prevent cross-user data leakage  |
-| Sandboxed LaTeX           | Prevent arbitrary code execution |
-| Structured audit logs     | Traceability and compliance      |
+| Decision                     | Rationale                                  |
+| ---------------------------- | ------------------------------------------ |
+| JWT Authentication           | Stateless authentication                   |
+| RBAC                         | Fine-grained authorization                 |
+| HTTPS Everywhere             | Secure communication                       |
+| Prompt isolation             | Prevent LLM manipulation                   |
+| Guardrails layer             | Provider-independent AI safety enforcement |
+| Structured output validation | Prevent malformed AI responses             |
+| Ownership-based retrieval    | Prevent cross-user data leakage            |
+| Sandboxed LaTeX              | Prevent arbitrary code execution           |
+| Structured audit logs        | Traceability and compliance                |
 
 ---
 
-# 33. Summary
+# 34. Summary
 
 Tailr adopts a defense-in-depth security architecture that protects both traditional application components and AI-specific workflows.
 
-By combining strong authentication, role-based authorization, secure file processing, prompt injection defenses, retrieval isolation, encrypted storage, and comprehensive audit logging, the platform safeguards sensitive career data while enabling reliable AI-powered resume optimization.
+By combining strong authentication, role-based authorization, secure file processing, prompt injection defenses, hallucination detection, a provider-independent Guardrails layer, retrieval isolation, encrypted storage, and comprehensive audit logging, the platform safeguards sensitive career data while enabling reliable AI-powered resume optimization.
 
-The security architecture is designed to evolve alongside the platform, supporting future enterprise deployments without requiring fundamental redesign.
+The Guardrails layer ensures that every AI-generated response is validated for safety, structure, and factual integrity before reaching the user, significantly reducing the risk of prompt leakage, malformed outputs, fabricated resume content, and other AI-specific threats.
+
+The security architecture is designed to evolve alongside the platform, supporting future enterprise deployments and advanced AI governance requirements without requiring fundamental redesign.

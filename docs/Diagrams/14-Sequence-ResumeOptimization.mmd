@@ -1,21 +1,59 @@
 sequenceDiagram
 
-User->>API: Upload Resume
+participant User
+participant API
+participant Workflow
+participant Parser
+participant Retriever
+participant Planner
+participant Rewriter
+participant LLM
+participant Guardrails
+participant Validator
+participant ATS
+participant Renderer
+participant Storage
 
-API->>Workflow: Start
+User->>API: Upload Resume + Job Description
 
-Workflow->>Parser: Parse
+API->>Workflow: Start optimization workflow
 
-Parser-->>Workflow: Resume
+Workflow->>Parser: Parse resume
 
-Workflow->>Planner: Plan
+Parser-->>Workflow: Canonical Resume Model
 
-Planner-->>Workflow: Tasks
+Workflow->>Retriever: Retrieve relevant experience
 
-Workflow->>Rewriter: Rewrite
+Retriever-->>Workflow: Ranked context
 
-Workflow->>Validator: Validate
+Workflow->>Planner: Generate optimization plan
 
-Workflow->>ATS: Score
+Planner-->>Workflow: Structured plan
 
-Workflow-->>User: PDF
+Workflow->>Rewriter: Rewrite selected sections
+
+Rewriter->>LLM: Structured rewrite request
+
+LLM-->>Rewriter: JSON response
+
+Rewriter->>Guardrails: Validate AI output
+
+Guardrails-->>Rewriter: Safe structured output
+
+Rewriter->>Validator: Business validation
+
+Validator-->>Workflow: Approved changes
+
+Workflow->>ATS: Calculate ATS score
+
+ATS-->>Workflow: ATS report + recommendations
+
+Workflow->>Renderer: Generate LaTeX
+
+Renderer-->>Workflow: Compiled PDF
+
+Workflow->>Storage: Store .tex, PDF, and metadata
+
+Workflow-->>API: Optimization completed
+
+API-->>User: PDF + ATS Report + Change Summary

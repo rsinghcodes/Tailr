@@ -30,6 +30,7 @@ The testing strategy aims to:
 - Detect hallucinations
 - Ensure prompt reliability
 - Measure retrieval quality
+- Validate guardrail enforcement
 - Protect against security vulnerabilities
 - Guarantee production readiness
 
@@ -86,12 +87,14 @@ Observability validates assumptions after deployment.
                           ▲
               Integration Tests
                           ▲
+            Guardrail & Security Tests
+                          ▲
                  Component Tests
                           ▲
                    Unit Tests
 ```
 
-AI evaluations execute alongside workflow tests.
+AI evaluations and guardrail evaluations execute alongside workflow tests.
 
 ---
 
@@ -107,6 +110,9 @@ Examples
 - Prompt Builder
 - Data Models
 - Utility Functions
+- Guardrail validators
+- JSON schema validators
+- Prompt injection detector
 
 Framework
 
@@ -127,15 +133,11 @@ Each subsystem is tested independently.
 Examples
 
 Parser
-
 Retriever
-
 Planner
-
 Rewriter
-
+Guardrails
 Validator
-
 Renderer
 
 No external dependencies are required.
@@ -149,14 +151,13 @@ Verify interactions between services.
 Examples
 
 FastAPI ↔ PostgreSQL
-
 FastAPI ↔ Redis
-
 FastAPI ↔ Qdrant
-
 Workflow ↔ Ollama
-
 Parser ↔ Knowledge Builder
+Workflow ↔ Guardrails
+Guardrails ↔ Validation Engine
+Guardrails ↔ Langfuse telemetry
 
 Framework
 
@@ -197,6 +198,10 @@ Rewriter
 
 ↓
 
+Guardrails
+
+↓
+
 Validator
 
 ↓
@@ -208,7 +213,7 @@ ATS
 Renderer
 ```
 
-The workflow must complete successfully.
+The workflow must complete successfully and all guardrail checks must pass or be repaired.
 
 ---
 
@@ -218,13 +223,18 @@ Every REST endpoint is tested.
 
 Verify
 
-- Status Codes
-- Authentication
-- Authorization
-- Validation
-- Pagination
-- Error Responses
-- Performance
+- JSON schema validation
+- Structured output validation
+- Business rules
+- Hallucination detection
+- Prompt injection detection
+- PII detection
+- Keyword validation
+- Formatting validation
+- Output repair behavior
+- Retry behavior
+
+Validation and guardrail behavior must remain deterministic.
 
 Framework
 
@@ -292,6 +302,8 @@ Verify
 - JSON validity
 - Schema compliance
 - Instruction following
+- Prompt injection resistance
+- Prompt leakage resistance
 - Hallucination rate
 - Latency
 - Token usage
@@ -336,11 +348,45 @@ Rewriter
 
 ATS Advisor
 
-Each agent receives predefined inputs and expected structured outputs.
+Each agent receives predefined inputs and expected structured outputs. Agent outputs must pass guardrail validation before being considered successful.
 
 ---
 
-# 16. Golden Dataset
+# 16. Guardrail Testing
+
+Guardrail testing verifies AI safety enforcement independently of business logic.
+
+Required test suites
+
+- JSON validation
+- Prompt injection detection
+- Prompt leakage detection
+- Hallucination detection
+- Resume integrity validation
+- ATS formatting validation
+- PII detection
+- Toxicity detection
+- Output repair validation
+- Guardrail timeout handling
+- Guardrail retry behavior
+
+Example test categories
+
+```text
+tests/guardrails/
+  test_json_validator.py
+  test_prompt_injection.py
+  test_hallucination.py
+  test_pii.py
+  test_resume_integrity.py
+  test_output_repair.py
+```
+
+Guardrail tests must execute in CI for every pull request.
+
+---
+
+# 17. Golden Dataset
 
 Tailr maintains a benchmark dataset.
 
@@ -351,12 +397,16 @@ Contents
 - Expected ATS scores
 - Expected rewrite plans
 - Expected parser outputs
+- Known prompt injection samples
+- Known hallucination examples
+- Expected guardrail decisions
+- Expected repair outcomes
 
-Changes are evaluated against this dataset before release.
+Changes are evaluated against this dataset before release. The dataset must contain both valid and intentionally malicious samples.
 
 ---
 
-# 17. Regression Testing
+# 18. Regression Testing
 
 Every resolved bug becomes a regression test.
 
@@ -364,9 +414,11 @@ Regression suite runs on every pull request.
 
 No previously fixed issue should reappear.
 
+Security incidents and guardrail bypasses also become permanent regression tests.
+
 ---
 
-# 18. Performance Testing
+# 19. Performance Testing
 
 Measure
 
@@ -389,7 +441,7 @@ Performance targets are defined in deployment documents.
 
 ---
 
-# 19. Load Testing
+# 20. Load Testing
 
 Simulate
 
@@ -402,7 +454,7 @@ The system should degrade gracefully under load.
 
 ---
 
-# 20. Security Testing
+# 21. Security Testing
 
 Security verification includes
 
@@ -410,16 +462,20 @@ Security verification includes
 - Authorization
 - SQL Injection
 - Prompt Injection
+- Prompt Leakage
+- Hallucination Bypass
 - XSS
 - File Upload Validation
 - Rate Limiting
 - Dependency Scanning
+- Guardrail Bypass Attempts
+- PII Leakage Detection
 
-Security tests run automatically in CI.
+Security and guardrail tests run automatically in CI.
 
 ---
 
-# 21. Chaos Testing
+# 22. Chaos Testing
 
 Introduce controlled failures.
 
@@ -434,7 +490,7 @@ Workflows should recover gracefully.
 
 ---
 
-# 22. End-to-End Testing
+# 23. End-to-End Testing
 
 User scenario
 
@@ -451,6 +507,10 @@ Optimize
 
 ↓
 
+Guardrails
+
+↓
+
 Review Suggestions
 
 ↓
@@ -462,7 +522,7 @@ Generate PDF
 Download Resume
 ```
 
-Entire user journeys are validated.
+Entire user journeys are validated. End-to-end tests verify that unsafe AI outputs are blocked before reaching the user.
 
 Framework
 
@@ -472,7 +532,7 @@ Playwright
 
 ---
 
-# 23. Manual QA
+# 24. Manual QA
 
 Manual evaluation focuses on
 
@@ -486,7 +546,7 @@ Human review complements automated testing.
 
 ---
 
-# 24. Continuous Integration
+# 25. Continuous Integration
 
 GitHub Actions pipeline
 
@@ -507,11 +567,19 @@ Unit Tests
 
 ↓
 
+Guardrail Tests
+
+↓
+
 Integration Tests
 
 ↓
 
 AI Evaluations
+
+↓
+
+Security Scan
 
 ↓
 
@@ -526,7 +594,7 @@ Deployment occurs only if all required stages pass.
 
 ---
 
-# 25. Test Data Management
+# 26. Test Data Management
 
 Test datasets include
 
@@ -534,18 +602,23 @@ Test datasets include
 - Anonymous job descriptions
 - Mock user accounts
 - Benchmark prompts
+- Prompt injection samples
+- Hallucination samples
+- PII leakage samples
+- Guardrail benchmark cases
 
 No real user resumes are used in automated testing.
 
 ---
 
-# 26. Coverage Goals
+# 27. Coverage Goals
 
 | Component         | Target |
 | ----------------- | ------ |
 | Business Logic    | 95%    |
 | API               | 90%    |
 | Parser            | 95%    |
+| Guardrails        | 95%    |
 | Validation Engine | 95%    |
 | Workflow          | 90%    |
 | Frontend          | 80%    |
@@ -554,12 +627,15 @@ Coverage complements—not replaces—quality evaluation.
 
 ---
 
-# 27. AI Evaluation Metrics
+# 28. AI Evaluation Metrics
 
 Track
 
 - Hallucination rate
 - JSON validity
+- Guardrail pass rate
+- Guardrail repair rate
+- Prompt injection detection rate
 - Validation pass rate
 - Prompt success rate
 - Retrieval accuracy
@@ -567,11 +643,11 @@ Track
 - ATS improvement
 - Rewrite acceptance
 
-These metrics are monitored continuously.
+These metrics are monitored continuously and compared across model versions and prompt versions.
 
 ---
 
-# 28. Future Enhancements
+# 29. Future Enhancements
 
 Planned capabilities
 
@@ -581,26 +657,35 @@ Planned capabilities
 - Prompt A/B testing
 - Automatic benchmark expansion
 - Continuous offline evaluation
+- Automated guardrail fuzzing
+- Adversarial prompt generation
+- Continuous red-team evaluation
+- Guardrail effectiveness scoring
+- AI safety benchmark automation
 
 ---
 
-# 29. Architecture Decisions
+# 30. Architecture Decisions
 
-| Decision            | Rationale                             |
-| ------------------- | ------------------------------------- |
-| pytest              | Mature Python testing ecosystem       |
-| Playwright          | Reliable browser automation           |
-| Golden datasets     | Stable AI regression testing          |
-| AI evaluation layer | Measures quality beyond correctness   |
-| Docker Compose      | Consistent integration environment    |
-| CI-first testing    | Prevent regressions before deployment |
+| Decision             | Rationale                                |
+| -------------------- | ---------------------------------------- |
+| pytest               | Mature Python testing ecosystem          |
+| Playwright           | Reliable browser automation              |
+| Golden datasets      | Stable AI regression testing             |
+| AI evaluation layer  | Measures quality beyond correctness      |
+| Guardrail test suite | Validates AI safety policies             |
+| Adversarial testing  | Detects prompt injection vulnerabilities |
+| Docker Compose       | Consistent integration environment       |
+| CI-first testing     | Prevent regressions before deployment    |
 
 ---
 
-# 30. Summary
+# 31. Summary
 
-Tailr adopts a comprehensive multi-layer testing strategy that combines traditional software testing with AI-specific evaluation techniques.
+Tailr adopts a comprehensive multi-layer testing strategy that combines traditional software testing with AI-specific evaluation and guardrail validation techniques.
 
-By testing deterministic components, AI agents, prompts, retrieval pipelines, workflows, APIs, and user journeys independently, the platform achieves high reliability while accommodating the probabilistic nature of LLM-based systems.
+By testing deterministic components, AI agents, prompts, retrieval pipelines, guardrail policies, workflows, APIs, and user journeys independently, the platform achieves high reliability while accommodating the probabilistic nature of LLM-based systems.
 
-This strategy ensures that every release is functionally correct, operationally stable, and capable of delivering consistent, high-quality resume optimizations.
+The dedicated guardrail test suite ensures that prompt injection attempts, hallucinated resume content, malformed structured outputs, PII leakage, and other AI-specific risks are detected before deployment.
+
+This strategy ensures that every release is functionally correct, operationally stable, security-hardened, and capable of delivering consistent, safe, and high-quality resume optimizations.

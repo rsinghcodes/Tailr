@@ -130,6 +130,16 @@ Knowledge is connected through explicit relationships.
 
 Relationships enable reasoning.
 
+## Policy-Driven Knowledge
+
+The Canonical Knowledge Model is protected by deterministic policies enforced by the Guardrails Engine.
+
+AI agents may only modify entities explicitly marked as mutable.
+
+All immutable entities are protected through policy validation before any changes are accepted.
+
+This separation ensures that semantic reasoning never compromises factual correctness.
+
 ---
 
 # 4. High-Level Knowledge Model
@@ -147,7 +157,21 @@ Relationships enable reasoning.
       │                 │
       └────────────┬────┘
                    ▼
-             Knowledge Graph
+            Canonical Knowledge Model
+                   │
+          ┌────────┴────────┐
+          ▼                 ▼
+ Knowledge Graph      Vector Index
+          │                 │
+          └────────┬────────┘
+                   ▼
+             AI Agents
+                   │
+                   ▼
+          Guardrails Engine
+                   │
+                   ▼
+          Validation Engine
 ```
 
 ---
@@ -196,6 +220,14 @@ certifications
 achievements
 
 metadata
+
+created_at
+
+updated_at
+
+version
+
+verified
 ```
 
 ---
@@ -220,6 +252,18 @@ technologies
 bullets
 
 achievements
+
+id
+
+metadata
+
+created_at
+
+updated_at
+
+version
+
+verified
 ```
 
 ---
@@ -240,6 +284,18 @@ bullets
 links
 
 category
+
+id
+
+metadata
+
+created_at
+
+updated_at
+
+version
+
+verified
 ```
 
 ---
@@ -258,6 +314,18 @@ confidence
 years
 
 source
+
+id
+
+metadata
+
+created_at
+
+updated_at
+
+version
+
+verified
 ```
 
 ---
@@ -276,6 +344,18 @@ cgpa
 start
 
 end
+
+id
+
+metadata
+
+created_at
+
+updated_at
+
+version
+
+verified
 ```
 
 ---
@@ -292,6 +372,18 @@ description
 date
 
 category
+
+id
+
+metadata
+
+created_at
+
+updated_at
+
+version
+
+verified
 ```
 
 ---
@@ -308,6 +400,18 @@ issuer
 date
 
 credential
+
+id
+
+metadata
+
+created_at
+
+updated_at
+
+version
+
+verified
 ```
 
 ---
@@ -362,6 +466,42 @@ CONTAINS
 ↓
 
 Experience
+```
+
+```
+Resume
+
+↓
+
+PROTECTED_BY
+
+↓
+
+Knowledge Policy
+```
+
+```
+Experience
+
+↓
+
+VALIDATED_BY
+
+↓
+
+Guardrails
+```
+
+```
+Project
+
+↓
+
+VERIFIED_BY
+
+↓
+
+Validation Engine
 ```
 
 ---
@@ -450,6 +590,18 @@ Achievements
 
 Validation rejects modifications.
 
+The Guardrails Engine enforces immutability.
+
+Attempts to modify immutable entities are rejected before business validation.
+
+Typical violations include
+
+- changing employers
+- changing employment dates
+- inventing technologies
+- modifying certifications
+- altering education history
+
 ---
 
 # 10. Mutable Knowledge
@@ -472,7 +624,9 @@ Skill ordering
 Highlighting
 ```
 
-These are presentation-layer optimizations.
+These are presentation-layer optimizations. Mutable fields remain subject to Guardrail validation.
+
+Allowed presentation changes must preserve the semantic meaning of the original content and must not introduce unsupported claims or fabricated achievements.
 
 ---
 
@@ -487,10 +641,13 @@ Example
   "importance": 0.95,
   "verified": true,
   "embedding": true,
+  "mutable": false,
   "source": "resume.tex",
   "created_at": "...",
   "updated_at": "...",
-  "version": 3
+  "version": 3,
+  "checksum": "...",
+  "owner": "resume"
 }
 ```
 
@@ -559,7 +716,11 @@ Presentation Layer
 
 ↓
 
-Canonical Model
+Canonical Knowledge Model
+
+↓
+
+Knowledge Policies
 
 ↓
 
@@ -575,7 +736,19 @@ Retriever
 
 ↓
 
-Agents
+AI Agents
+
+↓
+
+Guardrails
+
+↓
+
+Validation
+
+↓
+
+Renderer
 ```
 
 Every layer has one responsibility.
@@ -711,6 +884,20 @@ Required
 
 Validation prevents incomplete knowledge.
 
+## Guardrail Policies
+
+Before entity validation, the Guardrails Engine verifies
+
+- immutable field protection
+- schema compliance
+- entity ownership
+- relationship consistency
+- required metadata
+- unsupported entity creation
+- duplicate identifiers
+
+Only Guardrail-approved entities proceed to business validation.
+
 ---
 
 # 19. Serialization
@@ -741,6 +928,18 @@ Renderer
 
 This enables deterministic workflows.
 
+All serialized entities include schema version information to support backward compatibility and future model evolution.
+
+Example
+
+```json
+{
+  "schema_version": "1.0",
+  "entity": "Experience",
+  "version": 3
+}
+```
+
 ---
 
 # 20. Knowledge Lifecycle
@@ -754,7 +953,7 @@ Parser
 
 ↓
 
-Canonical Model
+Canonical Knowledge Model
 
 ↓
 
@@ -778,7 +977,11 @@ Rewrite
 
 ↓
 
-Validator
+Guardrails
+
+↓
+
+Validation
 
 ↓
 
@@ -810,6 +1013,20 @@ Future entities
 
 These integrate into the same graph.
 
+Future knowledge entities
+
+- Professional Certifications
+- Technical Assessments
+- AI Evaluation Results
+- Recruiter Notes
+- Resume Quality Metrics
+- Career Goals
+- Preferred Roles
+- Salary Expectations
+- Industry Domains
+
+These entities inherit the same validation, versioning, and Guardrail policies as existing entities.
+
 ---
 
 # 22. Summary
@@ -827,4 +1044,6 @@ This model enables:
 - long-term memory
 - reusable workflows
 
-Every AI agent, retrieval pipeline, validator, and renderer operates on this model, making it the single source of truth for the entire platform.
+Every AI agent, retrieval pipeline, Guardrails Engine, validator, and renderer operates exclusively on the Canonical Knowledge Model, making it the authoritative source of truth for the entire platform.
+
+By separating immutable knowledge from mutable presentation and enforcing deterministic Guardrail policies, Tailr ensures that AI-generated resume optimizations remain trustworthy, explainable, and production-ready.
