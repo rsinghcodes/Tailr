@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 
-**Date:** 2026-07-04
+**Date:** 2026-07-20
 
 **Authors:** Tailr Engineering
 
@@ -10,23 +10,24 @@
 
 # Context
 
-Tailr is an AI-native resume optimization platform whose primary input and output format is LaTeX.
+Tailr is an AI-native Resume Intelligence Platform whose primary input and output format is LaTeX.
 
-However, the platform must perform much more than simple text editing.
+However, the platform performs significantly more than simple text editing.
 
-It needs to:
+It must:
 
 - understand resume structure
-- analyze projects
-- retrieve relevant experience
+- analyze projects and experience
+- retrieve relevant professional history
 - optimize content for ATS
 - validate generated content
-- support versioning
+- enforce AI safety guardrails
+- support immutable versioning
 - compare resume revisions
-- generate PDFs
+- generate deterministic PDFs
 - support future document formats
 
-If the system manipulates raw LaTeX directly, every AI component must understand LaTeX syntax.
+If the system manipulates raw LaTeX directly, every AI component must understand LaTeX syntax and formatting semantics.
 
 Example:
 
@@ -35,11 +36,11 @@ Example:
 {ResearchMind}{2026}
 ```
 
-For an LLM, this is formatting rather than meaning.
+For an LLM, this is primarily formatting rather than structured meaning.
 
-Similarly, supporting DOCX, Markdown, or JSON resumes in the future would require rewriting most of the platform.
+Supporting DOCX, Markdown, JSON resumes, or future formats would require rewriting most of the platform if LaTeX remained the internal representation.
 
-The system therefore requires a technology-independent internal representation.
+The system therefore requires a technology-independent, structured internal representation that becomes the canonical source of truth.
 
 ---
 
@@ -49,40 +50,49 @@ Tailr will introduce a **Canonical Resume Model (CRM)**.
 
 Every resume uploaded to the platform will follow this pipeline:
 
-```
-LaTeX Resume
-        │
-        ▼
-Resume Parser
-        │
-        ▼
-Canonical Resume Model
-        │
-        ▼
-Knowledge Graph
-        │
-        ▼
-RAG + Agents
-        │
-        ▼
-Updated Canonical Resume Model
-        │
-        ▼
-LaTeX Renderer
-        │
-        ▼
-Optimized Resume
+```text
+LaTeX / DOCX / Markdown Resume
+            │
+            ▼
+       Resume Parser
+            │
+            ▼
+ Canonical Resume Model
+            │
+            ▼
+     Knowledge Layer
+            │
+            ▼
+      RAG + Agents
+            │
+            ▼
+       Guardrails
+            │
+            ▼
+  Business Validation
+            │
+            ▼
+Updated Canonical Resume
+            │
+            ▼
+     Rendering Engine
+            │
+            ▼
+        LaTeX Output
+            │
+            ▼
+       PDF Generation
 ```
 
-The Canonical Resume Model becomes the single source of truth for all downstream components.
+The **Canonical Resume Model becomes the single source of truth** for all downstream components.
 
-No AI agent or business service may directly manipulate LaTeX.
+No AI agent, workflow, or business service may directly manipulate LaTeX templates.
 
 ---
 
 # Decision Drivers
 
-The decision is driven by the following requirements:
+This decision is driven by the following requirements:
 
 - Separation of content and presentation
 - AI-friendly structured data
@@ -92,6 +102,9 @@ The decision is driven by the following requirements:
 - Easier testing
 - Better retrieval quality
 - Immutable resume versioning
+- Guardrail enforcement
+- Prompt injection resilience
+- Explainable optimization workflows
 
 ---
 
@@ -109,6 +122,7 @@ The model contains structured entities such as:
 - Publications
 - Awards
 - Metadata
+- Resume Version Metadata
 
 Each entity contains semantic information instead of presentation logic.
 
@@ -118,11 +132,50 @@ Example:
 {
   "project": {
     "title": "ResearchMind",
-    "description": "...",
-    "technologies": ["FastAPI", "LangChain", "Qdrant"]
+    "description": "AI-powered research assistant",
+    "technologies": ["FastAPI", "LangChain", "Qdrant"],
+    "start_date": "2026-01",
+    "end_date": "2026-03"
   }
 }
 ```
+
+The canonical schema is versioned independently of storage and rendering formats.
+
+---
+
+# Guardrails Integration
+
+Every AI-generated modification must pass through the Guardrails pipeline before being applied to the canonical model.
+
+Pipeline:
+
+```text
+LLM Output
+    │
+    ▼
+JSON Validation
+    │
+    ▼
+Schema Validation
+    │
+    ▼
+Prompt Injection Detection
+    │
+    ▼
+Hallucination Detection
+    │
+    ▼
+Resume Integrity Validation
+    │
+    ▼
+ATS Validation
+    │
+    ▼
+Business Validation
+```
+
+The CRM enables deterministic comparison between generated content and the original resume, making hallucination detection practical and reliable.
 
 ---
 
@@ -143,8 +196,9 @@ Example:
 - Template-dependent logic
 - Poor extensibility
 - Fragile formatting
+- Hard to enforce guardrails
 
-Decision: Rejected
+**Decision:** Rejected
 
 ---
 
@@ -161,7 +215,7 @@ Decision: Rejected
 - Difficult to reconstruct structure
 - Unsuitable for semantic editing
 
-Decision: Rejected
+**Decision:** Rejected
 
 ---
 
@@ -176,8 +230,9 @@ Decision: Rejected
 - Loss of formatting fidelity
 - Difficult round-trip conversion
 - Weak structural guarantees
+- Ambiguous section boundaries
 
-Decision: Rejected
+**Decision:** Rejected
 
 ---
 
@@ -191,14 +246,18 @@ Decision: Rejected
 - Better testing
 - Better retrieval
 - Future-proof architecture
+- Enables guardrails
+- Enables immutable versioning
+- Enables deterministic rendering
 
 ### Disadvantages
 
 - Parser complexity
 - Renderer complexity
+- Schema evolution management
 - Initial development effort
 
-Decision: Accepted
+**Decision:** Accepted
 
 ---
 
@@ -206,43 +265,49 @@ Decision: Accepted
 
 ## Positive
 
-The Canonical Resume Model enables:
+The CRM enables:
 
 - Structured RAG retrieval
 - Deterministic validation
+- Guardrail enforcement
 - Better prompt engineering
 - Immutable resume versioning
 - Template independence
 - Cleaner business logic
 - Easier unit testing
 - Future support for DOCX, Markdown, and JSON resumes
+- Explainable optimization workflows
 - Improved maintainability
 
 ---
 
 ## Negative
 
-The system must now maintain:
+The system must maintain:
 
-- Parser
-- Renderer
+- Resume parser
+- Rendering engine
 - Canonical schema
 - Schema migrations
 - Validation rules
+- Guardrail policies
+- Backward compatibility logic
 
-These components increase development effort.
+These components increase development effort and operational complexity.
 
 ---
 
 # Risks
 
-| Risk                      | Mitigation                       |
-| ------------------------- | -------------------------------- |
-| Parser bugs               | Golden test dataset              |
-| Schema evolution          | Versioned schema                 |
-| Rendering inconsistencies | Snapshot testing                 |
-| Performance overhead      | Parser caching                   |
-| New template support      | Plugin-based parser architecture |
+| Risk                      | Mitigation                          |
+| ------------------------- | ----------------------------------- |
+| Parser bugs               | Golden test dataset                 |
+| Schema evolution          | Versioned schema                    |
+| Rendering inconsistencies | Snapshot testing                    |
+| Performance overhead      | Parser caching                      |
+| New template support      | Plugin-based parser architecture    |
+| Guardrail false positives | Configurable validation policies    |
+| Migration complexity      | Backward-compatible schema adapters |
 
 ---
 
@@ -251,17 +316,20 @@ These components increase development effort.
 This decision directly affects:
 
 - Resume Parser
-- Knowledge Builder
+- Knowledge Layer
 - RAG Pipeline
 - Agent Framework
+- Guardrails Engine
 - Validation Engine
-- ATS Scoring
-- PDF Renderer
+- ATS Engine
+- Rendering Engine
+- PDF Compiler
 - Version Control
 - Database Schema
 - API Contracts
+- Evaluation Pipeline
 
-Nearly every major subsystem depends on this architecture.
+Nearly every major subsystem depends on this architectural decision.
 
 ---
 
@@ -270,19 +338,21 @@ Nearly every major subsystem depends on this architecture.
 - ADR-0002 — Use FastAPI as the Backend Framework
 - ADR-0003 — Use PostgreSQL as the Primary Database
 - ADR-0004 — Use Qdrant as the Vector Database
-- ADR-0005 — Use LlamaIndex for RAG
+- ADR-0005 — Use LlamaIndex for RAG and Workflows
 - ADR-0006 — Adopt a Multi-Agent Workflow
+- ADR-0008 — Adopt a Validation & Guardrails Engine
 
 ---
 
 # References
 
-- System-Architecture.md
-- Parser-Architecture.md
-- Knowledge-Model.md
-- Data-Models.md
-- RAG-Architecture.md
-- Workflow-Design.md
+- system-architecture.md
+- parser-architecture.md
+- knowledge-model.md
+- data-models.md
+- rag-architecture.md
+- workflow-design.md
+- guardrails-architecture.md
 
 ---
 
@@ -291,7 +361,8 @@ Nearly every major subsystem depends on this architecture.
 This decision should be revisited if:
 
 - the platform no longer supports multiple resume formats,
-- parser maintenance becomes prohibitively expensive, or
-- a fundamentally different document representation proves superior.
+- parser maintenance becomes prohibitively expensive,
+- a fundamentally different document representation proves superior, or
+- guardrail enforcement becomes impossible to maintain at the CRM boundary.
 
-Until then, the Canonical Resume Model remains the architectural foundation of Tailr.
+Until then, the **Canonical Resume Model remains the architectural foundation of Tailr and the authoritative representation of all resume data**.

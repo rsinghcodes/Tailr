@@ -147,20 +147,36 @@ Zod
 # Project Structure
 
 backend/
-
-    app/
-    api/
-    config/
-    telemetry/
-    shared/
-    domain/
-    application/
-    infrastructure/
-    agents/
-    workflows/
-    prompts/
+|-- agents/
+|-- alembic/
+|-- app/
+|-- api/
+|-- application/
+|-- config/
+|-- core/
+|-- domain/
+|-- embeddings/
+|-- evaluation/
+|-- guardrails/
+|-- telemetry/
+|-- shared/
+|-- infrastructure/
+|-- workflows/
+|-- prompts/
+|-- jobs/
+|-- parsers/
+|-- validators/
+|-- workflows/
+|-- storage/
+|-- rag/
+|-- providers/
+|-- scratch/
+|-- repositories/
+|-- services/
 
 frontend/
+
+worker/
 
 docs/
 
@@ -442,6 +458,78 @@ Communication happens through interfaces.
 
 ---
 
+---
+
+# Guardrails Rules
+
+All AI-generated content must pass the Guardrails Engine before it is persisted, indexed, rendered, or returned to the user.
+
+The Guardrails layer is a mandatory trust boundary.
+
+## Mandatory Validators
+
+Every AI output must be checked by:
+
+- Schema Validator
+- JSON Validator
+- Hallucination Detector
+- Resume Integrity Validator
+- Prompt Injection Detector
+- PII / Secret Scanner
+- ATS Validator
+- LaTeX Safety Validator
+
+## Hallucination Policy
+
+Agents must never introduce:
+
+- employers not present in the Canonical Resume Model,
+- projects not present in the source resume,
+- technologies not present in the source resume,
+- fabricated metrics,
+- altered employment dates,
+- unsupported certifications.
+
+If supporting evidence is missing, the content must be rejected.
+
+## Structured Output Requirement
+
+All agents must return typed JSON or Pydantic models.
+
+Free-form text is not allowed across agent boundaries.
+
+## Repair Policy
+
+Recoverable issues (escaping, malformed JSON, markdown fences) should be repaired automatically.
+
+Non-recoverable issues must cause workflow failure.
+
+## Rendering Safety
+
+AI-generated text must never contain dangerous LaTeX commands such as:
+
+- \\input
+- \\include
+- \\write18
+- \\openout
+- \\catcode
+
+All special characters must be escaped before rendering.
+
+## Audit Requirement
+
+Every guardrail decision must be logged with:
+
+- workflow_id
+- agent_name
+- validator_name
+- status
+- violation_code
+- repair_applied
+- execution_time_ms
+
+---
+
 # Workflow Rules
 
 Workflow orchestration belongs only inside:
@@ -459,6 +547,16 @@ Never expose raw exceptions.
 Always raise typed exceptions.
 
 All exceptions must map to standardized API responses.
+
+Guardrail violations must raise typed exceptions such as:
+
+- SchemaValidationError
+- HallucinationDetectedError
+- PromptInjectionDetectedError
+- LatexSafetyError
+- ATSValidationError
+
+Guardrail failures are considered business failures, not infrastructure failures.
 
 ---
 
@@ -504,6 +602,16 @@ Never log credentials.
 
 Never commit API keys.
 
+Run prompt injection detection on all retrieved context.
+
+Run PII and secret scanning on all AI-generated content.
+
+Reject outputs that fail guardrail validation.
+
+LaTeX rendering must occur in a sandboxed environment.
+
+Validation logs must be immutable and auditable.
+
 ---
 
 # Performance Rules
@@ -526,15 +634,21 @@ Stream LLM output when appropriate.
 
 Every feature requires:
 
-Unit tests
+- Unit tests
+- Integration tests
+- Edge case tests
+- Failure tests
+- Regression tests
+- Guardrail tests
 
-Integration tests
+Guardrail tests must include:
 
-Edge case tests
-
-Failure tests
-
-Regression tests
+- hallucination detection,
+- prompt injection attempts,
+- malformed JSON,
+- ATS validation failures,
+- unsafe LaTeX payloads,
+- PII leakage scenarios.
 
 No feature is complete without tests.
 
@@ -576,27 +690,22 @@ Prefer early returns.
 
 AI assistants MUST:
 
-Read AGENTS.md first.
-
-Read relevant ADRs.
-
-Read architecture documents.
-
-Understand the feature.
-
-Design before coding.
-
-Generate production-ready code.
-
-Generate tests.
-
-Explain trade-offs.
-
-Never invent APIs.
-
-Never fabricate requirements.
-
-Never remove existing architecture without justification.
+- Read AGENTS.md first.
+- Read relevant ADRs.
+- Read architecture documents.
+- Understand the feature.
+- Design before coding.
+- Generate production-ready code.
+- Generate tests.
+- Add structured logging.
+- Add telemetry hooks.
+- Add guardrail validation where AI output is used.
+- Explain trade-offs.
+- Never invent APIs.
+- Never fabricate requirements.
+- Never bypass the Guardrails Engine.
+- Never persist unvalidated AI output.
+- Never remove existing architecture without justification.
 
 ---
 
@@ -604,25 +713,21 @@ Never remove existing architecture without justification.
 
 A task is complete only if:
 
-✓ Code builds
-
-✓ Tests pass
-
-✓ Ruff passes
-
-✓ MyPy passes
-
-✓ Documentation updated
-
-✓ Architecture preserved
-
-✓ Logging added
-
-✓ Error handling implemented
-
-✓ Dependency injection used
-
-✓ No TODO placeholders
+- [ ] Code builds
+- [ ] Tests pass
+- [ ] Ruff passes
+- [ ] MyPy passes
+- [ ] Documentation updated
+- [ ] Architecture preserved
+- [ ] Structured logging added
+- [ ] Telemetry added
+- [ ] Error handling implemented
+- [ ] Dependency injection used
+- [ ] Guardrail validation added for AI outputs
+- [ ] Hallucination checks implemented where required
+- [ ] Prompt injection protection added where required
+- [ ] No TODO placeholders remain
+- [ ] No unvalidated AI output is persisted or rendered
 
 ---
 
@@ -635,3 +740,33 @@ Ask for clarification.
 Or stop and explain the architectural conflict.
 
 Incorrect production code is worse than incomplete code.
+
+---
+
+# Guardrails Enforcement
+
+Any AI coding agent that generates code which:
+
+- bypasses validation,
+- persists raw LLM output,
+- renders unescaped LaTeX,
+- ignores hallucination checks,
+- or skips prompt injection protection
+
+is producing **invalid Tailr code**.
+
+The correct behavior is to:
+
+1. Add or reuse the appropriate validator.
+2. Return structured validation errors.
+3. Log the violation with telemetry.
+4. Fail the workflow safely.
+5. Preserve auditability.
+
+When implementing new AI features, agents must consult:
+
+- ADR 11-Validation-Guardrails-Engine.md
+- 17-Guardrails-Architecture.md
+- ADR 10-Evaluation-Driven-Development.md
+
+before generating code.

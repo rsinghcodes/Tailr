@@ -1,8 +1,8 @@
-# ADR-0009: Adopt Prompt Versioning and Prompt Registry
+# ADR-0009: Adopt a Prompt Registry with Immutable Versioning and Evaluation
 
 **Status:** Accepted
 
-**Date:** 2026-07-04
+**Date:** 2026-07-20
 
 **Authors:** Tailr Engineering
 
@@ -17,39 +17,45 @@ Examples include:
 - Resume Analysis
 - Job Description Analysis
 - Planning
-- Retrieval
+- Retrieval Query Generation
 - Resume Rewriting
+- Guardrail Repair
 - Validation
 - ATS Scoring
+- Evaluation and Benchmarking
 
-As the platform evolves, prompts will be improved continuously.
+As the platform evolves, prompts will be improved continuously through experimentation and evaluation.
 
-Changing prompts directly in source code creates several problems:
+Embedding prompt text directly in source code creates several problems:
 
-- Difficult rollback
-- No experiment tracking
-- Poor reproducibility
-- Hard debugging
-- No audit history
-- Inconsistent agent behavior
+- difficult rollback,
+- no experiment tracking,
+- poor reproducibility,
+- hard debugging,
+- no audit history,
+- inconsistent agent behavior,
+- inability to compare prompt performance across releases.
 
-Prompts should be treated as versioned assets rather than embedded strings.
+Prompts should therefore be treated as **versioned production assets** rather than embedded strings.
 
 ---
 
 # Decision
 
-Tailr adopts a **Prompt Registry** with immutable **Prompt Versioning**.
+Tailr adopts a **Prompt Registry** with **immutable prompt versions** and a formal **prompt lifecycle**.
 
 Every prompt:
 
-- has a unique identifier
-- maintains semantic versions
-- records metadata
-- stores evaluation metrics
-- supports rollback
+- has a unique identifier,
+- maintains semantic versions,
+- stores metadata,
+- defines a variable schema,
+- records evaluation metrics,
+- supports rollback,
+- supports environment-specific resolution,
+- can participate in A/B experiments.
 
-Agents reference prompt IDs rather than prompt text.
+Agents reference **prompt IDs** rather than prompt text.
 
 ---
 
@@ -57,43 +63,44 @@ Agents reference prompt IDs rather than prompt text.
 
 The prompt management system must:
 
-- support version history
-- enable experimentation
-- provide reproducibility
-- allow rollback
-- separate prompts from code
-- integrate with observability
-- support A/B testing
+- support version history,
+- enable safe experimentation,
+- provide reproducibility,
+- allow instant rollback,
+- separate prompts from code,
+- integrate with observability,
+- support A/B testing,
+- support schema validation,
+- enable future prompt signing.
 
 ---
 
 # Architecture
 
-```
-Agent
-
-↓
-
+<CodeBlock language="text" content="Agent
+│
+▼
+Prompt Resolver
+│
+▼
 Prompt Registry
-
-↓
-
+│
+▼
 Prompt Version
-
-↓
-
+│
+▼
 Template Engine
+│
+▼
+LLM Router
+│
+▼
+Provider Adapter
+│
+▼
+LLM"/>
 
-↓
-
-Model Provider
-
-↓
-
-LLM
-```
-
-Business logic never embeds prompt text.
+Business logic never embeds prompt text directly.
 
 ---
 
@@ -101,239 +108,327 @@ Business logic never embeds prompt text.
 
 Each prompt contains:
 
-- prompt_id
-- name
-- version
-- owner
-- description
-- template
-- variables
-- model compatibility
-- status
-- created_at
+- prompt_id,
+- name,
+- current_production_version,
+- owner,
+- description,
+- category,
+- tags,
+- created_at,
+- updated_at.
 
 Example:
 
-```
-Prompt ID:
-
-resume_rewriter
+<CodeBlock language="text" content="Prompt ID: resume_rewriter
 
 Versions:
 
-v1.0.0
-
-v1.1.0
-
-v1.2.0
-
-v2.0.0
-```
+- 1.0.0
+- 1.1.0
+- 1.2.0
+- 2.0.0"/>
 
 ---
 
-# Versioning Strategy
+# Immutable Prompt Versions
 
-Semantic Versioning is used.
+Each version stores:
 
-```
-Major.Minor.Patch
-```
+- semantic version,
+- template,
+- variable schema,
+- model compatibility,
+- default generation parameters,
+- guardrail profile,
+- evaluation status,
+- checksum,
+- status,
+- created_at.
 
-Examples
+Once created, a prompt version **cannot be modified**.
 
-```
-1.0.0
+Any change requires a new version.
 
+---
+
+# Semantic Versioning
+
+Tailr uses **Semantic Versioning**.
+
+<CodeBlock language="text" content="MAJOR.MINOR.PATCH"/>
+
+Examples:
+
+<CodeBlock language="text" content="1.0.0
 1.1.0
-
 1.1.1
+2.0.0"/>
 
-2.0.0
-```
+### MAJOR
 
-### Major
+Breaking behavioral changes or output contract changes.
 
-Breaking prompt behavior.
+### MINOR
 
-### Minor
+Improved reasoning or optimization quality.
 
-Improved reasoning.
+### PATCH
 
-### Patch
-
-Grammar fixes or formatting improvements.
+Grammar, formatting, or instruction clarifications that do not materially change behavior.
 
 ---
 
 # Prompt Template
 
-Example
+Prompts use **Jinja2 templates**.
 
-```jinja
-You are an expert technical resume writer.
+<CodeBlock language="jinja" content="You are an expert technical resume writer.
 
 Job Description:
-
 {{ job_description }}
 
-Resume:
+Resume Context:
+{{ resume_context }}
 
-{{ resume }}
+Optimization Goals:
+{{ optimization_goals }}
 
-Return only valid JSON.
-```
+Return only valid JSON matching the provided schema."/>
 
-Variables are injected during execution.
+Variables are injected at runtime by the Prompt Resolver.
+
+---
+
+# Variable Schema
+
+Each prompt defines a typed variable schema.
+
+Example:
+
+<CodeBlock language="json" content="{
+"type": "object",
+"required": [
+"job_description",
+"resume_context"
+],
+"properties": {
+"job_description": { "type": "string" },
+"resume_context": { "type": "string" },
+"optimization_goals": {
+"type": "array",
+"items": { "type": "string" }
+}
+}
+}"/>
+
+Invalid variables fail before the LLM call.
 
 ---
 
 # Prompt Metadata
 
-Example
+Example metadata:
 
-```json
-{
-  "id": "resume_rewriter",
-  "version": "1.2.0",
-  "model": "qwen3:8b",
-  "temperature": 0.2,
-  "owner": "AI Team"
-}
-```
+<CodeBlock language="json" content="{
+"prompt_id": "resume_rewriter",
+"version": "1.2.0",
+"compatible_models": ["qwen3:14b", "llama3:70b"],
+"default_temperature": 0.2,
+"owner": "AI Team",
+"guardrail_profile": "rewrite_strict",
+"status": "production"
+}"/>
 
-Metadata supports auditing and debugging.
+Metadata supports auditing, debugging, and routing decisions.
 
 ---
 
-# Prompt Storage
+# Storage Strategy
 
 Prompts are stored in PostgreSQL.
 
-Schema:
+Core tables:
 
-```
-prompts
-
+<CodeBlock language="text" content="prompts
 prompt_versions
-
+prompt_experiments
 prompt_evaluations
-```
+prompt_deployments
+prompt_audit_logs"/>
 
-Templates are loaded dynamically.
+Templates are loaded dynamically and cached in memory.
 
 ---
 
-# Evaluation
+# Prompt Resolution
+
+The Prompt Resolver selects the appropriate version.
+
+Resolution order:
+
+<CodeBlock language="text" content="Explicit version
+   ↓
+Experiment assignment
+   ↓
+Environment override
+   ↓
+Production version"/>
+
+This enables safe experimentation without code changes.
+
+---
+
+# Environment-Aware Resolution
+
+Different environments may use different prompt versions.
+
+<Table columnSizing="equal" rowDivider={{"size":1,"color":"default"}}><Table.Row header><Table.Cell>Environment</Table.Cell><Table.Cell>Example Version</Table.Cell></Table.Row><Table.Row><Table.Cell>development</Table.Cell><Table.Cell>2.0.0-beta</Table.Cell></Table.Row><Table.Row><Table.Cell>staging</Table.Cell><Table.Cell>1.3.0-rc1</Table.Cell></Table.Row><Table.Row><Table.Cell>production</Table.Cell><Table.Cell>1.2.0</Table.Cell></Table.Row></Table>
+
+Production remains isolated from experimental prompts.
+
+---
+
+# Evaluation Integration
 
 Every prompt version records:
 
-- success rate
-- latency
-- token usage
-- hallucination rate
-- validation score
-- ATS improvement
+- success rate,
+- latency,
+- token usage,
+- hallucination rate,
+- guardrail pass rate,
+- validation score,
+- ATS improvement,
+- user acceptance rate,
+- retrieval relevance (where applicable).
 
-Poor-performing prompts are deprecated.
+Poor-performing prompts are automatically flagged for review.
+
+---
+
+# A/B Testing
+
+The registry supports controlled experiments.
+
+Example:
+
+<Table columnSizing="equal" rowDivider={{"size":1,"color":"default"}}><Table.Row header><Table.Cell>Variant</Table.Cell><Table.Cell align="end">Traffic</Table.Cell></Table.Row><Table.Row><Table.Cell>1.2.0</Table.Cell><Table.Cell align="end">90%</Table.Cell></Table.Row><Table.Row><Table.Cell>1.3.0</Table.Cell><Table.Cell align="end">10%</Table.Cell></Table.Row></Table>
+
+Assignments are deterministic per user/workflow to ensure reproducibility.
+
+---
+
+# Canary Rollout
+
+New prompt versions can be deployed gradually.
+
+<CodeBlock language="text" content="5% → 10% → 25% → 50% → 100%"/>
+
+Rollout can be stopped instantly if metrics regress.
 
 ---
 
 # Rollback
 
-Example
+Example:
 
-```
-v1.3.0
+<CodeBlock language="text" content="Deploy 1.3.0
+   ↓
+Validation regressions detected
+   ↓
+Promote 1.2.0
+   ↓
+Traffic restored"/>
 
-↓
-
-Validation Failure
-
-↓
-
-Rollback
-
-↓
-
-v1.2.0
-```
-
-Rollback requires no code deployment.
-
----
-
-# Experimentation
-
-Prompt Registry supports:
-
-- A/B testing
-- Shadow execution
-- Canary rollout
-- Offline evaluation
-
-Prompt quality improves through measurable experiments.
+Rollback requires **no code deployment** and completes in seconds.
 
 ---
 
 # Prompt Lifecycle
 
-```
-Draft
-
+<CodeBlock language="text" content="Draft
 ↓
-
 Review
-
 ↓
-
 Testing
-
 ↓
-
 Evaluation
-
 ↓
-
+Canary
+↓
 Production
-
 ↓
-
 Deprecated
-```
+↓
+Archived"/>
 
-Only production prompts are used by agents.
+Only **Production** prompts may be used by customer-facing workflows.
+
+---
+
+# Guardrails Integration
+
+Each prompt references a **Guardrail Profile**.
+
+Example profiles:
+
+- `rewrite_strict`
+- `analysis_standard`
+- `validation_paranoid`
+- `repair_mode`
+
+The Guardrails Engine uses this profile to apply task-specific validation rules.
 
 ---
 
 # Security
 
-Prompt Registry enforces:
+The Prompt Registry enforces:
 
-- immutable versions
-- role-based access
-- audit logs
-- prompt signing (future)
-- change history
+- immutable versions,
+- role-based access control,
+- audit logs,
+- checksum verification,
+- environment isolation,
+- future prompt signing.
 
-Unauthorized prompt modification is prevented.
+Every prompt change is attributable to a user and timestamp.
 
 ---
 
 # Observability
 
-Each inference logs:
+Every inference logs:
 
-- workflow_id
-- agent
-- prompt_id
-- prompt_version
-- model
-- latency
-- tokens
-- validation result
+- workflow_id,
+- agent_name,
+- prompt_id,
+- prompt_version,
+- provider,
+- model,
+- latency,
+- input tokens,
+- output tokens,
+- validation result,
+- guardrail outcome,
+- experiment assignment.
 
-Logs integrate with Langfuse and OpenTelemetry.
+Logs are exported through **OpenTelemetry** and correlated with workflow traces.
+
+---
+
+# Git Integration
+
+Prompts can be exported as files for code review.
+
+<CodeBlock language="text" content="prompts/
+└── resume_rewriter/
+ ├── 1.2.0.jinja
+ ├── 1.2.0.schema.json
+ └── metadata.yaml"/>
+
+Git becomes the review mechanism, while PostgreSQL remains the runtime source of truth.
 
 ---
 
@@ -351,46 +446,49 @@ Logs integrate with Langfuse and OpenTelemetry.
 - No versioning
 - Difficult rollback
 - Poor reproducibility
-- Code deployment required
+- Requires code deployment
 
-Decision: Rejected
+**Decision:** Rejected
 
 ---
 
-## Option 2 — Files on Disk
+## Option 2 — Prompt Files on Disk
 
 ### Advantages
 
 - Easier maintenance
-- Version controlled with Git
+- Git version control
 
 ### Disadvantages
 
 - Runtime updates require deployment
 - Limited metadata
 - No experiment tracking
+- Weak observability
 
-Decision: Rejected
+**Decision:** Rejected
 
 ---
 
-## Option 3 — Prompt Registry
+## Option 3 — Prompt Registry with Immutable Versioning
 
 ### Advantages
 
-- Version history
-- Rollback
-- Evaluation
+- Full version history
+- Instant rollback
 - Dynamic loading
+- Evaluation support
+- Experiment tracking
 - Better observability
-- Production-ready
+- Production-ready governance
 
 ### Disadvantages
 
 - Additional database schema
-- Registry management
+- Registry operational overhead
+- Requires prompt governance process
 
-Decision: Accepted
+**Decision:** Accepted
 
 ---
 
@@ -400,10 +498,12 @@ Decision: Accepted
 
 - Reproducible AI behavior
 - Safe experimentation
-- Easy rollback
+- Instant rollback
 - Better debugging
 - Prompt analytics
 - Cleaner architecture
+- Auditability
+- Environment isolation
 
 ---
 
@@ -412,65 +512,89 @@ Decision: Accepted
 - Additional infrastructure
 - Prompt governance required
 - Slight runtime lookup overhead
+- More operational processes
 
 ---
 
 # Risks
 
-| Risk                    | Mitigation                 |
-| ----------------------- | -------------------------- |
-| Prompt drift            | Immutable versions         |
-| Breaking prompt changes | Semantic versioning        |
-| Registry growth         | Archive deprecated prompts |
-| Inconsistent variables  | Schema validation          |
+| Risk                     | Mitigation                 |
+| ------------------------ | -------------------------- |
+| Prompt drift             | Immutable versions         |
+| Breaking prompt changes  | Semantic versioning        |
+| Registry growth          | Archive deprecated prompts |
+| Variable mismatches      | Schema validation          |
+| Experiment contamination | Deterministic assignment   |
+| Unauthorized changes     | RBAC and audit logs        |
 
 ---
 
 # Architecture Integration
 
-```
-FastAPI
-
-↓
-
+<CodeBlock language="text" content="FastAPI
+│
+▼
 Workflow Engine
-
-↓
-
-Agent
-
-↓
-
+│
+▼
+AI Agent
+│
+▼
+Prompt Resolver
+│
+▼
 Prompt Registry
+│
+▼
+Template Engine
+│
+▼
+LLM Router
+│
+▼
+Provider Adapter
+│
+▼
+LLM"/>
 
-↓
+The Prompt Registry is the **authoritative source for all AI prompts**.
 
-Model Provider
+---
 
-↓
+# Future Enhancements
 
-LLM
-```
+Planned enhancements include:
 
-The Prompt Registry becomes the authoritative source for all AI prompts.
+- prompt signing,
+- automated prompt optimization,
+- semantic prompt diffing,
+- prompt lineage graphs,
+- learned prompt selection,
+- reinforcement learning from evaluations,
+- prompt cost optimization,
+- organization-wide prompt sharing.
+
+The current design supports these capabilities without changing agent contracts.
 
 ---
 
 # Related ADRs
 
-- ADR-0005 — Use LlamaIndex as the AI Data Framework
+- ADR-0005 — LlamaIndex as the AI Data and Workflow Framework
 - ADR-0006 — Multi-Agent Architecture
 - ADR-0007 — Event-Driven Workflow Engine
-- ADR-0008 — Model Provider Abstraction Layer
+- ADR-0008 — LLM Router and Provider Abstraction Layer
 
 ---
 
 # References
 
-- LLM-Prompt-Design.md
-- Observability.md
-- Validation-Engine.md
-- Database-Design.md
+- llm-prompt-design.md
+- observability.md
+- validation-engine.md
+- database-design.md
+- evaluation-architecture.md
+- guardrails-architecture.md
 
 ---
 
@@ -479,7 +603,8 @@ The Prompt Registry becomes the authoritative source for all AI prompts.
 This decision should be revisited if:
 
 - prompts are replaced by learned policies,
-- fine-tuned models eliminate prompt engineering,
-- or a dedicated prompt management platform becomes the standard.
+- fine-tuned models eliminate most prompt engineering,
+- a dedicated prompt management platform becomes strategically preferable,
+- or operational overhead exceeds the benefits of centralized prompt governance.
 
-Until then, the Prompt Registry remains the authoritative source for all prompts within Tailr.
+Until then, the **Prompt Registry with immutable versioning remains the authoritative source for all prompts within Tailr**, providing reproducibility, safe experimentation, rollback capability, structured governance, and full observability.
