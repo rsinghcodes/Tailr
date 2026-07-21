@@ -11,7 +11,7 @@ from starlette.requests import Request
 
 from telemetry.constants import REQUEST_ID_HEADER
 from telemetry.request_context import (
-    clear_context,
+    clear_request_id,
     set_request_id,
 )
 from telemetry.types import RequestId
@@ -29,6 +29,6 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
         request.state.request_id = request_id
         response = await call_next(request)
         response.headers[REQUEST_ID_HEADER] = request_id
-        clear_context()
+        clear_request_id()
 
         return response

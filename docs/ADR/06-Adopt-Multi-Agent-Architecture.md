@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 
-**Date:** 2026-07-04
+**Date:** 2026-07-20
 
 **Authors:** Tailr Engineering
 
@@ -10,226 +10,346 @@
 
 # Context
 
-Tailr performs more than simple text generation.
+Tailr performs significantly more than simple text generation.
 
 For each resume optimization request, the platform must:
 
-- Understand the job description
-- Analyze the resume
-- Retrieve relevant context
-- Plan improvements
-- Rewrite sections
-- Validate generated content
-- Calculate ATS scores
-- Produce the final LaTeX resume
+- understand the job description,
+- analyze the canonical resume,
+- retrieve relevant professional context,
+- create an optimization strategy,
+- rewrite targeted sections,
+- validate generated content,
+- enforce AI guardrails,
+- calculate ATS scores,
+- generate recommendations,
+- render deterministic LaTeX,
+- produce the final PDF artifact.
 
-Attempting to solve all of these tasks with a single prompt creates several problems:
+Attempting to solve all of these tasks with a **single LLM prompt** creates several problems:
 
-- Extremely long prompts
-- Poor reasoning quality
-- Difficult debugging
-- Limited reuse
-- High token usage
-- High hallucination rate
-- Low maintainability
+- extremely long prompts,
+- poor reasoning quality,
+- difficult debugging,
+- limited component reuse,
+- high token consumption,
+- increased hallucination risk,
+- weak observability,
+- low maintainability.
 
-A more modular approach is required.
+A modular architecture is required so that each reasoning task can be optimized, tested, and monitored independently.
 
 ---
 
 # Decision
 
-Tailr adopts a **Multi-Agent Architecture**.
+Tailr adopts a **Multi-Agent Architecture** orchestrated by a **deterministic Workflow Engine**.
 
-Each AI agent owns one well-defined responsibility.
+Each agent owns **one well-defined responsibility** and communicates using **structured events and typed JSON payloads**.
 
-Agents communicate through structured data rather than natural language.
+The Workflow Engine controls execution order, retries, state persistence, and error handling.
 
-Business orchestration remains deterministic and is controlled by the Workflow Engine.
+Agents **never invoke one another directly**.
 
 ---
 
 # Decision Drivers
 
-The architecture should:
+The architecture must:
 
-- Improve reasoning quality
-- Reduce prompt complexity
-- Encourage modularity
-- Enable independent testing
-- Support prompt versioning
-- Reduce hallucinations
-- Allow future agent expansion
-- Improve observability
-
----
-
-# Agent Architecture
-
-```
-                 Job Description
-                        │
-                        ▼
-                JD Analyzer Agent
-                        │
-                        ▼
-                Resume Analysis Agent
-                        │
-                        ▼
-                 Planning Agent
-                        │
-                        ▼
-                Retrieval Pipeline
-                        │
-                        ▼
-                Rewrite Agent
-                        │
-                        ▼
-               Validation Agent
-                        │
-                        ▼
-                ATS Scoring Agent
-                        │
-                        ▼
-                  PDF Renderer
-```
-
-Each agent performs exactly one responsibility.
+- improve reasoning quality,
+- reduce prompt complexity,
+- encourage modularity,
+- enable independent testing,
+- support prompt versioning,
+- reduce hallucinations,
+- support guardrails,
+- improve observability,
+- allow parallel execution,
+- support future distributed execution.
 
 ---
 
-# Initial Agents
+# High-Level Architecture
 
-## JD Analyzer
+<CodeBlock language="text" content="Job Description
+    │
+    ▼
+JD Analyzer Agent
+    │
+    ▼
+Resume Analyzer Agent
+    │
+    ▼
+Planning Agent
+    │
+    ▼
+Retrieval Pipeline
+    │
+    ▼
+Rewrite Agent
+    │
+    ▼
+Guardrails Engine
+    │
+    ▼
+Validation Agent
+    │
+    ▼
+ATS Agent
+    │
+    ▼
+Rendering Engine
+    │
+    ▼
+PDF Artifact"/>
 
-Responsibilities
+Each agent performs **exactly one responsibility**.
+
+---
+
+# Initial Agent Set
+
+## JD Analyzer Agent
+
+### Responsibilities
 
 - Extract keywords
 - Identify required skills
-- Identify seniority
-- Detect responsibilities
+- Detect seniority
+- Extract responsibilities
+- Identify domain requirements
 - Generate optimization targets
+
+### Output
+
+<CodeBlock language="json" content="{
+"required_skills": ["FastAPI", "Docker", "Redis"],
+"seniority": "mid",
+"domain": "AI Platform",
+"priority_keywords": ["RAG", "LangGraph"]
+}"/>
 
 ---
 
-## Resume Analysis Agent
+## Resume Analyzer Agent
 
-Responsibilities
+### Responsibilities
 
 - Analyze strengths
 - Detect weaknesses
-- Identify missing experience
+- Identify missing keywords
 - Understand existing skills
 - Build optimization context
+
+### Output
+
+<CodeBlock language="json" content="{
+"strengths": ["FastAPI", "Qdrant"],
+"missing_keywords": ["Redis", "Docker"],
+"candidate_level": "mid"
+}"/>
 
 ---
 
 ## Planning Agent
 
-Responsibilities
+### Responsibilities
 
 - Create rewrite strategy
 - Prioritize sections
 - Determine optimization order
 - Avoid unnecessary modifications
+- Estimate expected ATS improvement
+
+### Output
+
+<CodeBlock language="json" content="{
+"target_sections": ["summary", "projects"],
+"rewrite_order": ["summary", "projects"],
+"expected_ats_delta": 14
+}"/>
+
+---
+
+## Retrieval Pipeline
+
+### Responsibilities
+
+- Generate semantic queries
+- Retrieve relevant resume nodes
+- Apply metadata filters
+- Rerank results
+- Assemble structured context
+
+This stage is implemented using **LlamaIndex + Qdrant**.
 
 ---
 
 ## Rewrite Agent
 
-Responsibilities
+### Responsibilities
 
 - Rewrite content
 - Preserve factual correctness
 - Maintain writing style
 - Improve ATS relevance
+- Use only retrieved evidence
+
+### Constraints
+
+- No new employers
+- No invented projects
+- No fabricated metrics
+- No unsupported skills
+
+---
+
+## Guardrails Engine
+
+### Responsibilities
+
+- JSON validation
+- Schema validation
+- Prompt injection detection
+- Hallucination detection
+- Resume integrity checks
+- PII detection
+- Output repair
+
+### Outcomes
+
+- **Approved**
+- **Repairable**
+- **Rejected**
+
+Guardrails execute immediately after rewriting.
 
 ---
 
 ## Validation Agent
 
-Responsibilities
+### Responsibilities
 
-- Verify schema
-- Detect hallucinations
-- Validate technologies
-- Check formatting
-- Verify consistency
+- Verify canonical schema
+- Check section consistency
+- Validate technology references
+- Verify date consistency
+- Ensure deterministic rendering compatibility
 
 ---
 
 ## ATS Agent
 
-Responsibilities
+### Responsibilities
 
-- Score resume
+- Calculate ATS score
 - Explain deductions
-- Generate recommendations
-- Compare versions
+- Generate prioritized recommendations
+- Compare against previous versions
+- Produce detailed ATS reports
+
+### Output
+
+<CodeBlock language="json" content="{
+"score": 87,
+"keyword_coverage": 0.91,
+"semantic_similarity": 0.88,
+"recommendations": [
+"Add Redis experience to summary"
+]
+}"/>
 
 ---
 
 # Communication Model
 
-Agents never communicate through free-form text.
+Agents communicate only through **typed JSON events**.
 
-Instead they exchange structured JSON.
+Example:
 
-Example
+<CodeBlock language="json" content="{
+"event_type": "rewrite.completed",
+"workflow_id": "wf_123",
+"target_section": "projects",
+"missing_keywords": ["Docker", "Redis"],
+"priority": "high"
+}"/>
 
-```json
-{
-  "target_section": "projects",
-  "missing_keywords": ["Docker", "Redis"],
-  "priority": "high"
-}
-```
-
-Structured communication improves reliability.
+This eliminates ambiguity and enables deterministic orchestration.
 
 ---
 
 # Workflow Orchestration
 
-The Workflow Engine coordinates execution.
+The Workflow Engine executes agents in a controlled sequence.
 
-```
-Receive Request
-
-↓
-
+<CodeBlock language="text" content="Receive Request
+   ↓
+Parse Resume
+   ↓
 Execute JD Analyzer
-
-↓
-
-Execute Resume Analysis
-
-↓
-
+   ↓
+Execute Resume Analyzer
+   ↓
 Execute Planner
-
-↓
-
+   ↓
 Execute Retrieval
-
-↓
-
+   ↓
 Execute Rewriter
-
-↓
-
+   ↓
+Execute Guardrails
+   ↓
 Execute Validator
-
-↓
-
+   ↓
 Execute ATS
+   ↓
+Render PDF
+   ↓
+Return Result"/>
 
-↓
+Agents do not contain orchestration logic.
 
-Return Result
-```
+---
 
-Agents do not invoke one another directly.
+# Parallel Execution
+
+Independent tasks may run concurrently.
+
+<CodeBlock language="text" content="            Planner
+            │
+    ┌───────┴────────┐
+    ▼                ▼
+Resume Analysis    Retrieval Prep
+    │                │
+    └───────┬────────┘
+            ▼
+        Rewriter"/>
+
+Parallel execution reduces end-to-end latency.
+
+---
+
+# Workflow State Persistence
+
+Workflow state is persisted in PostgreSQL.
+
+States:
+
+- Uploaded
+- Parsed
+- Indexed
+- Planning
+- Retrieval
+- Rewrite
+- Guardrails
+- Validation
+- ATS
+- Rendering
+- Completed
+- Failed
+
+State transitions are append-only and auditable.
 
 ---
 
@@ -237,13 +357,18 @@ Agents do not invoke one another directly.
 
 If an agent fails:
 
-- Retry with exponential backoff
-- Log execution details
-- Return structured error
-- Stop dependent agents
-- Preserve workflow state
+- retry with exponential backoff,
+- record structured error details,
+- stop dependent stages,
+- preserve workflow state,
+- allow manual replay,
+- emit telemetry events.
 
-Partial failures never corrupt user data.
+Example retry policy:
+
+<Table columnSizing="equal" rowDivider={{"size":1,"color":"default"}}><Table.Row header><Table.Cell>Error Type</Table.Cell><Table.Cell align="end">Retries</Table.Cell></Table.Row><Table.Row><Table.Cell>LLM timeout</Table.Cell><Table.Cell align="end">3</Table.Cell></Table.Row><Table.Row><Table.Cell>Rate limit</Table.Cell><Table.Cell align="end">5</Table.Cell></Table.Row><Table.Row><Table.Cell>Qdrant unavailable</Table.Cell><Table.Cell align="end">3</Table.Cell></Table.Row><Table.Row><Table.Cell>Guardrail rejection</Table.Cell><Table.Cell align="end">0</Table.Cell></Table.Row></Table>
+
+Partial failures must never corrupt user data.
 
 ---
 
@@ -251,13 +376,31 @@ Partial failures never corrupt user data.
 
 Every agent owns:
 
-- System prompt
-- Output schema
-- Temperature
-- Model configuration
-- Evaluation metrics
+- system prompt,
+- output schema,
+- temperature,
+- model configuration,
+- token budget,
+- evaluation metrics,
+- fallback model policy.
 
 Prompt isolation prevents unintended interactions between responsibilities.
+
+---
+
+# Human Approval Gate
+
+High-impact changes require explicit approval.
+
+Examples:
+
+- summary rewrite,
+- experience reordering,
+- project promotion,
+- removal of content,
+- major ATS-driven restructuring.
+
+The workflow pauses until the user approves or rejects the proposed changes.
 
 ---
 
@@ -267,14 +410,17 @@ Each agent is evaluated independently.
 
 Metrics include:
 
-- Success rate
-- Latency
-- Token usage
-- Schema validity
-- Hallucination rate
-- Validation pass rate
+- success rate,
+- latency,
+- token usage,
+- schema validity,
+- hallucination rate,
+- guardrail pass rate,
+- ATS improvement,
+- retrieval precision,
+- retry frequency.
 
-This enables targeted optimization.
+This enables targeted optimization without affecting unrelated agents.
 
 ---
 
@@ -282,16 +428,55 @@ This enables targeted optimization.
 
 Every execution records:
 
-- Workflow ID
-- Agent name
-- Prompt version
-- Model
-- Tokens
-- Latency
-- Cost
-- Validation status
+- workflow ID,
+- agent name,
+- prompt version,
+- model provider,
+- token counts,
+- latency,
+- estimated cost,
+- validation status,
+- guardrail outcome,
+- retry count,
+- correlation ID.
 
-Agent telemetry integrates with Langfuse and OpenTelemetry.
+Telemetry is exported through **OpenTelemetry** and stored for evaluation and debugging.
+
+---
+
+# LLM Provider Abstraction
+
+Agents do not call providers directly.
+
+<CodeBlock language="text" content="Agent
+↓
+LLM Provider Interface
+↓
+Router
+├── Ollama
+├── OpenAI
+├── Anthropic
+└── Gemini"/>
+
+This allows model replacement without changing agent logic.
+
+---
+
+# Future Distributed Execution
+
+The architecture is designed to evolve into independently scalable services.
+
+<CodeBlock language="text" content="API Gateway
+  │
+  ▼
+Workflow Service
+  │
+┌───┼───────────┐
+▼   ▼           ▼
+JD  Rewrite   Validation
+Svc   Svc        Svc"/>
+
+Because agents communicate through structured events, they can be moved to separate processes or services with minimal changes.
 
 ---
 
@@ -302,20 +487,21 @@ Agent telemetry integrates with Langfuse and OpenTelemetry.
 ### Advantages
 
 - Simple implementation
-- Fewer components
+- Few components
 
 ### Disadvantages
 
-- Large prompts
+- Huge prompts
 - Difficult debugging
 - High hallucination risk
-- Limited reuse
+- Poor reuse
+- Weak observability
 
-Decision: Rejected
+**Decision:** Rejected
 
 ---
 
-## Option 2 — Chain of Prompts
+## Option 2 — Sequential Prompt Chain
 
 ### Advantages
 
@@ -325,10 +511,11 @@ Decision: Rejected
 ### Disadvantages
 
 - Weak separation of concerns
-- Limited scalability
 - Difficult evaluation
+- Hard to parallelize
+- Shared prompt state causes drift
 
-Decision: Rejected
+**Decision:** Rejected
 
 ---
 
@@ -341,14 +528,18 @@ Decision: Rejected
 - Reusable
 - Observable
 - Easier prompt engineering
+- Lower hallucination rates
 - Supports future expansion
+- Enables distributed execution
 
 ### Disadvantages
 
-- More orchestration logic
-- Increased implementation complexity
+- Additional orchestration layer
+- More prompts to manage
+- More telemetry to collect
+- Higher initial complexity
 
-Decision: Accepted
+**Decision:** Accepted
 
 ---
 
@@ -362,15 +553,18 @@ Decision: Accepted
 - Easier debugging
 - Prompt versioning
 - Lower hallucination rates
-- Improved maintainability
+- Better observability
+- Parallel execution support
+- Easier future scaling
 
 ---
 
 ## Negative
 
-- Additional orchestration layer
-- More prompts to manage
-- More telemetry to collect
+- Additional orchestration logic
+- More configuration files
+- More telemetry storage
+- Slightly higher latency overhead per stage
 
 ---
 
@@ -378,64 +572,70 @@ Decision: Accepted
 
 | Risk                        | Mitigation                                       |
 | --------------------------- | ------------------------------------------------ |
-| Agent coordination failures | Central workflow orchestration                   |
-| Prompt drift                | Prompt versioning                                |
-| Increased latency           | Parallelize independent agents                   |
+| Agent coordination failures | Central deterministic workflow engine            |
+| Prompt drift                | Prompt versioning and evaluation                 |
+| Increased latency           | Parallelize independent stages                   |
 | Context inconsistency       | Canonical Resume Model as shared source of truth |
+| Event schema changes        | Versioned event contracts                        |
+| Guardrail bypass            | Mandatory guardrail stage before validation      |
 
 ---
 
 # Architecture Integration
 
-```
-FastAPI
-
-↓
-
-Workflow Engine
-
-↓
-
+<CodeBlock language="text" content="FastAPI
+│
+▼
+LangGraph Workflow Engine
+│
+▼
 Multi-Agent Layer
+│
+├── LlamaIndex (RAG & Retrieval)
+│       │
+│       ▼
+│   Qdrant Cloud
+│
+▼
+LLM Provider
+│
+▼
+Guardrails
+│
+▼
+Validation
+│
+▼
+Rendering Engine
+│
+▼
+PDF Artifact"/>
 
-↓
-
-LlamaIndex
-
-↓
-
-Qdrant
-
-↓
-
-Ollama
-
-↓
-
-Response
-```
-
-The Multi-Agent Layer is responsible for AI reasoning, while business orchestration remains deterministic.
+The **Multi-Agent Layer is responsible for AI reasoning**, while **business orchestration remains deterministic**.
 
 ---
 
 # Related ADRs
 
 - ADR-0001 — Adopt a Canonical Resume Model
-- ADR-0002 — Adopt Clean Architecture
+- ADR-0002 — Adopt Clean Architecture with Hexagonal Boundaries
 - ADR-0003 — Use FastAPI as the Primary Backend Framework
-- ADR-0004 — Use PostgreSQL as the Primary Database
-- ADR-0005 — Use LlamaIndex as the AI Data Framework
+- ADR-0004 — Use PostgreSQL as the Primary Transactional Database
+- ADR-0005 — Use LlamaIndex as the RAG and Knowledge Framework
+- ADR-0007 — Event-Driven Workflow Engine (LangGraph)
+- ADR-0008 — Adopt a Validation & Guardrails Engine
 
 ---
 
 # References
 
-- Agent-Architecture.md
-- Workflow-Design.md
-- RAG-Architecture.md
-- Validation-Engine.md
-- Testing.md
+- agent-architecture.md
+- workflow-design.md
+- rag-architecture.md
+- validation-engine.md
+- testing.md
+- guardrails-architecture.md
+- evaluation-architecture.md
 
 ---
 
@@ -443,8 +643,9 @@ The Multi-Agent Layer is responsible for AI reasoning, while business orchestrat
 
 This decision should be revisited if:
 
-- agent orchestration introduces unacceptable latency,
-- workflow complexity significantly exceeds operational benefits,
-- or a simpler orchestration model proves sufficient.
+- orchestration latency becomes unacceptable,
+- workflow complexity exceeds operational benefits,
+- a simpler orchestration model proves sufficient,
+- or distributed execution introduces excessive operational overhead.
 
-Until then, the Multi-Agent Architecture remains the standard approach for AI workflow execution within Tailr.
+Until then, the **Multi-Agent Architecture remains the standard approach for AI workflow execution within Tailr**, with deterministic orchestration, structured communication, mandatory guardrails, and independently testable AI agents.

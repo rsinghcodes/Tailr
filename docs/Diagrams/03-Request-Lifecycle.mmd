@@ -3,22 +3,48 @@ sequenceDiagram
 participant User
 participant API
 participant Workflow
-participant Agents
+participant Planner
+participant Retriever
+participant Rewrite
 participant LLM
+participant Guardrails
+participant Validator
+participant ATS
 participant DB
+participant Storage
 
-User->>API: Upload Resume + JD
+User->>API: Upload Resume + Job Description
 
-API->>Workflow: Start Workflow
+API->>Workflow: Start Optimization Workflow
 
-Workflow->>Agents: Execute
+Workflow->>Planner: Analyze resume and JD
 
-Agents->>LLM: Generate
+Planner->>Retriever: Request relevant resume context
 
-LLM-->>Agents: Response
+Retriever-->>Planner: Return ranked context
 
-Agents->>DB: Save Results
+Workflow->>Rewrite: Generate optimized sections
 
-Workflow-->>API: Completed
+Rewrite->>LLM: Structured rewrite request
 
-API-->>User: Optimized Resume
+LLM-->>Rewrite: JSON response
+
+Rewrite->>Guardrails: Validate AI output
+
+Guardrails-->>Rewrite: Safe structured output
+
+Rewrite->>Validator: Business validation
+
+Validator-->>Rewrite: Approved changes
+
+Rewrite->>ATS: Calculate ATS score
+
+ATS-->>Rewrite: ATS report + recommendations
+
+Rewrite->>DB: Save optimization metadata
+
+Rewrite->>Storage: Store generated .tex and PDF
+
+Workflow-->>API: Optimization completed
+
+API-->>User: Optimized Resume + ATS Report + Diff

@@ -1,21 +1,39 @@
 flowchart LR
 
-Resume --> Parser
+Resume[Resume.tex] --> Parser[Resume Parser]
 
-Parser --> Chunks
+Parser --> Normalize[Normalization]
 
-Chunks --> Embedding
+Normalize --> Chunks[Semantic Chunking]
 
-Embedding --> Qdrant
+Chunks --> Metadata[Metadata Enrichment]
 
-JD --> Query
+Metadata --> Embedding[Embedding Model]
 
-Query --> EmbedQuery
+Embedding --> Qdrant[(Qdrant Vector DB)]
 
-EmbedQuery --> Search
+JD[Job Description] --> Query[Query Builder]
 
-Search --> Context
+Query --> EmbedQuery[Query Embedding]
 
-Context --> LLM
+EmbedQuery --> DenseSearch[Dense Search]
 
-LLM --> Answer
+Query --> SparseSearch[Sparse Search]
+
+DenseSearch --> Merge[Merge Results]
+
+SparseSearch --> Merge
+
+Merge --> Rerank[Reranker]
+
+Rerank --> Context[Context Builder]
+
+Context --> Prompt[Prompt Assembly]
+
+Prompt --> LLM[LLM]
+
+LLM --> Guardrails[Guardrails Engine]
+
+Guardrails --> Validate[Validation Engine]
+
+Validate --> Answer[Structured Response]

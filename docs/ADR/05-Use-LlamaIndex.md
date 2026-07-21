@@ -1,8 +1,8 @@
-# ADR-0005: Use LlamaIndex as the AI Data Framework
+# ADR-0005: Use LlamaIndex as the RAG and Knowledge Framework
 
 **Status:** Accepted
 
-**Date:** 2026-07-04
+**Date:** 2026-07-20
 
 **Authors:** Tailr Engineering
 
@@ -10,7 +10,7 @@
 
 # Context
 
-Tailr is an AI-native resume optimization platform that relies on Retrieval-Augmented Generation (RAG) to provide accurate, context-aware resume improvements.
+Tailr is an AI-native Resume Intelligence Platform that relies on **Retrieval-Augmented Generation (RAG)** and **agentic workflows** to provide accurate, context-aware resume optimizations.
 
 The system must:
 
@@ -19,33 +19,41 @@ The system must:
 - Generate embeddings
 - Index structured information
 - Retrieve relevant context
-- Orchestrate retrieval pipelines
-- Support multiple LLMs
+- Apply metadata filtering
+- Rerank retrieved results
+- Assemble token-efficient prompts
+- Support workflow integration via clean interfaces
+- Support multiple LLM providers
 - Evaluate retrieval quality
-- Enable future AI workflows
+- Support future AI capabilities
 
-Building these capabilities from scratch would significantly increase complexity and maintenance costs.
+Building these capabilities from scratch would significantly increase development effort, operational complexity, and maintenance cost.
 
-A dedicated AI framework is required to manage the complete data flow between application data and language models.
+A dedicated framework is required to manage the complete flow between **structured application data** and **language models**.
 
 ---
 
 # Decision
 
-Tailr adopts **LlamaIndex** as the primary AI data framework.
+Tailr will use **LlamaIndex** as the primary **RAG and knowledge framework**.
 
 LlamaIndex is responsible for:
 
 - Document ingestion
-- Chunk creation
+- Semantic chunking
 - Embedding generation
 - Index management
 - Retrieval pipelines
-- Query orchestration
-- LLM abstraction
+- Hybrid search orchestration
+- Context assembly
+- LLM abstraction (for RAG queries)
 - Evaluation utilities
 
-Business logic remains outside LlamaIndex.
+Workflow orchestration is handled by **LangGraph** (see ADR-0007). LlamaIndex focuses exclusively on the data and retrieval pipeline.
+
+Business logic remains outside LlamaIndex and is implemented in the **Application** and **Domain** layers defined in ADR-0002.
+
+LlamaIndex is treated as an **Infrastructure Adapter**, not a domain dependency.
 
 ---
 
@@ -53,44 +61,54 @@ Business logic remains outside LlamaIndex.
 
 The selected framework must:
 
-- Be open source
-- Support local LLMs
-- Integrate with Qdrant
-- Support multiple embedding models
-- Provide modular architecture
-- Enable custom retrieval pipelines
-- Work well with structured documents
-- Support future AI workflows
+- be open source,
+- support local LLMs,
+- integrate with Qdrant Cloud,
+- support multiple embedding models,
+- provide modular retrieval pipelines,
+- support metadata filtering,
+- support reranking,
+- work well with structured documents,
+- provide evaluation tooling,
+- integrate cleanly with external workflow engines (LangGraph).
 
 ---
 
 # Architectural Role
 
-```
-            Resume
-               │
-               ▼
-      Resume Parser
-               │
-               ▼
- Canonical Resume Model
-               │
-               ▼
-        LlamaIndex
-               │
-      ┌────────┴────────┐
-      ▼                 ▼
-Embedding Model     Qdrant
-      │                 │
-      └────────┬────────┘
-               ▼
-        Retrieval Engine
-               │
-               ▼
-             LLM
-```
+<CodeBlock language="text" content="Resume
+│
+▼
+Resume Parser
+│
+▼
+Canonical Resume Model
+│
+▼
+Knowledge Layer
+│
+▼
+LlamaIndex (Knowledge & Retrieval)
+│
+├── Embedding Provider
+├── Qdrant Vector Store
+├── Hybrid Retriever
+├── Reranker
+└── Context Assembler
+        │
+        ▼
+   LangGraph (Workflow & Orchestration)
+        │
+        ▼
+   AI Agents
+        │
+        ▼
+   Guardrails
+        │
+        ▼
+ Validation Engine"/>
 
-LlamaIndex acts as the bridge between structured knowledge and AI reasoning.
+LlamaIndex acts as the bridge between **structured knowledge** and **AI reasoning**. Workflow orchestration and multi-agent coordination are handled by **LangGraph** (ADR-0007).
 
 ---
 
@@ -98,47 +116,61 @@ LlamaIndex acts as the bridge between structured knowledge and AI reasoning.
 
 LlamaIndex manages:
 
-- Document ingestion
-- Node generation
-- Metadata attachment
-- Embedding creation
-- Vector indexing
-- Retrieval
-- Context assembly
-- Response synthesis
+- document ingestion,
+- semantic chunk creation,
+- metadata attachment,
+- embedding creation,
+- vector indexing,
+- retrieval orchestration,
+- metadata filtering,
+- reranking,
+- context assembly,
 
-The application remains responsible for orchestration and business rules.
+- response synthesis,
+- retrieval evaluation.
+
+The application remains responsible for:
+
+- business policies,
+- resume integrity,
+- ATS scoring,
+- guardrail decisions,
+- persistence,
+- deterministic rendering.
 
 ---
 
 # Retrieval Pipeline
 
-```
-Job Description
-        │
-        ▼
-Query Generation
-        │
-        ▼
-Embedding
-        │
-        ▼
-Vector Search
-        │
-        ▼
-Metadata Filtering
-        │
-        ▼
-Top-K Nodes
-        │
-        ▼
-Context Assembly
-        │
-        ▼
-LLM Prompt
-```
+Tailr uses a **hybrid retrieval pipeline**.
 
-Each stage is configurable.
+<CodeBlock language="text" content="Job Description
+   │
+   ▼
+Query Builder
+   │
+   ▼
+Query Embedding
+   │
+   ├── Dense Search (Qdrant)
+   └── Sparse Search (BM25)
+            │
+            ▼
+       Merge Results
+            │
+            ▼
+         Reranker
+            │
+            ▼
+      Top-K Context
+            │
+            ▼
+     Context Builder
+            │
+            ▼
+      Structured Prompt"/>
+
+Each stage is independently configurable.
 
 ---
 
@@ -146,84 +178,105 @@ Each stage is configurable.
 
 Every indexed node contains metadata such as:
 
-```json
-{
-  "resume_id": "res_001",
-  "section": "projects",
-  "project": "ResearchMind",
-  "skills": ["FastAPI", "LangChain", "Qdrant"],
-  "version": 3
-}
-```
+<CodeBlock language="json" content="{
+"resume_id": "res_001",
+"section": "projects",
+"project": "ResearchMind",
+"skills": ["FastAPI", "LangChain", "Qdrant"],
+"version": 3,
+"date_range": "2026-01:2026-03"
+}"/>
 
-Metadata enables filtered retrieval and ownership enforcement.
+Metadata enables:
+
+- section filtering,
+- version isolation,
+- ownership enforcement,
+- skill-based retrieval,
+- temporal filtering,
+- auditability.
 
 ---
 
 # Embedding Strategy
 
-Embedding models are abstracted.
+Embedding providers are abstracted behind interfaces.
 
-Initial options include:
+Initial models include:
 
-- BAAI/bge-small-en-v1.5
-- BAAI/bge-base-en-v1.5
-- nomic-embed-text
-- Snowflake Arctic Embed
+- `BAAI/bge-small-en-v1.5`
+- `BAAI/bge-base-en-v1.5`
+- `nomic-embed-text`
+- `Snowflake Arctic Embed`
 
-The embedding model can change without affecting application logic.
+The embedding model can be replaced without affecting application logic or database schemas.
 
 ---
 
 # Vector Store Integration
 
-LlamaIndex integrates directly with Qdrant.
+LlamaIndex integrates directly with **Qdrant Cloud**.
 
-Responsibilities include:
+Responsibilities:
 
-- Create vectors
-- Update vectors
-- Delete vectors
-- Query vectors
-- Apply metadata filters
+- create vectors,
+- update vectors,
+- delete vectors,
+- execute similarity search,
+- apply metadata filters,
+- manage collection schemas.
 
-Qdrant remains the storage engine.
+Qdrant remains the **storage engine**; LlamaIndex remains the **orchestration layer**.
 
 ---
 
-# Query Engine
+# Integration with LangGraph
 
-The query engine performs:
+LlamaIndex handles knowledge retrieval. **LangGraph** (ADR-0007) handles workflow orchestration.
 
-```
-Receive Query
+LlamaIndex is invoked by LangGraph workflow nodes for:
 
-↓
+- embedding generation,
+- vector search,
+- hybrid retrieval,
+- reranking,
+- context assembly.
 
-Embed Query
+LlamaIndex does not control workflow state, retries, or agent scheduling. Those responsibilities belong to LangGraph.
 
-↓
+---
 
-Retrieve Candidates
+# Context Assembly
 
-↓
+LlamaIndex assembles token-efficient context windows.
 
-Filter Results
+The Context Builder:
 
-↓
+- removes duplicates,
+- prioritizes recent experience,
+- preserves section boundaries,
+- enforces token budgets,
+- attaches evidence references,
+- returns structured context objects.
 
-Rank Results
+This improves determinism and reduces hallucination risk.
 
-↓
+---
 
-Assemble Context
+# Guardrails Integration
 
-↓
+LlamaIndex does **not** enforce business validation.
 
-Generate Response
-```
+All generated outputs are passed to the **Guardrails Layer** for:
 
-The query engine is configurable and extensible.
+- JSON validation,
+- schema validation,
+- prompt injection detection,
+- hallucination detection,
+- resume integrity checks,
+- ATS formatting validation.
+
+Guardrails remain outside LlamaIndex to avoid framework lock-in.
 
 ---
 
@@ -231,13 +284,14 @@ The query engine is configurable and extensible.
 
 LlamaIndex provides evaluation utilities for:
 
-- Retrieval accuracy
-- Context relevance
-- Response quality
-- Faithfulness
-- Hallucination detection
+- retrieval precision,
+- recall@k,
+- context relevance,
+- answer faithfulness,
+- response quality,
+- latency analysis.
 
-Evaluation metrics are integrated into Tailr's testing framework.
+These metrics are integrated into Tailr’s evaluation pipeline and CI/CD quality gates.
 
 ---
 
@@ -250,8 +304,9 @@ Supported providers include:
 - Ollama
 - OpenAI
 - Anthropic
+- Google Gemini
 - Hugging Face Inference
-- Future providers
+- future custom providers
 
 Changing the underlying model requires minimal application changes.
 
@@ -272,8 +327,9 @@ Changing the underlying model requires minimal application changes.
 - Reinvents existing functionality
 - Difficult maintenance
 - Limited evaluation support
+- Slower feature development
 
-Decision: Rejected
+**Decision:** Rejected
 
 ---
 
@@ -290,10 +346,11 @@ Decision: Rejected
 - Broader focus on orchestration than data
 - More abstraction for simple RAG pipelines
 - Frequent API evolution
+- Heavier dependency surface
 
-Decision: Partially Rejected
+**Decision:** Partially Rejected
 
-LangChain may be introduced later for advanced agent orchestration, but not as the primary data framework.
+LangChain may be introduced later for specialized orchestration, but not as the primary data framework.
 
 ---
 
@@ -307,9 +364,10 @@ LangChain may be introduced later for advanced agent orchestration, but not as t
 ### Disadvantages
 
 - Heavier setup
-- Less aligned with the project's local-first goals
+- Less aligned with local-first architecture
+- Smaller workflow ecosystem
 
-Decision: Rejected
+**Decision:** Rejected
 
 ---
 
@@ -321,15 +379,16 @@ Decision: Rejected
 - Excellent document indexing
 - Native Qdrant integration
 - Flexible retrieval pipelines
-- Strong evaluation tools
+- Strong evaluation tooling
 - Active open-source community
 
 ### Disadvantages
 
 - Additional abstraction layer
 - Requires understanding of indexing concepts
+- Workflow APIs require discipline
 
-Decision: Accepted
+**Decision:** Accepted
 
 ---
 
@@ -343,14 +402,17 @@ Decision: Accepted
 - Easier model replacement
 - Built-in evaluation support
 - Simplified vector management
+- Clean integration with LangGraph for orchestration
+- Better observability hooks
 
 ---
 
 ## Negative
 
-- Dependency on external framework
+- Dependency on an external framework
 - Learning curve for contributors
 - Framework upgrades require compatibility testing
+- Some advanced behavior may require custom extensions
 
 ---
 
@@ -362,57 +424,79 @@ Decision: Accepted
 | Framework lock-in         | Keep business logic independent          |
 | Retrieval regressions     | Automated evaluation datasets            |
 | Embedding incompatibility | Abstract embedding providers             |
+| Retrieval API changes     | Isolate retrieval adapters               |
+| Performance overhead      | Benchmark and profile retrieval stages   |
 
 ---
 
 # Architecture Integration
 
-```
-FastAPI
-
-↓
-
+<CodeBlock language="text" content="FastAPI
+│
+▼
 Application Layer
+│
+▼
+LangGraph Workflow Orchestrator
+│
+▼
+LlamaIndex (RAG Pipeline)
+│
+├── Qdrant Cloud
+├── Embedding Provider
+├── Reranker
+└── Context Assembler
+        │
+        ▼
+   Guardrails
+        │
+        ▼
+ Validation Engine
+        │
+        ▼
+  Structured Result"/>
 
-↓
+LlamaIndex remains an **Infrastructure component** and does not contain business rules.
 
-Workflow Engine
+---
 
-↓
+# Future Evolution
 
-LlamaIndex
+The following capabilities can be added incrementally:
 
-↓
+- graph-based retrieval,
+- knowledge graph indexes,
+- long-term memory,
+- conversational retrieval,
+- personalized ranking,
+- feedback-aware retrieval,
+- multi-document reasoning,
+- distributed retrieval execution.
 
-Qdrant + Ollama
-
-↓
-
-LLM Response
-```
-
-LlamaIndex remains an infrastructure component and does not contain business rules.
+The surrounding architecture isolates these changes from the Domain layer.
 
 ---
 
 # Related ADRs
 
 - ADR-0001 — Adopt a Canonical Resume Model
-- ADR-0002 — Adopt Clean Architecture
+- ADR-0002 — Adopt Clean Architecture with Hexagonal Boundaries
 - ADR-0003 — Use FastAPI as the Primary Backend Framework
-- ADR-0004 — Use PostgreSQL as the Primary Database
-- ADR-0006 — Use Qdrant as the Vector Database
-- ADR-0007 — Adopt a Multi-Agent Workflow
+- ADR-0004 — Use PostgreSQL as the Primary Transactional Database
+- ADR-0006 — Adopt a Multi-Agent Workflow
+- ADR-0008 — Adopt a Validation & Guardrails Engine
 
 ---
 
 # References
 
-- RAG-Architecture.md
-- Knowledge-Model.md
-- Workflow-Design.md
-- Data-Models.md
-- Testing.md
+- rag-architecture.md
+- knowledge-model.md
+- workflow-design.md
+- data-models.md
+- testing.md
+- evaluation-architecture.md
+- guardrails-architecture.md
 
 ---
 
@@ -421,7 +505,7 @@ LlamaIndex remains an infrastructure component and does not contain business rul
 This decision should be revisited if:
 
 - retrieval requirements significantly exceed the framework's capabilities,
-- the project adopts a different AI data abstraction,
+- a different AI data abstraction becomes strategically preferable,
 - or operational complexity outweighs the productivity benefits.
 
-Until then, LlamaIndex remains the standard AI data framework for indexing, retrieval, and context construction within Tailr.
+Until then, **LlamaIndex remains the standard RAG and knowledge framework for indexing, retrieval, context construction, and evaluation within Tailr**. Workflow orchestration is handled by LangGraph (ADR-0007).

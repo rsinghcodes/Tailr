@@ -1,15 +1,15 @@
 flowchart TB
 
-Presentation[Presentation Layer]
+Presentation[Presentation Layer<br/>Next.js + FastAPI]
 
-Application[Application Layer]
+Application[Application Layer<br/>Use Cases / Services]
 
-Domain[Domain Layer]
+Domain[Domain Layer<br/>Entities / Value Objects / Policies]
 
-Infrastructure[Infrastructure Layer]
+Infrastructure[Infrastructure Layer<br/>PostgreSQL / Qdrant / Redis / Ollama]
 
 Presentation --> Application
 
 Application --> Domain
 
-Infrastructure --> Domain
+Infrastructure -. implements .-> Domain

@@ -1,12 +1,10 @@
-# Vision
+# Vision.md
 
 **Project:** Tailr
 
-**Version:** 1.0
+**Version:** 1.1
 
 **Status:** Draft
-
-**Author:** Raghvendra Singh
 
 ---
 
@@ -14,17 +12,17 @@
 
 Tailr is an AI-powered Resume Intelligence Platform designed to help software engineers create high-quality, ATS-optimized resumes tailored to specific job descriptions while preserving complete factual accuracy.
 
-Unlike conventional AI resume builders that rewrite resumes through a single prompt, Tailr treats resume optimization as an engineering problem. It combines structured parsing, knowledge retrieval, agentic reasoning, validation, and deterministic rendering to produce trustworthy, explainable, and production-ready resume variants.
+Unlike conventional AI resume builders that rewrite resumes through a single prompt, Tailr treats resume optimization as an engineering problem. It combines structured parsing, knowledge retrieval, agentic reasoning, guardrails, validation, and deterministic rendering to produce trustworthy, explainable, and production-ready resume variants.
 
-The long-term vision is to build an intelligent career assistant that continuously learns from a user's professional history and helps throughout the job application lifecycle.
+The long-term vision is to build an intelligent career assistant that continuously learns from a user’s professional history and helps throughout the entire job application lifecycle.
 
 ---
 
 # 2. Mission
 
-Enable every developer to create the best possible version of their resume for every opportunity without compromising honesty, consistency, or technical quality.
+Enable every developer to create the best possible version of their resume for every opportunity without compromising honesty, consistency, technical quality, or AI safety.
 
-Tailr aims to reduce the time spent tailoring resumes from hours to minutes while ensuring that every generated resume remains factually correct and fully explainable.
+Tailr aims to reduce the time spent tailoring resumes from hours to minutes while ensuring that every generated resume remains factually correct, fully explainable, and protected by deterministic guardrails.
 
 ---
 
@@ -42,10 +40,13 @@ Although Large Language Models have made resume rewriting easier, existing solut
 - Limited ATS optimization
 - Lack of version control
 - No knowledge management
+- Prompt injection vulnerabilities
+- Inconsistent structured outputs
+- Unsafe AI behavior
 
 Most tools treat resumes as plain text instead of structured knowledge.
 
-Tailr approaches resumes as structured engineering artifacts rather than editable documents.
+Tailr approaches resumes as structured engineering artifacts rather than editable documents and introduces a dedicated Guardrails layer to ensure safe and reliable AI behavior.
 
 ---
 
@@ -72,30 +73,34 @@ The repetitive nature of this workflow results in:
 - Human error
 - Generic applications
 
+AI tools can accelerate this process, but without proper guardrails they may introduce fabricated content or unsafe outputs.
+
 ---
 
 # 5. Vision Goals
 
 Tailr will become an intelligent career platform capable of:
 
-- Understanding resumes instead of reading them.
-- Understanding job descriptions instead of matching keywords.
-- Retrieving only relevant professional experience.
-- Optimizing wording without changing facts.
-- Producing deterministic outputs.
-- Explaining every recommendation.
-- Maintaining multiple optimized resume versions.
-- Learning from previous resume optimizations.
+- Understanding resumes instead of reading them
+- Understanding job descriptions instead of matching keywords
+- Retrieving only relevant professional experience
+- Optimizing wording without changing facts
+- Producing deterministic outputs
+- Explaining every recommendation
+- Maintaining multiple optimized resume versions
+- Learning from previous resume optimizations
+- Detecting unsafe or hallucinated AI outputs
+- Enforcing structured and verifiable resume generation
 
 ---
 
 # 6. Product Philosophy
 
-Tailr follows five core engineering principles.
+Tailr follows six core engineering principles.
 
-## Truthfulness
+## 6.1 Truthfulness
 
-Every generated statement must be supported by information present in the user's master resume.
+Every generated statement must be supported by information present in the user’s master resume.
 
 Tailr never fabricates:
 
@@ -109,7 +114,7 @@ Tailr never fabricates:
 
 ---
 
-## Explainability
+## 6.2 Explainability
 
 Every optimization must be explainable.
 
@@ -125,7 +130,7 @@ No change should appear without justification.
 
 ---
 
-## Determinism
+## 6.3 Determinism
 
 AI should generate recommendations.
 
@@ -135,7 +140,7 @@ Tailr prioritizes deterministic processing over creative generation.
 
 ---
 
-## Modularity
+## 6.4 Modularity
 
 Every component performs one responsibility.
 
@@ -146,14 +151,15 @@ Examples:
 - Retrieval Engine
 - Planner
 - Rewriter
-- Validator
+- Guardrails Engine
+- Validation Engine
 - Renderer
 
 This enables testing, replacement, and independent improvement.
 
 ---
 
-## Human Control
+## 6.5 Human Control
 
 Users remain the final decision maker.
 
@@ -165,11 +171,28 @@ Tailr never silently changes resumes.
 
 ---
 
+## 6.6 AI Safety
+
+Every interaction with an LLM must pass through a Guardrails layer before business validation occurs.
+
+The Guardrails layer enforces:
+
+- Structured JSON outputs
+- Prompt injection detection
+- Hallucination detection
+- PII protection
+- ATS formatting constraints
+- Resume integrity policies
+
+AI output is never trusted by default.
+
+---
+
 # 7. Design Principles
 
-The system will be designed around the following principles.
+The system is designed around the following principles.
 
-## Canonical Resume
+## 7.1 Canonical Resume
 
 The master resume is the single source of truth.
 
@@ -177,7 +200,7 @@ Every optimized resume is derived from the master resume.
 
 ---
 
-## Structured Knowledge
+## 7.2 Structured Knowledge
 
 Resumes are not treated as text documents.
 
@@ -185,7 +208,7 @@ They are transformed into structured knowledge models.
 
 ---
 
-## Retrieval Before Generation
+## 7.3 Retrieval Before Generation
 
 The LLM should receive only the most relevant resume context.
 
@@ -193,13 +216,28 @@ Retrieval should happen before every reasoning step.
 
 ---
 
-## Validation Before Rendering
+## 7.4 Guardrails Before Validation
 
-Every generated modification must pass validation before becoming part of the final resume.
+Every generated modification must pass the Guardrails pipeline before business validation occurs.
+
+The pipeline verifies:
+
+- JSON structure
+- Schema compliance
+- Prompt safety
+- Hallucination risk
+- Resume integrity
+- ATS constraints
 
 ---
 
-## Rendering Is Deterministic
+## 7.5 Validation Before Rendering
+
+Every approved modification must pass business validation before becoming part of the final resume.
+
+---
+
+## 7.6 Rendering Is Deterministic
 
 Only the rendering engine generates LaTeX.
 
@@ -209,7 +247,7 @@ LLMs never directly edit LaTeX templates.
 
 # 8. Target Users
 
-Primary Users
+## Primary Users
 
 - Software Engineers
 - Full Stack Developers
@@ -220,7 +258,9 @@ Primary Users
 - Students
 - New Graduates
 
-Future Users
+---
+
+## Future Users
 
 - Designers
 - Product Managers
@@ -242,7 +282,9 @@ Tailr focuses on optimizing:
 - Experience
 - Summary
 
-Future releases may include:
+---
+
+## Future Scope
 
 - Cover Letters
 - LinkedIn Optimization
@@ -250,33 +292,51 @@ Future releases may include:
 - Portfolio Optimization
 - Interview Preparation
 - Career Analytics
+- Application Tracking
+- Career Knowledge Graph
 
 ---
 
 # 10. Success Metrics
 
-The platform will be considered successful if it achieves:
+The platform will be considered successful if it achieves the following.
 
-Functional
+## Functional
 
 - Resume generated successfully
 - LaTeX compiles without errors
 - No hallucinated content
 - Deterministic rendering
+- Structured output validation passes
 
-Quality
+---
+
+## Quality
 
 - Higher ATS score
 - Better keyword coverage
 - Reduced manual editing
 - Faster optimization
+- Consistent AI behavior
 
-Engineering
+---
+
+## Safety
+
+- Prompt injection attempts blocked
+- Invalid AI outputs rejected
+- Resume integrity preserved
+- PII leakage prevented
+
+---
+
+## Engineering
 
 - Modular architecture
 - Testable components
 - Explainable reasoning
 - Production-ready workflows
+- Observable AI pipelines
 
 ---
 
@@ -317,38 +377,83 @@ Instead of relying on a single Large Language Model prompt, the system will comb
 - Knowledge Representation
 - Retrieval-Augmented Generation (RAG)
 - Agentic Workflows
+- Guardrails Engine
 - Validation Engines
 - Deterministic Rendering
 - Explainable AI
+- Observability and Tracing
 
-Every architectural decision should prioritize reliability, transparency, maintainability, and correctness over convenience.
+Every architectural decision should prioritize reliability, transparency, maintainability, correctness, and AI safety over convenience.
 
 ---
 
-# 13. Guiding Principles
+# 13. AI Safety & Guardrails Vision
 
-Throughout the project, the following principles should never be violated.
+Tailr introduces a dedicated Guardrails architecture that sits between AI reasoning and business validation.
+
+## Guardrails Pipeline
+
+LLM Output
+
+↓
+
+JSON Validation
+
+↓
+
+Schema Validation
+
+↓
+
+Prompt Injection Detection
+
+↓
+
+Hallucination Detection
+
+↓
+
+Resume Integrity Validation
+
+↓
+
+ATS Formatting Validation
+
+↓
+
+PII Detection
+
+↓
+
+Business Validation
+
+↓
+
+Rendering
+
+This pipeline ensures that every AI-generated recommendation is verifiable, safe, and compliant with system policies before it reaches the user.
+
+---
+
+# 14. Guiding Principles
+
+The following principles must never be violated.
 
 1. The master resume is the source of truth.
-
-2. AI proposes changes; software validates them.
-
-3. Knowledge should be retrieved before generation.
-
+2. AI proposes changes; deterministic software validates them.
+3. Knowledge must be retrieved before generation.
 4. Every modification must be explainable.
-
 5. Every output must be deterministic.
-
 6. Rendering must never depend on LLM-generated LaTeX.
-
-7. The user always has the final approval.
+7. Every AI output must pass Guardrails before validation.
+8. The user always has the final approval.
 
 ---
 
-# 14. Vision Summary
+# 15. Vision Summary
 
-Tailr is an engineering-focused AI platform that combines Retrieval-Augmented Generation, structured knowledge, deterministic software engineering, and agentic reasoning to help professionals create trustworthy, optimized resumes.
+Tailr is an engineering-focused AI platform that combines Retrieval-Augmented Generation, structured knowledge, deterministic software engineering, agentic reasoning, and AI guardrails to help professionals create trustworthy, optimized resumes.
 
-Rather than replacing human judgment, Tailr augments it by providing transparent recommendations grounded in the user's actual experience.
+Rather than replacing human judgment, Tailr augments it by providing transparent recommendations grounded in the user’s actual experience.
 
-The goal is to build a platform that users can trust—not because it is powered by AI, but because every decision made by AI is verifiable, explainable, and backed by engineering principles.
+The goal is to build a platform that users can trust—not because it is powered by AI, but because every decision made by AI is verifiable, explainable, safe, and backed by rigorous engineering principles.

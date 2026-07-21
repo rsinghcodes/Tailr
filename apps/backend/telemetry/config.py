@@ -4,7 +4,7 @@ import sys
 from config.settings import settings
 
 from telemetry.filters import RequestContextFilter
-from telemetry.formatter import TailrFormatter
+from telemetry.formatters import TailrFormatter
 
 
 def configure_logging():

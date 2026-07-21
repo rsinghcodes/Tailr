@@ -1,11 +1,17 @@
 flowchart LR
 
-LaTeX --> AST
+Resume[Resume.tex]
 
-AST --> CanonicalResume
+Resume --> Lexer[LaTeX Lexer]
 
-CanonicalResume --> JSON
+Lexer --> Extract[Macro & Section Extractor]
 
-JSON --> Validation
+Extract --> Normalize[Normalization]
 
-Validation --> Storage
+Normalize --> Canonical[Canonical Resume Model]
+
+Canonical --> Validate[Schema Validation]
+
+Validate --> Store[(Resume Storage)]
+
+Validate -. invalid .-> Error[Parser Error Report]

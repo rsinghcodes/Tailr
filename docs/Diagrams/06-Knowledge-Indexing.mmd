@@ -1,13 +1,19 @@
 flowchart LR
 
-Resume
+Resume[Resume.tex]
 
-Resume --> Canonical
+Resume --> Parser[Resume Parser]
 
-Canonical --> Chunker
+Parser --> Canonical[Canonical Resume Model]
 
-Chunker --> Metadata
+Canonical --> Normalize[Normalization]
 
-Metadata --> Embeddings
+Normalize --> Chunker[Semantic Chunker]
 
-Embeddings --> Qdrant
+Chunker --> Metadata[Metadata Enrichment]
+
+Metadata --> Embeddings[Embedding Generator]
+
+Embeddings --> Qdrant[(Qdrant Vector DB)]
+
+Canonical --> Versions[(Resume Version Store)]

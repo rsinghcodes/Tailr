@@ -1,27 +1,67 @@
 flowchart TB
 
-Gateway
+subgraph Edge[Edge Layer]
+Gateway[API Gateway]
+end
 
-ResumeService
+subgraph Core[Core Services]
+ResumeService[Resume Service]
+RAGService[RAG Service]
+AgentService[Agent Service]
+PromptService[Prompt Service]
+EvaluationService[Evaluation Service]
+NotificationService[Notification Service]
+AuthService[Auth Service]
+end
 
-RAGService
+subgraph Infra[Shared Infrastructure]
+Postgres[(PostgreSQL)]
+Qdrant[(Qdrant)]
+Redis[(Redis)]
+Storage[(Object Storage)]
+EventBus[(Kafka / Redis Streams)]
+end
 
-AgentService
+subgraph Obs[Observability]
+OTel[OpenTelemetry]
+Prometheus[(Prometheus)]
+Grafana[(Grafana)]
+end
 
-PromptService
-
-EvaluationService
-
-NotificationService
+Gateway --> AuthService
 
 Gateway --> ResumeService
-
 Gateway --> RAGService
-
 Gateway --> AgentService
-
 Gateway --> PromptService
-
 Gateway --> EvaluationService
-
 Gateway --> NotificationService
+
+ResumeService --> Postgres
+ResumeService --> Storage
+ResumeService --> EventBus
+
+RAGService --> Qdrant
+RAGService --> Redis
+RAGService --> EventBus
+
+AgentService --> Redis
+AgentService --> EventBus
+
+PromptService --> Postgres
+
+EvaluationService --> Postgres
+EvaluationService --> Storage
+EvaluationService --> EventBus
+
+NotificationService --> EventBus
+
+ResumeService --> OTel
+RAGService --> OTel
+AgentService --> OTel
+PromptService --> OTel
+EvaluationService --> OTel
+NotificationService --> OTel
+
+OTel --> Prometheus
+Prometheus --> Grafana

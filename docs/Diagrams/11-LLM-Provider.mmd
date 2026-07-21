@@ -1,11 +1,31 @@
 flowchart LR
 
-Agent
+Agent[AI Agent]
 
-Agent --> Router
+Agent --> Guardrails[Guardrails Engine]
 
-Router --> Ollama
+Guardrails --> Provider[LLM Provider Interface]
 
-Router --> OpenAI
+Provider --> Router[Provider Router]
 
-Router --> Anthropic
+Router --> Local[Local Models]
+
+Router --> Cloud[Cloud Models]
+
+subgraph LocalModels[Local Models]
+Ollama[Ollama]
+Qwen[Qwen3 8B]
+Llama[Llama 3]
+end
+
+subgraph CloudModels[Cloud Models]
+OpenAI[OpenAI]
+Anthropic[Anthropic]
+Gemini[Google Gemini]
+end
+
+Router --> Fallback[Fallback Strategy]
+
+Fallback --> Telemetry[Telemetry & Tracing]
+
+Telemetry --> Metrics[(Metrics)]

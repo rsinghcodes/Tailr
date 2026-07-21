@@ -1,0 +1,12 @@
+CONTEXT:
+Candidate Resume JSON:
+{resume_json}
+
+Rewrite Plan:
+{rewrite_plan}
+
+Retrieved Candidate Background Details:
+{retrieved_context}
+
+INSTRUCTIONS:
+Rewrite the resume details implementing the plan. Ensure output maps precisely to the Resume schema.

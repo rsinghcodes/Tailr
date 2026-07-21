@@ -321,6 +321,25 @@ Users shall review changes before export.
 
 ---
 
+### FR-016: AI Guardrails
+
+The system shall validate all LLM inputs and outputs using a Guardrails Pipeline before returning responses to users.
+
+The Guardrails Pipeline shall support:
+
+- Prompt injection detection
+- Structured output validation
+- JSON schema validation
+- Resume integrity validation
+- ATS compatibility validation
+- PII detection
+- Toxicity detection
+- Hallucination detection
+- Citation validation
+- Configurable validation policies
+
+The system shall reject or repair invalid outputs before returning results.
+
 # 5. Non-Functional Requirements
 
 ## Performance

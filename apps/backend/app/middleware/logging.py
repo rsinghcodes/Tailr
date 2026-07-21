@@ -25,11 +25,13 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         ) * 1000
         logger.info(
             "HTTP Request",
-            method=request.method,
-            path=request.url.path,
-            status_code=response.status_code,
-            duration_ms=round(duration, 2),
-            request_id=get_request_id(),
+            extra={
+                "method": request.method,
+                "path": request.url.path,
+                "status_code": response.status_code,
+                "duration_ms": round(duration, 2),
+                "request_id": get_request_id(),
+            },
         )
 
         return response

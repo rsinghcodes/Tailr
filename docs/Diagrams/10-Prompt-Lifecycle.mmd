@@ -1,11 +1,27 @@
 stateDiagram-v2
 
-Draft --> Review
+[*] --> Draft
 
-Review --> Testing
+Draft --> Review : submit
 
-Testing --> Production
+Review --> Validation : approved for validation
 
-Production --> Deprecated
+Review --> Draft : changes requested
 
-Testing --> Draft
+Validation --> Testing : schema & safety passed
+
+Validation --> Draft : validation failed
+
+Testing --> Canary : integration tests passed
+
+Testing --> Draft : tests failed
+
+Canary --> Production : rollout approved
+
+Canary --> Draft : rollback
+
+Production --> Deprecated : replaced by newer version
+
+Deprecated --> Archived : retention expired
+
+Archived --> [*]

@@ -1,10 +1,7 @@
 # System Architecture
 
 **Project:** Tailr
-
 **Document Version:** 1.0
-
-**Status:** Draft
 
 ---
 
@@ -94,7 +91,7 @@ Cloud LLMs remain optional.
                        FastAPI Backend
                              │
                              ▼
-                  LlamaIndex Workflow Engine
+                  LangGraph Workflow Engine
                              │
       ┌──────────────────────┼───────────────────────┐
       │                      │                       │
@@ -224,7 +221,7 @@ Responsibilities
 
 Technology
 
-- LlamaIndex Workflows
+- LangGraph
 
 ---
 
@@ -257,6 +254,53 @@ Contains
 - ATS explanation
 
 LLMs never manipulate raw files.
+
+---
+
+## Guardrails Layer
+
+The Guardrails Layer sits between the AI Layer and the Validation Layer.
+
+Its responsibility is to ensure that every interaction with an LLM is safe, deterministic, and compliant with system policies before business validation occurs.
+
+Responsibilities
+
+- Validate LLM inputs
+- Validate LLM outputs
+- Enforce structured JSON schemas
+- Detect prompt injection attempts
+- Detect prompt leakage
+- Detect hallucinated content
+- Detect Personally Identifiable Information (PII) leakage
+- Enforce resume integrity policies
+- Enforce ATS formatting constraints
+- Repair recoverable outputs when possible
+
+The Guardrails Layer is provider-independent and is executed for every AI workflow regardless of the underlying model (Ollama, OpenAI, Anthropic, etc.).
+
+Typical execution flow
+
+```
+
+AI Layer
+
+↓
+
+Guardrails
+
+↓
+
+Validation Layer
+
+↓
+
+Rendering Layer
+
+```
+
+The Guardrails Layer never performs business decisions.
+
+It only ensures that generated content is safe and structurally correct before validation rules are applied.
 
 ---
 
@@ -429,12 +473,19 @@ Cannot
 
 ## Validation Engine
 
-Responsible for verifying
+Responsible for verifying business correctness after Guardrails have approved the AI output.
+
+Checks include
 
 - factual correctness
-- schema
-- formatting
+- resume integrity
+- schema compliance
+- formatting rules
 - unsupported claims
+- ATS compliance
+- business policies
+
+Unlike the Guardrails Layer, the Validation Engine focuses on business correctness rather than AI safety.
 
 ---
 
@@ -490,7 +541,11 @@ Rewrite
 
 ↓
 
-Validator
+Guardrails
+
+↓
+
+Validation
 
 ↓
 
@@ -560,7 +615,15 @@ Optimize
 
 ↓
 
+Guardrails
+
+↓
+
 Validate
+
+↓
+
+Render
 
 ↓
 
@@ -594,7 +657,7 @@ Authentication
 
 ↓
 
-Validation
+Request Validation
 
 ↓
 
@@ -614,7 +677,11 @@ Rewrite
 
 ↓
 
-Validation
+Guardrails
+
+↓
+
+Business Validation
 
 ↓
 
@@ -698,7 +765,7 @@ Ollama
 |---------|------------|
 | Frontend | Next.js |
 | Backend | FastAPI |
-| Workflow | LlamaIndex Workflows |
+| Workflow | LangGraph |
 | RAG | LlamaIndex |
 | Vector DB | Qdrant |
 | Database | PostgreSQL |
@@ -777,6 +844,18 @@ Compilation Failure
 
 Return Logs
 
+### Guardrail Failures
+
+If Guardrails reject AI output, the workflow follows one of the following recovery strategies:
+
+1. Retry with a stricter prompt.
+2. Retry using a fallback model.
+3. Attempt automatic output repair.
+4. Escalate for manual review.
+5. Abort the workflow if safety cannot be guaranteed.
+
+Guardrail failures are logged for observability and future model evaluation.
+
 ---
 
 # 15. Security Architecture
@@ -793,6 +872,18 @@ Every uploaded file is validated before processing.
 
 LaTeX compilation occurs in an isolated environment.
 
+Additional security measures include:
+
+- Prompt Injection Detection
+- Prompt Leakage Detection
+- Structured Output Validation
+- Resume Integrity Enforcement
+- Output Sanitization
+- PII Protection
+- AI Safety Policies
+
+Every AI response passes through the Guardrails Layer before entering the Validation Layer.
+
 ---
 
 # 16. Architecture Decision Summary
@@ -800,11 +891,13 @@ LaTeX compilation occurs in an isolated environment.
 | Decision | Reason |
 |-----------|--------|
 | Canonical Resume Model | Single source of truth |
-| LlamaIndex | Native RAG & workflows |
+| LlamaIndex | Native RAG & knowledge retrieval |
+| LangGraph | Workflow orchestration & multi-agent coordination |
 | Qdrant | Open-source vector search |
 | Ollama | Local inference |
 | Hybrid Retrieval | Higher retrieval accuracy |
-| Rule-Based Validation | Prevent hallucinations |
+| Guardrails Layer | Enforce AI safety, schema validation, and prompt security |
+| Rule-Based Validation | Enforce business correctness and resume integrity |
 | Renderer Generates LaTeX | Deterministic output |
 
 ---
@@ -829,9 +922,59 @@ These modules can reuse the existing knowledge, workflow, and validation layers 
 
 ---
 
-# 18. Summary
+# 18. AI Safety & Guardrails
 
-Tailr adopts a layered, modular, and knowledge-centric architecture that separates reasoning from validation and rendering.
+Every AI-generated response follows a standardized Guardrails Pipeline before business validation.
+
+Pipeline
+
+```
+
+LLM Output
+
+↓
+
+JSON Validation
+
+↓
+
+Schema Validation
+
+↓
+
+Prompt Injection Detection
+
+↓
+
+Hallucination Detection
+
+↓
+
+Resume Integrity Validation
+
+↓
+
+ATS Formatting Validation
+
+↓
+
+PII Detection
+
+↓
+
+Business Validation
+
+↓
+
+Rendering
+
+```
+
+This architecture ensures that AI outputs remain trustworthy, explainable, and production-ready regardless of the underlying LLM provider.
+
+# 19. Summary
+
+Tailr adopts a layered, modular, and knowledge-centric architecture that separates reasoning, AI safety, business validation, and deterministic rendering into independent architectural layers. This separation improves maintainability, observability, and the reliability of AI-generated outputs.
 
 The architecture prioritizes:
 

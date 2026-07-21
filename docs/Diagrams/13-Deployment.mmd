@@ -1,20 +1,44 @@
 flowchart TB
 
-Browser
+subgraph Client[Client Layer]
+Browser[User Browser]
+end
 
-NextJS
+subgraph Edge[Edge Layer]
+Nginx[Nginx / Reverse Proxy]
+end
 
-FastAPI
+subgraph Frontend[Frontend]
+NextJS[Next.js Frontend]
+end
 
-Postgres
+subgraph Backend[Backend]
+FastAPI[FastAPI API]
+Worker[Background Worker]
+end
 
-Qdrant
+subgraph Data[Data Layer]
+Postgres[(PostgreSQL)]
+Qdrant[(Qdrant Cloud)]
+Redis[(Redis Cache)]
+Storage[(Object Storage)]
+end
 
-Redis
+subgraph AI[AI Layer]
+Ollama[Ollama + Qwen3]
+end
 
-Ollama
+subgraph Observability[Observability]
+OTel[OpenTelemetry]
+Prometheus[(Prometheus)]
+Grafana[(Grafana)]
+end
 
-Browser --> NextJS
+Browser --> Nginx
+
+Nginx --> NextJS
+
+Nginx --> FastAPI
 
 NextJS --> FastAPI
 
@@ -24,4 +48,20 @@ FastAPI --> Qdrant
 
 FastAPI --> Redis
 
+FastAPI --> Storage
+
 FastAPI --> Ollama
+
+FastAPI --> OTel
+
+Worker --> Postgres
+
+Worker --> Qdrant
+
+Worker --> Storage
+
+Worker --> OTel
+
+OTel --> Prometheus
+
+Prometheus --> Grafana

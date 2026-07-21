@@ -1,8 +1,8 @@
-# ADR-0008: Adopt a Model Provider Abstraction Layer with Ollama as the Default Inference Provider
+# ADR-0008: Adopt an LLM Router and Provider Abstraction Layer with Ollama as the Default Inference Provider
 
 **Status:** Accepted
 
-**Date:** 2026-07-04
+**Date:** 2026-07-20
 
 **Authors:** Tailr Engineering
 
@@ -18,32 +18,33 @@ Tailr relies heavily on Large Language Models (LLMs) for nearly every AI capabil
 - Planning
 - Validation
 - ATS scoring
-- Retrieval-augmented generation (RAG)
+- Retrieval-Augmented Generation (RAG)
+- Guardrail repair
+- Evaluation and benchmarking
 
-Using a single model provider directly throughout the codebase would tightly couple business logic to one vendor.
+Using a single provider directly throughout the codebase would tightly couple business logic to one vendor and make model replacement expensive.
 
-Additionally, different tasks benefit from different models.
+Different tasks also benefit from different model sizes and capabilities:
 
-For example:
+- small models for keyword extraction,
+- medium models for planning,
+- larger models for rewriting,
+- specialized models for validation,
+- embedding models for retrieval.
 
-- Small models for keyword extraction
-- Medium models for planning
-- Larger models for rewriting
-- Embedding models for retrieval
-
-The platform therefore requires a provider-independent inference layer.
+The platform therefore requires a **provider-independent inference layer with intelligent model routing**.
 
 ---
 
 # Decision
 
-Tailr adopts a **Model Provider Abstraction Layer (MPAL)**.
+Tailr adopts an **LLM Router and Provider Abstraction Layer (LLM-RPAL)**.
 
 All AI requests pass through a unified interface.
 
-The initial implementation uses **Ollama** as the default inference provider.
+The initial implementation uses **Ollama** as the default inference provider for local-first development.
 
-Future providers can be added without changing business logic.
+Future providers (OpenAI, Anthropic, Gemini, and others) can be added without changing business logic or agent implementations.
 
 ---
 
@@ -51,62 +52,88 @@ Future providers can be added without changing business logic.
 
 The inference layer must:
 
-- Support multiple LLM providers
-- Enable local-first development
-- Reduce vendor lock-in
-- Support model routing
-- Enable cost optimization
-- Allow future cloud deployment
-- Support structured outputs
+- support multiple LLM providers,
+- enable local-first development,
+- reduce vendor lock-in,
+- support intelligent model routing,
+- enable cost optimization,
+- support cloud and hybrid deployments,
+- enforce structured outputs,
+- support streaming responses,
+- provide observability and token accounting,
+- isolate provider-specific APIs.
 
 ---
 
 # Architecture
 
-```
-                AI Agent
-                    │
-                    ▼
-        Model Provider Interface
-                    │
-     ┌──────────────┼──────────────┐
-     ▼              ▼              ▼
- Ollama        OpenAI Adapter   Anthropic Adapter
-     │
-     ▼
-Selected Model
-```
+<CodeBlock language="text" content="                AI Agent
+                 │
+                 ▼
+           LLM Router
+                 │
+       Provider Interface
+                 │
+  ┌──────────────┼──────────────┐
+  ▼              ▼              ▼
+Ollama         OpenAI Adapter   Anthropic Adapter
+  │
+  ▼
+Selected Model"/>
 
 Agents never call providers directly.
+
+The **LLM Router** selects the provider and model based on task requirements and routing policy.
 
 ---
 
 # Provider Interface
 
-Example:
+<CodeBlock language="python" content="class LLMProvider(Protocol):
+async def generate(
+self,
+request: GenerationRequest
+) -> GenerationResponse:
+...
 
-```python
-class LLMProvider:
-
-    async def generate(
-        self,
-        prompt: Prompt,
-        config: GenerationConfig
-    ) -> AIResponse:
-        ...
+```
+async def stream(
+    self,
+    request: GenerationRequest
+) -> AsyncIterator[TokenChunk]:
+    ..."/>
 ```
 
-Every provider implements the same interface.
+All providers implement the same interface, enabling provider substitution without changing application code.
 
 ---
 
-# Initial Provider
+# LLM Router
 
-Default implementation:
+The router is responsible for:
 
-```
-Ollama
-```
+- selecting the provider,
+- selecting the model,
+- applying routing policies,
+- enforcing timeouts,
+- applying retry policies,
+- recording telemetry,
+- triggering fallback providers.
+
+Example:
+
+<CodeBlock language="python" content="response = await llm_router.generate(
+task="rewrite",
+request=request
+)"/>
+
+---
+
+# Default Provider
+
+The default implementation is:
+
+<CodeBlock language="text" content="Ollama"/>
 
 Supported local models include:
 
@@ -117,43 +144,49 @@ Supported local models include:
 - Mistral
 - Phi-4
 
-Models remain configurable.
+Model names remain configuration-driven and are not hardcoded in business logic.
 
 ---
 
-# Model Selection
+# Model Capability Registry
+
+Each model declares its capabilities.
+
+<Table columnSizing="equal" rowDivider={{"size":1,"color":"default"}}><Table.Row header><Table.Cell>Capability</Table.Cell><Table.Cell>Example</Table.Cell></Table.Row><Table.Row><Table.Cell>chat</Table.Cell><Table.Cell>Qwen3-8B</Table.Cell></Table.Row><Table.Row><Table.Cell>structured_output</Table.Cell><Table.Cell>Gemma3</Table.Cell></Table.Row><Table.Row><Table.Cell>long_context</Table.Cell><Table.Cell>Llama3-70B</Table.Cell></Table.Row><Table.Row><Table.Cell>streaming</Table.Cell><Table.Cell>Qwen3-14B</Table.Cell></Table.Row><Table.Row><Table.Cell>tool_calling</Table.Cell><Table.Cell>Future providers</Table.Cell></Table.Row></Table>
+
+The router uses this registry during model selection.
+
+---
+
+# Task-Based Model Routing
 
 Different agents may use different models.
 
-Example:
+<Table columnSizing="equal" rowDivider={{"size":1,"color":"default"}}><Table.Row header><Table.Cell>Agent</Table.Cell><Table.Cell>Default Model</Table.Cell></Table.Row><Table.Row><Table.Cell>JD Analyzer</Table.Cell><Table.Cell>Qwen3-4B</Table.Cell></Table.Row><Table.Row><Table.Cell>Resume Analyzer</Table.Cell><Table.Cell>Qwen3-8B</Table.Cell></Table.Row><Table.Row><Table.Cell>Planning Agent</Table.Cell><Table.Cell>Qwen3-14B</Table.Cell></Table.Row><Table.Row><Table.Cell>Rewrite Agent</Table.Cell><Table.Cell>Qwen3-14B / Cloud fallback</Table.Cell></Table.Row><Table.Row><Table.Cell>Validation Agent</Table.Cell><Table.Cell>Gemma3</Table.Cell></Table.Row><Table.Row><Table.Cell>Guardrail Repair</Table.Cell><Table.Cell>Gemma3</Table.Cell></Table.Row></Table>
 
-| Agent           | Model                          |
-| --------------- | ------------------------------ |
-| JD Analyzer     | Qwen 3 4B                      |
-| Resume Analyzer | Qwen 3 8B                      |
-| Planner         | Qwen 3 14B                     |
-| Rewriter        | Llama 3.3 70B (cloud optional) |
-| Validator       | Gemma 3                        |
-
-Model routing is configuration-driven rather than hardcoded.
+Routing is configuration-driven rather than hardcoded.
 
 ---
 
-# Structured Output
+# Structured Output Enforcement
 
-Every AI response should conform to a schema.
+Every AI response must conform to a schema.
 
 Example:
 
-```json
-{
-  "summary": "...",
-  "missing_keywords": [],
-  "recommendations": []
-}
-```
+<CodeBlock language="json" content="{
+"summary": "...",
+"missing_keywords": [],
+"recommendations": []
+}"/>
 
-Schema validation occurs after generation.
+The provider layer:
+
+- requests structured output,
+- parses the response,
+- validates against the schema,
+- returns typed objects,
+- raises structured errors on validation failure.
 
 ---
 
@@ -161,40 +194,43 @@ Schema validation occurs after generation.
 
 The provider layer receives:
 
-- system prompt
-- user prompt
-- response schema
-- model configuration
-- generation parameters
+- system prompt,
+- user prompt,
+- response schema,
+- model configuration,
+- generation parameters,
+- token budget,
+- timeout,
+- trace context.
 
 Prompt construction remains outside provider implementations.
+
+This keeps providers generic and reusable.
 
 ---
 
 # Streaming Support
 
-The provider interface supports:
+The interface supports:
 
-- synchronous generation
-- streaming responses
-- incremental token delivery
+- standard generation,
+- streaming generation,
+- incremental token delivery,
+- cancellation propagation.
 
-Streaming enables future real-time UI updates.
+Streaming enables real-time UI progress updates and future conversational features.
 
 ---
 
-# Provider Configuration
+# Embedding Provider Separation
 
-Each model defines:
+Embedding generation is handled by a separate interface.
 
-- context window
-- temperature
-- top_p
-- max_tokens
-- timeout
-- retry policy
+<CodeBlock language="python" content="class EmbeddingProvider(Protocol):
+ async def embed(self, texts: list[str]) -> list[list[float]]:
+     ..."/>
 
-Configuration is externalized.
+This prevents chat-model assumptions from leaking into retrieval infrastructure.
 
 ---
 
@@ -202,35 +238,106 @@ Configuration is externalized.
 
 If a provider fails:
 
-```
-Primary Model
-
-↓
-
-Retry
-
-↓
-
+<CodeBlock language="text" content="Primary Model
+   ↓
+Retry (same provider)
+   ↓
 Fallback Model
+   ↓
+Fallback Provider
+   ↓
+Workflow Failure"/>
 
-↓
+Example policy:
 
-Workflow Failure
-```
+<Table columnSizing="equal" rowDivider={{"size":1,"color":"default"}}><Table.Row header><Table.Cell>Stage</Table.Cell><Table.Cell>Fallback</Table.Cell></Table.Row><Table.Row><Table.Cell>Qwen3-14B</Table.Cell><Table.Cell>Qwen3-8B</Table.Cell></Table.Row><Table.Row><Table.Cell>Ollama unavailable</Table.Cell><Table.Cell>OpenAI GPT-4o-mini</Table.Cell></Table.Row><Table.Row><Table.Cell>Structured output failure</Table.Cell><Table.Cell>Gemma3 repair pass</Table.Cell></Table.Row></Table>
 
-Fallback policies are configurable.
+Fallback policies are centrally managed.
 
 ---
 
 # Caching
 
-The provider layer supports:
+The abstraction layer supports:
 
-- prompt cache
-- response cache
-- embedding cache
+- prompt cache,
+- response cache,
+- embedding cache,
+- semantic cache (future).
 
-Repeated requests avoid unnecessary inference.
+Cache keys include:
+
+- model,
+- prompt hash,
+- schema version,
+- generation parameters.
+
+This reduces latency and inference cost.
+
+---
+
+# Guardrails Integration
+
+The provider layer does **not** make trust decisions.
+
+All responses are forwarded to the **Guardrails Engine** for:
+
+- schema validation,
+- prompt injection detection,
+- hallucination detection,
+- PII detection,
+- policy enforcement,
+- output repair.
+
+Guardrails remain independent of provider implementations.
+
+---
+
+# Observability
+
+Every request records:
+
+- workflow ID,
+- agent name,
+- provider,
+- model,
+- prompt version,
+- input tokens,
+- output tokens,
+- latency,
+- retry count,
+- fallback usage,
+- estimated cost,
+- streaming duration.
+
+Telemetry is exported through **OpenTelemetry**.
+
+---
+
+# Configuration
+
+Provider configuration is externalized.
+
+<CodeBlock language="yaml" content="llm:
+default_provider: ollama
+
+providers:
+ollama:
+base_url: http://localhost:11434
+timeout: 120
+
+```
+openai:
+  api_key: ${OPENAI_API_KEY}
+  timeout: 60
+```
+
+routing:
+rewrite: qwen3:14b
+planning: qwen3:14b
+validation: gemma3"/>
+
+No provider credentials are stored in code.
 
 ---
 
@@ -248,8 +355,9 @@ Repeated requests avoid unnecessary inference.
 - Vendor lock-in
 - Ongoing API costs
 - Internet dependency
+- Harder offline development
 
-Decision: Rejected
+**Decision:** Rejected
 
 ---
 
@@ -259,32 +367,54 @@ Decision: Rejected
 
 - Local execution
 - No API costs
+- Full data privacy
 
 ### Disadvantages
 
 - Tight coupling
 - Difficult provider replacement
+- No routing abstraction
 
-Decision: Rejected
+**Decision:** Rejected
 
 ---
 
-## Option 3 — Model Provider Abstraction Layer
+## Option 3 — Provider Abstraction without Router
 
 ### Advantages
 
 - Provider independence
+- Simpler implementation
+
+### Disadvantages
+
+- No intelligent routing
+- Harder cost optimization
+- Manual model selection everywhere
+
+**Decision:** Rejected
+
+---
+
+## Option 4 — LLM Router + Provider Abstraction Layer
+
+### Advantages
+
+- Provider independence
+- Intelligent routing
 - Easier testing
-- Configurable routing
-- Future-proof architecture
+- Configurable policies
 - Supports local and cloud inference
+- Future-proof architecture
+- Centralized observability
 
 ### Disadvantages
 
 - Additional abstraction
-- Slight implementation complexity
+- More infrastructure code
+- Provider compatibility testing
 
-Decision: Accepted
+**Decision:** Accepted
 
 ---
 
@@ -294,67 +424,90 @@ Decision: Accepted
 
 - No vendor lock-in
 - Easy provider replacement
-- Supports multiple models
+- Intelligent model selection
 - Local-first development
 - Better testability
+- Centralized telemetry
 - Cleaner architecture
+- Easier future cloud migration
 
 ---
 
 ## Negative
 
 - More infrastructure code
-- Provider compatibility testing
-- Configuration management
+- Additional configuration management
+- Need to maintain provider adapters
+- Requires compatibility testing across providers
 
 ---
 
 # Risks
 
-| Risk                       | Mitigation                |
-| -------------------------- | ------------------------- |
-| Provider API changes       | Adapter pattern           |
-| Model quality differences  | Evaluation framework      |
-| Local resource limitations | Optional cloud providers  |
-| Slow inference             | Model routing and caching |
+| Risk                              | Mitigation                    |
+| --------------------------------- | ----------------------------- |
+| Provider API changes              | Adapter pattern               |
+| Model quality differences         | Evaluation framework          |
+| Local resource limitations        | Optional cloud providers      |
+| Slow inference                    | Routing and caching           |
+| Structured output incompatibility | Guardrails repair stage       |
+| Cost spikes                       | Budget-aware routing policies |
 
 ---
 
 # Architecture Integration
 
-```
-FastAPI
-
-↓
-
+<CodeBlock language="text" content="FastAPI
+│
+▼
 Workflow Engine
+│
+▼
+AI Agents
+│
+▼
+LLM Router
+│
+▼
+Provider Interface
+├── Ollama
+├── OpenAI
+├── Anthropic
+└── Gemini
+     │
+     ▼
+Guardrails
+     │
+     ▼
+Typed AI Response"/>
 
-↓
+The router isolates the rest of the application from provider-specific APIs and routing complexity.
 
-Agents
+---
 
-↓
+# Future Enhancements
 
-LLM Provider Interface
+Planned enhancements include:
 
-↓
+- budget-aware routing,
+- latency-aware routing,
+- automatic model benchmarking,
+- dynamic provider health checks,
+- multi-model consensus,
+- speculative decoding,
+- distributed inference,
+- GPU-aware routing,
+- prompt optimization feedback loops.
 
-Ollama / OpenAI / Anthropic
-
-↓
-
-AI Response
-```
-
-The provider layer isolates the rest of the application from model-specific APIs.
+The current abstraction is designed so these capabilities can be added incrementally.
 
 ---
 
 # Related ADRs
 
 - ADR-0001 — Canonical Resume Model
-- ADR-0002 — Clean Architecture
-- ADR-0005 — LlamaIndex as the AI Data Framework
+- ADR-0002 — Clean Architecture with Hexagonal Boundaries
+- ADR-0005 — LlamaIndex as the RAG and Knowledge Framework
 - ADR-0006 — Multi-Agent Architecture
 - ADR-0007 — Event-Driven Workflow Engine
 
@@ -362,11 +515,12 @@ The provider layer isolates the rest of the application from model-specific APIs
 
 # References
 
-- Agent-Architecture.md
-- Workflow-Design.md
-- RAG-Architecture.md
-- Deployment.md
-- Observability.md
+- agent-architecture.md
+- workflow-design.md
+- rag-architecture.md
+- deployment.md
+- observability.md
+- evaluation-architecture.md
 
 ---
 
@@ -375,7 +529,8 @@ The provider layer isolates the rest of the application from model-specific APIs
 This decision should be revisited if:
 
 - inference requirements change significantly,
-- new provider standards emerge,
-- or local-first execution no longer meets product goals.
+- a new provider standard emerges,
+- local-first execution no longer meets product goals,
+- or operational complexity outweighs the benefits of provider abstraction.
 
-Until then, the Model Provider Abstraction Layer with Ollama as the default implementation remains the standard approach for AI inference within Tailr.
+Until then, the **LLM Router and Provider Abstraction Layer with Ollama as the default implementation remains the standard inference architecture for Tailr**, providing provider independence, intelligent model routing, structured outputs, and centralized observability.
