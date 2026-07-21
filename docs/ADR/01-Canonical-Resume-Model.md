@@ -338,7 +338,7 @@ Nearly every major subsystem depends on this architectural decision.
 - ADR-0002 — Use FastAPI as the Backend Framework
 - ADR-0003 — Use PostgreSQL as the Primary Database
 - ADR-0004 — Use Qdrant as the Vector Database
-- ADR-0005 — Use LlamaIndex for RAG and Workflows
+- ADR-0005 — Use LlamaIndex as the RAG and Knowledge Framework
 - ADR-0006 — Adopt a Multi-Agent Workflow
 - ADR-0008 — Adopt a Validation & Guardrails Engine
 

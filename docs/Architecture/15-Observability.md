@@ -1,10 +1,7 @@
 # Observability Architecture
 
 **Project:** Tailr
-
 **Version:** 1.0
-
-**Status:** Draft
 
 ---
 

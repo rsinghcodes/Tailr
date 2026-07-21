@@ -1,10 +1,7 @@
 # Agent Architecture
 
 **Project:** Tailr
-
 **Document Version:** 1.0
-
-**Status:** Draft
 
 ---
 

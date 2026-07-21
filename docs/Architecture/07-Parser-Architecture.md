@@ -1,10 +1,7 @@
 # Parser Architecture
 
 **Project:** Tailr
-
-**Version:** 1.1
-
-**Status:** Draft
+**Version:** 1.0
 
 ---
 

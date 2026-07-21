@@ -1,10 +1,7 @@
 # Database Design
 
 **Project:** Tailr
-
 **Version:** 1.1
-
-**Status:** Draft
 
 ---
 

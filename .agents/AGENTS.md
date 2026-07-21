@@ -274,6 +274,8 @@ Contains:
 
 - LlamaIndex
 
+- LangGraph
+
 - HTTP clients
 
 Everything here is replaceable.

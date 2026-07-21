@@ -2,14 +2,14 @@
 
 # 🚀 Tailr
 
-### AI-Powered Resume Tailoring Platform
+### AI-Powered Resume Intelligence Platform
 
-**Optimize your resume for every job description using Multi-Agent AI, RAG, and LLMs — while preserving truth, ATS compatibility, and LaTeX formatting.**
+**Optimize your resume for every job description using Multi-Agent AI, RAG, and LLMs — while preserving truth, enforcing AI safety, and producing ATS-compatible LaTeX output.**
 
-[![Python](https://img.shields.io/badge/Python-3.12+-3776AB?style=for-the-badge&logo=python&logoColor=white)]()
+[![Python](https://img.shields.io/badge/Python-3.13-3776AB?style=for-the-badge&logo=python&logoColor=white)]()
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=for-the-badge&logo=fastapi&logoColor=white)]()
 [![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=nextdotjs)]()
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql)]()
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169E1?style=for-the-badge&logo=postgresql)]()
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker)]()
 [![License](https://img.shields.io/badge/License-MIT-success?style=for-the-badge)]()
 
@@ -25,28 +25,47 @@
 
 **Tailr** is an AI-powered resume optimization platform that automatically tailors a master resume for a specific job description while preserving factual accuracy.
 
-Unlike traditional resume generators, Tailr **never fabricates experience**. Every optimization is grounded in the user's existing resume and validated before generation.
+Unlike traditional resume generators, Tailr **never fabricates experience**. Every optimization is grounded in the user's existing resume, validated through a mandatory Guardrails Engine, and rendered deterministically.
 
-Instead of editing LaTeX directly, Tailr converts the resume into a structured knowledge model, applies AI-powered transformations, validates every modification, and finally renders a compilable LaTeX resume.
+Instead of editing LaTeX directly, Tailr converts the resume into a structured knowledge model, retrieves relevant context via RAG, applies AI-powered transformations through a multi-agent pipeline, validates every modification through guardrails, and renders a compilable LaTeX resume.
 
 ---
 
 # ✨ Features
 
-- 🤖 Multi-Agent AI workflow
+## Core
+
+- 🤖 Multi-Agent AI workflow orchestrated by LangGraph
 - 📄 Native LaTeX (Overleaf) resume support
 - 🎯 ATS optimization & scoring
-- 🧠 RAG-powered contextual rewriting
-- 🔍 Semantic keyword matching
+- 🧠 RAG-powered contextual rewriting via LlamaIndex
+- 🔍 Hybrid retrieval (dense + sparse + reranking)
 - 📊 Resume gap analysis
-- 📈 Explainable AI recommendations
-- 📝 Resume diff viewer
-- 🛡 Hallucination prevention
-- 📑 PDF generation
-- ⚡ FastAPI backend
-- 🎨 Next.js frontend
+- 📈 Explainable AI recommendations with evidence citations
+- 📝 Resume diff viewer & version control
+- 📑 Deterministic PDF generation via latexmk
+
+## AI Safety & Guardrails
+
+- 🛡 Mandatory Guardrails Engine on every AI output
+- 🚫 Hallucination detection against the Canonical Resume Model
+- 🔒 Prompt injection detection & prevention
+- 🔐 PII / secret scanning
+- ✅ Structured output validation (JSON + schema)
+- 🔧 Automatic output repair for recoverable issues
+- 📋 Resume integrity validation (no invented employers, projects, metrics, or dates)
+- 🧪 ATS formatting validation
+- 🔰 LaTeX safety validation (no shell escape, no unsafe commands)
+
+## Platform
+
+- ⚡ Async FastAPI backend
+- 🎨 Next.js frontend with TypeScript
 - 🐳 Dockerized development
 - 📚 OpenAPI documentation
+- 🔭 OpenTelemetry observability
+- 📊 Langfuse tracing
+- 🏠 Local-first AI (Ollama) — cloud LLMs optional
 
 ---
 
@@ -68,22 +87,31 @@ Instead of editing LaTeX directly, Tailr converts the resume into a structured k
              │                       │
              └───────────┬───────────┘
                          ▼
-                 RAG Retrieval Engine
+              LlamaIndex RAG Pipeline
+           (Hybrid Retrieval + Reranking)
                          │
                          ▼
-                 Multi-Agent Pipeline
+              LangGraph Workflow Engine
                          │
-      ┌──────────┬──────────┬──────────┐
-      ▼          ▼          ▼          ▼
- JD Analyzer  Planner   Rewriter  Validator
-      │          │          │          │
-      └──────────┴──────────┴──────────┘
+      ┌──────────┬───────┴──────┬──────────┐
+      ▼          ▼              ▼          ▼
+ JD Analyzer  Planner      Rewriter  Optimizer
+      │          │              │          │
+      └──────────┴──────────────┴──────────┘
+                         │
+                         ▼
+               Guardrails Engine
+          (Hallucination · Injection ·
+           Schema · PII · ATS · LaTeX)
+                         │
+                         ▼
+              Validation Engine
                          │
                          ▼
                   ATS Evaluation
                          │
                          ▼
-                 Resume Renderer
+               Resume Renderer
                          │
                          ▼
                 PDF + LaTeX Output
@@ -93,13 +121,14 @@ Instead of editing LaTeX directly, Tailr converts the resume into a structured k
 
 # 🎯 Design Principles
 
-Tailr follows five engineering principles:
+Tailr follows six architectural principles:
 
-- The master resume is the single source of truth.
-- AI suggests changes; deterministic code validates them.
-- Never fabricate skills, projects, companies, or achievements.
-- LLMs never modify raw LaTeX directly.
-- Every modification must be explainable and reversible.
+1. **Single Source of Truth** — The master resume is the canonical representation. No AI may introduce information that doesn't exist in it.
+2. **Retrieval Before Generation** — LLMs never receive the complete resume. Relevant context is retrieved first via RAG.
+3. **Deterministic Rendering** — LLMs never generate LaTeX. The renderer produces compilable documents deterministically.
+4. **Explainability** — Every AI modification includes reasoning, evidence, confidence, and the affected section.
+5. **Modular Components** — Each component has exactly one responsibility and communicates using typed schemas.
+6. **Local-First AI** — The architecture supports fully offline execution. Cloud LLMs are optional.
 
 ---
 
@@ -109,34 +138,43 @@ Tailr follows five engineering principles:
 Resume.tex
       │
       ▼
-Parser
+Parser → Canonical Resume Model
       │
       ▼
-Structured Resume
+Knowledge Indexing (LlamaIndex → Qdrant)
       │
       ▼
-JD Analyzer
+JD Analyzer Agent
       │
       ▼
-Gap Analysis
+Resume Analyzer Agent
+      │
+      ▼
+Hybrid Retrieval (Dense + BM25 + Reranker)
+      │
+      ▼
+Guardrails — Prompt Injection Scan (on retrieved context)
       │
       ▼
 Planning Agent
       │
       ▼
-Rewrite Agent
+Rewrite Agent → LLM
       │
       ▼
-Validation Engine
+Guardrails Engine (Schema · Hallucination · Integrity · PII · ATS · LaTeX)
+      │
+      ▼
+Validation Engine (Business Rules)
       │
       ▼
 ATS Scoring
       │
       ▼
-Resume Renderer
+Human Approval
       │
       ▼
-Optimized Resume.tex
+LaTeX Renderer → latexmk → PDF
 ```
 
 ---
@@ -145,79 +183,127 @@ Optimized Resume.tex
 
 ## Frontend
 
-- Next.js
+- Next.js (App Router)
 - React
-- TypeScript
+- TypeScript (strict mode)
 - Tailwind CSS
-- React Query
+- TanStack Query
 - Zustand
+- ShadCN UI
+- React Hook Form
+- Zod
 
 ## Backend
 
+- Python 3.13
 - FastAPI
-- Python 3.12+
-- SQLAlchemy 2.0
+- SQLAlchemy 2.x (Async)
 - Alembic
 - Pydantic v2
-- PostgreSQL
-- Redis
+- HTTPX
 
-## AI Stack
+## AI & RAG
 
-- Ollama
-- Qwen3
-- LlamaIndex
-- HuggingFace Embeddings
-- Qdrant Cloud
-- RAG
+- **LlamaIndex** — RAG, indexing, retrieval, embedding, context assembly
+- **LangGraph** — Workflow orchestration, multi-agent coordination, state machines
+- Ollama (local inference)
+- Qwen3 (default model)
+- HuggingFace Embeddings (BAAI/bge-small-en-v1.5)
+
+## Data & Storage
+
+- PostgreSQL 17+
+- Qdrant Cloud (vector search)
+- Redis (caching)
+
+## Observability
+
+- OpenTelemetry
+- Langfuse
+- Prometheus
+- Structured JSON logging
+
+## Evaluation
+
+- RAGAS
 
 ## Infrastructure
 
-- Docker
-- Docker Compose
-- GitHub Actions
-- Ruff
-- MyPy
-- Pytest
+- Docker & Docker Compose
+- GitHub Actions (CI/CD)
+- Ruff (linting)
+- MyPy (type checking)
+- Pytest (testing)
+- latexmk (PDF compilation)
 
 ---
 
 # 🤖 AI Agents
 
-| Agent           | Responsibility                                |
-| --------------- | --------------------------------------------- |
-| JD Analyzer     | Extract requirements from the job description |
-| Resume Analyzer | Analyze the current resume                    |
-| Planner         | Create an optimization plan                   |
-| Retriever       | Retrieve relevant resume context using RAG    |
-| Rewriter        | Rewrite resume sections                       |
-| Validator       | Prevent hallucinations                        |
-| ATS Scorer      | Evaluate ATS compatibility                    |
+| Agent | Responsibility |
+|-------|---------------|
+| JD Analyzer | Extract structured requirements from job descriptions |
+| Resume Analyzer | Analyze strengths, weaknesses, and missing keywords |
+| Planner | Create an evidence-backed optimization strategy |
+| Retriever | Retrieve relevant context via hybrid search (LlamaIndex + Qdrant) |
+| Rewriter | Rewrite resume sections using only retrieved evidence |
+| Guardrails Engine | Validate every AI output for safety, integrity, and schema compliance |
+| Validator | Verify business correctness after guardrails approval |
+| ATS Scorer | Evaluate ATS compatibility and generate recommendations |
+| Critic | Identify weaknesses in the rewritten draft |
+| Optimizer | Improve the draft (output re-validated through Guardrails) |
+
+All agents communicate via **typed JSON events**. Agents never call each other directly — **LangGraph** orchestrates execution.
 
 ---
 
 # 📈 Roadmap
 
-### Phase 1 — MVP
+### Phase 1 — Foundation (MVP)
 
-- Resume parser
-- JD analyzer
-- Resume rewriting
-- PDF generation
-
-### Phase 2
-
-- Multi-agent orchestration
-- Validation engine
+- LaTeX resume parser
+- Canonical Resume Model
+- Knowledge indexing (LlamaIndex + Qdrant)
+- Multi-agent workflow (LangGraph)
+- Resume rewriting with RAG
+- Guardrails Engine (hallucination, injection, PII, ATS, LaTeX safety)
+- Validation Engine
 - ATS scoring
-- Semantic retrieval
+- PDF generation
+- Resume versioning
+- Basic dashboard
 
-### Phase 3
+### Phase 2 — Intelligence
 
-- Multiple resume templates
-- Cover letter generation
-- Batch optimization
-- Recruiter outreach
+- Cover letter generator
+- LinkedIn profile optimizer
+- GitHub repository analyzer
+- Skill gap analysis
+- Multi-resume management
+- Guardrail analytics dashboard
+
+### Phase 3 — Career Copilot
+
+- Interview preparation agent
+- Mock interview feedback
+- Application tracker
+- Personalized learning roadmaps
+- Salary benchmarking
+
+### Phase 4 — Career Intelligence Platform
+
+- Career timeline & knowledge graph
+- Industry trends & hiring intelligence
+- Career health score
+- AI governance center
+
+### Phase 5 — Enterprise
+
+- Multi-tenant architecture
+- Recruiter dashboard
+- University placement portal
+- API platform
+- White-label deployment
 
 ---
 
@@ -236,7 +322,7 @@ cd tailr
 ## Backend
 
 ```bash
-cd backend
+cd apps/backend
 
 python -m venv .venv
 
@@ -260,7 +346,7 @@ pip install -r requirements.txt
 ## Frontend
 
 ```bash
-cd frontend
+cd apps/frontend
 
 npm install
 
@@ -275,26 +361,31 @@ npm run dev
 docker compose up -d
 ```
 
-This starts
+This starts:
 
-- PostgreSQL
 - Redis
 - Ollama
+
+> **Note:** PostgreSQL and Qdrant are configured separately. See the deployment docs for full setup.
 
 ---
 
 # 📊 Development Status
 
-| Module             | Status         |
-| ------------------ | -------------- |
+| Module | Status |
+|--------|--------|
 | Backend Foundation | 🚧 In Progress |
-| Resume Parser      | ⏳ Planned     |
-| Knowledge Model    | ⏳ Planned     |
-| RAG Engine         | ⏳ Planned     |
-| AI Agents          | ⏳ Planned     |
-| Workflow Engine    | ⏳ Planned     |
-| ATS Engine         | ⏳ Planned     |
-| Frontend Dashboard | ⏳ Planned     |
+| Resume Parser | ⏳ Planned |
+| Canonical Resume Model | ⏳ Planned |
+| Knowledge Indexing (LlamaIndex) | ⏳ Planned |
+| RAG Pipeline | ⏳ Planned |
+| AI Agents | ⏳ Planned |
+| Workflow Engine (LangGraph) | ⏳ Planned |
+| Guardrails Engine | ⏳ Planned |
+| Validation Engine | ⏳ Planned |
+| ATS Engine | ⏳ Planned |
+| LaTeX Renderer | ⏳ Planned |
+| Frontend Dashboard | ⏳ Planned |
 
 ---
 
@@ -302,15 +393,36 @@ This starts
 
 Most resume tools simply ask an LLM to rewrite your resume.
 
-Tailr takes a different approach.
+Tailr takes a different approach:
 
-- Parse → Don't prompt raw LaTeX
-- Plan → Think before rewriting
-- Retrieve → Use RAG for context
-- Validate → Prevent hallucinations
-- Render → Generate deterministic LaTeX
+- **Parse** → Convert LaTeX into a structured knowledge model
+- **Index** → Build searchable resume knowledge via LlamaIndex + Qdrant
+- **Retrieve** → Use hybrid RAG for evidence-based context
+- **Plan** → Think before rewriting with a dedicated planning agent
+- **Rewrite** → Optimize sections using only retrieved evidence
+- **Guard** → Validate every AI output through mandatory guardrails
+- **Validate** → Enforce business rules and resume integrity
+- **Score** → Evaluate ATS compatibility with detailed reports
+- **Render** → Generate deterministic, compilable LaTeX
 
-The result is a resume optimization system that is **accurate, explainable, and production-ready**.
+The result is a resume optimization system that is **accurate, explainable, safe, and production-ready**.
+
+---
+
+# 📚 Documentation
+
+Detailed engineering documentation is available in the [`docs/`](docs/) directory:
+
+- [Vision & Mission](docs/Vision.md)
+- [Requirements](docs/Requirements.md)
+- [Product Roadmap](docs/Roadmap.md)
+- [System Architecture](docs/Architecture/01-System-Architecture.md)
+- [Agent Architecture](docs/Architecture/02-Agent-Architecture.md)
+- [RAG Architecture](docs/Architecture/03-Knowledge-RAG-Architecture.md)
+- [Workflow Design](docs/Architecture/06-Workflow-Design.md)
+- [Deployment Architecture](docs/Architecture/14-Deployment.md)
+
+Architecture Decision Records (ADRs) are in [`docs/ADR/`](docs/ADR/).
 
 ---
 
@@ -319,6 +431,8 @@ The result is a resume optimization system that is **accurate, explainable, and 
 Contributions are welcome!
 
 If you'd like to improve Tailr, feel free to open an issue or submit a pull request.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ---
 
@@ -330,7 +444,7 @@ This project is licensed under the MIT License.
 
 <div align="center">
 
-**Built using FastAPI, Next.js, LlamaIndex, Qdrant, Ollama, and modern AI engineering practices.**
+**Built using FastAPI, Next.js, LlamaIndex, LangGraph, Qdrant, Ollama, and modern AI engineering practices.**
 
 ⭐ Star this repository if you find it useful!
 

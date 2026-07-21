@@ -580,7 +580,7 @@ The current design supports these capabilities without changing agent contracts.
 
 # Related ADRs
 
-- ADR-0005 — LlamaIndex as the AI Data and Workflow Framework
+- ADR-0005 — LlamaIndex as the RAG and Knowledge Framework
 - ADR-0006 — Multi-Agent Architecture
 - ADR-0007 — Event-Driven Workflow Engine
 - ADR-0008 — LLM Router and Provider Abstraction Layer

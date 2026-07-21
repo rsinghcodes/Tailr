@@ -46,7 +46,7 @@ The platform therefore requires a dedicated workflow engine that provides determ
 
 # Decision
 
-Tailr adopts an **Event-Driven Workflow Engine** based on **LlamaIndex Workflows** with persistent workflow state stored in PostgreSQL.
+Tailr adopts an **Event-Driven Workflow Engine** based on **LangGraph** with persistent workflow state stored in PostgreSQL.
 
 The Workflow Engine is responsible for:
 
@@ -192,7 +192,7 @@ Events are append-only and never mutated after publication.
 
 # Typed Workflow Events
 
-LlamaIndex Workflow events are represented as typed objects.
+LangGraph workflow events are represented as typed objects.
 
 <CodeBlock language="python" content="class ResumeParsedEvent(Event):
 workflow_id: str
@@ -480,7 +480,7 @@ Workflow Engine
 Multi-Agent Layer
 │
 ▼
-LlamaIndex Workflows
+LangGraph
 │
 ▼
 Qdrant Cloud
@@ -526,7 +526,7 @@ The current architecture is intentionally designed so these capabilities can be 
 
 - ADR-0001 — Canonical Resume Model
 - ADR-0002 — Clean Architecture with Hexagonal Boundaries
-- ADR-0005 — LlamaIndex as the AI Data and Workflow Framework
+- ADR-0005 — LlamaIndex as the RAG and Knowledge Framework
 - ADR-0006 — Multi-Agent Architecture
 - ADR-0008 — Validation & Guardrails Engine
 

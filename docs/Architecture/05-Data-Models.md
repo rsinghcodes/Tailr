@@ -1,10 +1,7 @@
 # Data Models
 
 **Project:** Tailr
-
 **Version:** 1.0
-
-**Status:** Draft
 
 ---
 

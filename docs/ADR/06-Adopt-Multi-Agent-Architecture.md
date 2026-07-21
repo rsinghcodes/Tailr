@@ -586,16 +586,15 @@ Because agents communicate through structured events, they can be moved to separ
 <CodeBlock language="text" content="FastAPI
 │
 ▼
-Workflow Engine
+LangGraph Workflow Engine
 │
 ▼
 Multi-Agent Layer
 │
-▼
-LlamaIndex
-│
-▼
-Qdrant Cloud
+├── LlamaIndex (RAG & Retrieval)
+│       │
+│       ▼
+│   Qdrant Cloud
 │
 ▼
 LLM Provider
@@ -622,7 +621,8 @@ The **Multi-Agent Layer is responsible for AI reasoning**, while **business orch
 - ADR-0002 — Adopt Clean Architecture with Hexagonal Boundaries
 - ADR-0003 — Use FastAPI as the Primary Backend Framework
 - ADR-0004 — Use PostgreSQL as the Primary Transactional Database
-- ADR-0005 — Use LlamaIndex as the AI Data and Workflow Framework
+- ADR-0005 — Use LlamaIndex as the RAG and Knowledge Framework
+- ADR-0007 — Event-Driven Workflow Engine (LangGraph)
 - ADR-0008 — Adopt a Validation & Guardrails Engine
 
 ---

@@ -1,4 +1,4 @@
-# ADR-0005: Use LlamaIndex as the AI Data and Workflow Framework
+# ADR-0005: Use LlamaIndex as the RAG and Knowledge Framework
 
 **Status:** Accepted
 
@@ -22,7 +22,7 @@ The system must:
 - Apply metadata filtering
 - Rerank retrieved results
 - Assemble token-efficient prompts
-- Orchestrate multi-step AI workflows
+- Support workflow integration via clean interfaces
 - Support multiple LLM providers
 - Evaluate retrieval quality
 - Support future AI capabilities
@@ -35,7 +35,7 @@ A dedicated framework is required to manage the complete flow between **structur
 
 # Decision
 
-Tailr will use **LlamaIndex** as the primary **AI data and workflow framework**.
+Tailr will use **LlamaIndex** as the primary **RAG and knowledge framework**.
 
 LlamaIndex is responsible for:
 
@@ -46,9 +46,10 @@ LlamaIndex is responsible for:
 - Retrieval pipelines
 - Hybrid search orchestration
 - Context assembly
-- LLM abstraction
-- Workflow orchestration
+- LLM abstraction (for RAG queries)
 - Evaluation utilities
+
+Workflow orchestration is handled by **LangGraph** (see ADR-0007). LlamaIndex focuses exclusively on the data and retrieval pipeline.
 
 Business logic remains outside LlamaIndex and is implemented in the **Application** and **Domain** layers defined in ADR-0002.
 
@@ -68,9 +69,8 @@ The selected framework must:
 - support metadata filtering,
 - support reranking,
 - work well with structured documents,
-- support asynchronous workflows,
 - provide evaluation tooling,
-- enable future AI workflows.
+- integrate cleanly with external workflow engines (LangGraph).
 
 ---
 
@@ -88,13 +88,16 @@ Canonical Resume Model
 Knowledge Layer
 │
 ▼
-LlamaIndex
+LlamaIndex (Knowledge & Retrieval)
 │
 ├── Embedding Provider
 ├── Qdrant Vector Store
 ├── Hybrid Retriever
 ├── Reranker
-└── Workflow Engine
+└── Context Assembler
+        │
+        ▼
+   LangGraph (Workflow & Orchestration)
         │
         ▼
    AI Agents
@@ -105,7 +108,7 @@ LlamaIndex
         ▼
  Validation Engine"/>
 
-LlamaIndex acts as the bridge between **structured knowledge** and **AI reasoning**.
+LlamaIndex acts as the bridge between **structured knowledge** and **AI reasoning**. Workflow orchestration and multi-agent coordination are handled by **LangGraph** (ADR-0007).
 
 ---
 
@@ -122,7 +125,7 @@ LlamaIndex manages:
 - metadata filtering,
 - reranking,
 - context assembly,
-- workflow state transitions,
+
 - response synthesis,
 - retrieval evaluation.
 
@@ -227,38 +230,19 @@ Qdrant remains the **storage engine**; LlamaIndex remains the **orchestration la
 
 ---
 
-# Workflow Engine
+# Integration with LangGraph
 
-Tailr uses **LlamaIndex Workflows** for orchestrating AI pipelines.
+LlamaIndex handles knowledge retrieval. **LangGraph** (ADR-0007) handles workflow orchestration.
 
-Example:
+LlamaIndex is invoked by LangGraph workflow nodes for:
 
-<CodeBlock language="text" content="Parse Resume
-   ↓
-Index Knowledge
-   ↓
-Generate Plan
-   ↓
-Retrieve Context
-   ↓
-Rewrite Content
-   ↓
-Run Guardrails
-   ↓
-Validate
-   ↓
-Generate ATS Report
-   ↓
-Render PDF"/>
+- embedding generation,
+- vector search,
+- hybrid retrieval,
+- reranking,
+- context assembly.
 
-Benefits:
-
-- typed events,
-- async execution,
-- retry support,
-- workflow observability,
-- state tracking,
-- easier testing.
+LlamaIndex does not control workflow state, retries, or agent scheduling. Those responsibilities belong to LangGraph.
 
 ---
 
@@ -396,7 +380,6 @@ LangChain may be introduced later for specialized orchestration, but not as the 
 - Native Qdrant integration
 - Flexible retrieval pipelines
 - Strong evaluation tooling
-- Built-in workflow engine
 - Active open-source community
 
 ### Disadvantages
@@ -419,7 +402,7 @@ LangChain may be introduced later for specialized orchestration, but not as the 
 - Easier model replacement
 - Built-in evaluation support
 - Simplified vector management
-- Native workflow orchestration
+- Clean integration with LangGraph for orchestration
 - Better observability hooks
 
 ---
@@ -441,7 +424,7 @@ LangChain may be introduced later for specialized orchestration, but not as the 
 | Framework lock-in         | Keep business logic independent          |
 | Retrieval regressions     | Automated evaluation datasets            |
 | Embedding incompatibility | Abstract embedding providers             |
-| Workflow API changes      | Isolate workflow adapters                |
+| Retrieval API changes     | Isolate retrieval adapters               |
 | Performance overhead      | Benchmark and profile retrieval stages   |
 
 ---
@@ -454,15 +437,15 @@ LangChain may be introduced later for specialized orchestration, but not as the 
 Application Layer
 │
 ▼
-Workflow Orchestrator
+LangGraph Workflow Orchestrator
 │
 ▼
-LlamaIndex
+LlamaIndex (RAG Pipeline)
 │
 ├── Qdrant Cloud
 ├── Embedding Provider
 ├── Reranker
-└── LLM Provider
+└── Context Assembler
         │
         ▼
    Guardrails
@@ -488,7 +471,7 @@ The following capabilities can be added incrementally:
 - personalized ranking,
 - feedback-aware retrieval,
 - multi-document reasoning,
-- distributed workflow execution.
+- distributed retrieval execution.
 
 The surrounding architecture isolates these changes from the Domain layer.
 
@@ -521,9 +504,8 @@ The surrounding architecture isolates these changes from the Domain layer.
 
 This decision should be revisited if:
 
-- retrieval requirements significantly exceed the framework’s capabilities,
+- retrieval requirements significantly exceed the framework's capabilities,
 - a different AI data abstraction becomes strategically preferable,
-- workflow orchestration needs exceed LlamaIndex capabilities,
 - or operational complexity outweighs the productivity benefits.
 
-Until then, **LlamaIndex remains the standard AI data and workflow framework for indexing, retrieval, context construction, and workflow orchestration within Tailr**.
+Until then, **LlamaIndex remains the standard RAG and knowledge framework for indexing, retrieval, context construction, and evaluation within Tailr**. Workflow orchestration is handled by LangGraph (ADR-0007).

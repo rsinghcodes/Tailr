@@ -1,4 +1,6 @@
-# AI Engineering Workflow
+---
+description: AI Engineering Workflow
+---
 
 > Project: Tailr
 > Version: 1.0
@@ -17,8 +19,11 @@ The workflow exists to ensure:
 - Minimal technical debt
 - Predictable implementations
 - Safe refactoring
+- AI output safety
 
 No code should be written without following this workflow.
+
+No AI-generated content should ever reach a user, a repository, or the rendering pipeline without passing through the Guardrails Engine.
 
 ---
 
@@ -38,6 +43,8 @@ Review fifth.
 
 Document last.
 
+If the work touches AI-generated content: never trust it first. Guardrail it first.
+
 ---
 
 # Global Workflow
@@ -55,6 +62,10 @@ Read AGENTS.md
 ↓
 
 Read Architecture Documents
+
+↓
+
+Read Guardrails Architecture
 
 ↓
 
@@ -86,6 +97,10 @@ Run Tests
 
 ↓
 
+Run Guardrail Evaluation (if AI-related)
+
+↓
+
 Perform Architecture Review
 
 ↓
@@ -112,6 +127,7 @@ Before writing code, determine:
 - Is the request complete?
 - Are there hidden assumptions?
 - Is the request compatible with architecture?
+- Does this request produce, transform, or persist AI-generated content? If yes, Guardrails involvement is mandatory, not optional, for the rest of this workflow.
 
 If requirements are ambiguous:
 
@@ -141,7 +157,11 @@ Rules
 
 Architecture
 
+Guardrails Architecture
+
 ADRs
+
+If the change touches an AI agent, a prompt, a retriever, or anything that produces content later consumed by a user, the Guardrails Architecture document and the relevant Guardrail Profile definitions must be read before implementation planning begins.
 
 Do not rely on memory.
 
@@ -169,6 +189,10 @@ Testing requirements
 
 Documentation changes
 
+Guardrail validators or profiles affected
+
+Whether a new AI-output-consuming code path is being introduced, and where in that path the Guardrails Engine will be invoked
+
 ---
 
 # STEP 4 — Architecture Validation
@@ -185,7 +209,11 @@ Does this expose infrastructure?
 
 Does this leak business logic?
 
-If yes:
+Does this introduce a path where AI-generated content could reach persistence, validation, or rendering without first passing through the Guardrails Engine?
+
+Does this call Guardrails with the correct profile for the task (`rewrite_strict` / `analysis_standard` / `validation_paranoid`)?
+
+If yes to any violation, or no to the Guardrails questions:
 
 Stop.
 
@@ -215,6 +243,8 @@ Migration strategy
 
 Rollback strategy
 
+For AI-related work: which guardrail profile applies, which validators are relevant, and how the `approved` / `repaired` / `rejected` outcomes are each handled downstream
+
 Implementation should never begin without a design.
 
 ---
@@ -239,6 +269,10 @@ Infrastructure
 
 ↓
 
+Guardrails Integration (for any AI-output-consuming path)
+
+↓
+
 Application
 
 ↓
@@ -252,6 +286,8 @@ Tests
 ↓
 
 Documentation
+
+Guardrails integration is not an afterthought bolted on at the end — it is implemented alongside the Infrastructure layer that produces the AI output it protects, before Application code is written to consume that output.
 
 ---
 
@@ -273,6 +309,8 @@ Avoid duplication.
 
 Do not prematurely optimize.
 
+Never write a bespoke validation shortcut "just for this feature" instead of using the Guardrails Engine — extend the Guardrails Engine with a new validator if existing coverage is insufficient.
+
 ---
 
 # STEP 8 — Logging
@@ -289,6 +327,16 @@ Duration
 
 Request ID
 
+For guardrail executions, also log:
+
+Guardrail profile used
+
+Status (approved / repaired / rejected)
+
+Violation codes
+
+Repair actions taken
+
 Never log:
 
 Passwords
@@ -298,6 +346,8 @@ Tokens
 Secrets
 
 PII
+
+Full resume or job description content
 
 ---
 
@@ -312,6 +362,8 @@ Return standardized responses.
 Include enough diagnostic information.
 
 Never expose stack traces to API users.
+
+A Guardrails rejection must raise a typed `GuardrailRejectionError` carrying violation codes and the affected section. It is translated into a structured, explainable error at the API or workflow boundary — never caught and discarded, and never allowed to fall through as a default "approved."
 
 ---
 
@@ -333,6 +385,13 @@ Uploaded files
 
 LLM responses
 
+LLM responses are validated in two distinct, sequential stages:
+
+1. **Guardrails** — is this output safe, structurally valid, non-hallucinated, free of injected instructions, free of PII/secrets, ATS-compatible, and safe to render?
+2. **Business Validators** — is this output correct according to business rules?
+
+Stage 1 always runs before stage 2. Skipping stage 1 "because stage 2 will catch it" is not acceptable — the two stages check different things.
+
 ---
 
 # STEP 11 — Testing
@@ -348,6 +407,16 @@ Failure tests
 Edge case tests
 
 Regression tests
+
+Every AI-output-consuming feature additionally requires:
+
+Guardrail approved-path test
+
+Guardrail repaired-path test
+
+Guardrail rejected-path test
+
+At least one adversarial test (known prompt-injection pattern, known hallucination scenario, or similarly documented attack)
 
 Coverage should increase over time.
 
@@ -371,6 +440,8 @@ MyPy
 
 Pytest
 
+If the change touches guardrail validators, prompts, or AI-output-consuming code, also run the guardrail evaluation/adversarial suite.
+
 No code should be considered complete otherwise.
 
 ---
@@ -392,6 +463,8 @@ Deployment changes
 Agent behavior changes
 
 Workflow changes
+
+Guardrail validators, profiles, or thresholds change
 
 ---
 
@@ -418,6 +491,8 @@ Error handling
 Logging
 
 Testing
+
+Guardrails coverage and correctness (see Code Review Checklist, Step 10a)
 
 ---
 
@@ -447,6 +522,10 @@ Before considering a feature complete:
 
 ✓ Documentation updated
 
+✓ No AI-output-consuming path that skips the Guardrails Engine
+
+✓ `approved`, `repaired`, and `rejected` outcomes all explicitly handled
+
 ---
 
 # Refactoring Rules
@@ -465,6 +544,8 @@ Test coverage remains.
 
 Never refactor for personal preference.
 
+Refactoring a guardrail validator additionally requires re-running its adversarial test suite and confirming detection rates have not regressed before the refactor is considered complete.
+
 ---
 
 # Database Changes
@@ -482,6 +563,8 @@ Test migration
 Update repositories
 
 Update documentation
+
+Ensure repositories persisting AI-generated content still reject ungated (non-`approved`/`repaired`) input after the schema change
 
 Never manually edit production migrations unless necessary.
 
@@ -503,6 +586,8 @@ Tests
 
 Version compatibility
 
+Guardrail rejection error shape documented, if the endpoint can produce one
+
 ---
 
 # AI Features
@@ -513,9 +598,11 @@ Verify provider abstraction.
 
 Verify prompt templates.
 
+Verify prompt references a guardrail profile.
+
 Verify structured output.
 
-Validate responses.
+Validate responses through the Guardrails Engine before any other consumer sees them.
 
 Add retries.
 
@@ -523,7 +610,7 @@ Handle rate limits.
 
 Handle provider failures.
 
-Never trust model output.
+Never trust model output — "never trust" means invoking Guardrails, not merely writing a comment saying output should be checked.
 
 ---
 
@@ -545,6 +632,8 @@ Citation support
 
 Source attribution
 
+Prompt-injection scanning of retrieved context before it is interpolated into a prompt
+
 ---
 
 # Security Review
@@ -559,7 +648,7 @@ Authentication
 
 Injection attacks
 
-Prompt injection
+Prompt injection — delegated to the Guardrails Prompt Injection Detector, not reimplemented per feature
 
 SQL injection
 
@@ -568,6 +657,10 @@ XSS
 CSRF (if applicable)
 
 Secrets management
+
+PII leakage in AI output — delegated to the Guardrails PII/Secret Scanner
+
+Unsafe LaTeX in AI output — delegated to the Guardrails LaTeX Safety Validator
 
 ---
 
@@ -589,6 +682,8 @@ Concurrency
 
 Caching opportunities
 
+Guardrail validator concurrency (independent validators should run in parallel, not sequentially, where there is no data dependency)
+
 ---
 
 # Final Deliverable
@@ -602,6 +697,8 @@ Why it changed
 Architecture impact
 
 Testing performed
+
+Guardrails impact (new/modified validators, profiles, or coverage) if applicable
 
 Future considerations
 
@@ -627,6 +724,8 @@ When multiple approaches exist:
 
 6. Prefer simplicity.
 
+A design that is simpler or faster but removes, weakens, or bypasses a Guardrails check is not an acceptable trade-off under any ranking above. Guardrails coverage is a hard constraint, not a factor to be traded off against.
+
 Never choose a shortcut that creates technical debt.
 
 ---
@@ -645,11 +744,15 @@ Performance
 
 Testing
 
+Guardrails coverage for AI-generated content
+
 Stop.
 
 Explain why.
 
 Do not fabricate a solution.
+
+Do not ship an AI feature with a "temporarily disabled" or "TODO: add guardrails later" guardrail check. If Guardrails coverage cannot be completed, the feature is not done — stop and explain why, per this policy.
 
 ---
 
@@ -672,4 +775,6 @@ Observable
 Deployable
 
 Production Ready
+
+Guardrail-Compliant — every AI-generated content path is protected, every outcome is handled, and every rejection is explainable
 ```

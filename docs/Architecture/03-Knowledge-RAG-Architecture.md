@@ -1,10 +1,7 @@
 # Knowledge & RAG Architecture
 
 **Project:** Tailr
-
 **Version:** 1.0
-
-**Status:** Draft
 
 ---
 

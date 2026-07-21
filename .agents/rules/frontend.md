@@ -1,87 +1,75 @@
+---
+trigger: always_on
+---
+
 # Frontend Rules
 
 Priority: MEDIUM
 
 ---
 
-Framework
+# Core Principle
 
-Next.js
+The frontend is a **typed, secure, accessibility-first client**.
 
-TypeScript
+It must never contain business logic, trust AI output blindly, or bypass backend validation.
 
----
-
-State
-
-TanStack Query
-
-Zustand
+The frontend consumes validated APIs and renders only sanitized, typed data.
 
 ---
 
-Validation
+# Framework
 
-React Hook Form
+- Next.js (App Router)
+- TypeScript (strict mode)
 
-Zod
+### Required
 
----
+- `strict: true`
+- `noImplicitAny: true`
+- `exactOptionalPropertyTypes: true`
+- `noUncheckedIndexedAccess: true`
 
-Components
-
-Reusable
-
-Accessible
-
-Composable
+JavaScript files are not allowed in production code.
 
 ---
 
-Styling
+# State Management
 
-TailwindCSS
+## Server State
 
-shadcn/ui
+Use **TanStack Query** for:
 
----
+- API requests,
+- caching,
+- pagination,
+- optimistic updates,
+- retries,
+- background refetching.
 
-API
+## Client State
 
-Never call backend directly.
+Use **Zustand** only for UI state such as:
 
-Always use API client.
+- theme,
+- sidebar state,
+- wizard progress,
+- modal visibility,
+- transient form drafts.
 
----
-
-Performance
-
-Lazy loading
-
-Code splitting
-
-Memoization when needed
-
-Image optimization
-
----
-
-Accessibility
-
-Keyboard navigation
-
-ARIA labels
-
-Contrast compliance
-
-Semantic HTML
+Do not store server data in Zustand.
 
 ---
 
-Testing
+# Forms & Validation
 
-React Testing Library
+Use:
 
-Playwright
+- React Hook Form
+- Zod
 
-Vitest
+Validation must exist on both frontend and backend.
+
+Example:
+
+<CodeBlock language=

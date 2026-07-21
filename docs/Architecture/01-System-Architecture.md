@@ -1,10 +1,7 @@
 # System Architecture
 
 **Project:** Tailr
-
 **Document Version:** 1.0
-
-**Status:** Draft
 
 ---
 
@@ -94,7 +91,7 @@ Cloud LLMs remain optional.
                        FastAPI Backend
                              │
                              ▼
-                  LlamaIndex Workflow Engine
+                  LangGraph Workflow Engine
                              │
       ┌──────────────────────┼───────────────────────┐
       │                      │                       │
@@ -224,7 +221,7 @@ Responsibilities
 
 Technology
 
-- LlamaIndex Workflows
+- LangGraph
 
 ---
 
@@ -768,7 +765,7 @@ Ollama
 |---------|------------|
 | Frontend | Next.js |
 | Backend | FastAPI |
-| Workflow | LlamaIndex Workflows |
+| Workflow | LangGraph |
 | RAG | LlamaIndex |
 | Vector DB | Qdrant |
 | Database | PostgreSQL |
@@ -894,7 +891,8 @@ Every AI response passes through the Guardrails Layer before entering the Valida
 | Decision | Reason |
 |-----------|--------|
 | Canonical Resume Model | Single source of truth |
-| LlamaIndex | Native RAG & workflows |
+| LlamaIndex | Native RAG & knowledge retrieval |
+| LangGraph | Workflow orchestration & multi-agent coordination |
 | Qdrant | Open-source vector search |
 | Ollama | Local inference |
 | Hybrid Retrieval | Higher retrieval accuracy |

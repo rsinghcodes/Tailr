@@ -507,7 +507,7 @@ The current abstraction is designed so these capabilities can be added increment
 
 - ADR-0001 — Canonical Resume Model
 - ADR-0002 — Clean Architecture with Hexagonal Boundaries
-- ADR-0005 — LlamaIndex as the AI Data and Workflow Framework
+- ADR-0005 — LlamaIndex as the RAG and Knowledge Framework
 - ADR-0006 — Multi-Agent Architecture
 - ADR-0007 — Event-Driven Workflow Engine
 

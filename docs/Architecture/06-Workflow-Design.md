@@ -1,10 +1,7 @@
 # Workflow Design
 
 **Project:** Tailr
-
-**Version:** 1.1
-
-**Status:** Draft
+**Version:** 1.0
 
 ---
 
@@ -14,7 +11,7 @@ This document defines the execution workflow of Tailr.
 
 It describes how requests move through the system, how components interact, how workflow state evolves, and how failures are handled.
 
-Tailr uses an event-driven workflow orchestrated by **LlamaIndex Workflows**, where deterministic software components and AI agents collaborate through a shared workflow state.
+Tailr uses an event-driven workflow orchestrated by **LangGraph**, where deterministic software components and AI agents collaborate through a shared workflow state. Knowledge retrieval is handled by **LlamaIndex** (ADR-0005).
 
 The workflow is designed to be:
 
