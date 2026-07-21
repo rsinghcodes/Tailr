@@ -212,7 +212,7 @@ LaTeX Renderer → latexmk → PDF
 
 ## Data & Storage
 
-- PostgreSQL 17+
+- PostgreSQL 18
 - Qdrant Cloud (vector search)
 - Redis (caching)
 
@@ -240,18 +240,18 @@ LaTeX Renderer → latexmk → PDF
 
 # 🤖 AI Agents
 
-| Agent | Responsibility |
-|-------|---------------|
-| JD Analyzer | Extract structured requirements from job descriptions |
-| Resume Analyzer | Analyze strengths, weaknesses, and missing keywords |
-| Planner | Create an evidence-backed optimization strategy |
-| Retriever | Retrieve relevant context via hybrid search (LlamaIndex + Qdrant) |
-| Rewriter | Rewrite resume sections using only retrieved evidence |
+| Agent             | Responsibility                                                        |
+| ----------------- | --------------------------------------------------------------------- |
+| JD Analyzer       | Extract structured requirements from job descriptions                 |
+| Resume Analyzer   | Analyze strengths, weaknesses, and missing keywords                   |
+| Planner           | Create an evidence-backed optimization strategy                       |
+| Retriever         | Retrieve relevant context via hybrid search (LlamaIndex + Qdrant)     |
+| Rewriter          | Rewrite resume sections using only retrieved evidence                 |
 | Guardrails Engine | Validate every AI output for safety, integrity, and schema compliance |
-| Validator | Verify business correctness after guardrails approval |
-| ATS Scorer | Evaluate ATS compatibility and generate recommendations |
-| Critic | Identify weaknesses in the rewritten draft |
-| Optimizer | Improve the draft (output re-validated through Guardrails) |
+| Validator         | Verify business correctness after guardrails approval                 |
+| ATS Scorer        | Evaluate ATS compatibility and generate recommendations               |
+| Critic            | Identify weaknesses in the rewritten draft                            |
+| Optimizer         | Improve the draft (output re-validated through Guardrails)            |
 
 All agents communicate via **typed JSON events**. Agents never call each other directly — **LangGraph** orchestrates execution.
 
@@ -372,20 +372,20 @@ This starts:
 
 # 📊 Development Status
 
-| Module | Status |
-|--------|--------|
-| Backend Foundation | 🚧 In Progress |
-| Resume Parser | ⏳ Planned |
-| Canonical Resume Model | ⏳ Planned |
-| Knowledge Indexing (LlamaIndex) | ⏳ Planned |
-| RAG Pipeline | ⏳ Planned |
-| AI Agents | ⏳ Planned |
-| Workflow Engine (LangGraph) | ⏳ Planned |
-| Guardrails Engine | ⏳ Planned |
-| Validation Engine | ⏳ Planned |
-| ATS Engine | ⏳ Planned |
-| LaTeX Renderer | ⏳ Planned |
-| Frontend Dashboard | ⏳ Planned |
+| Module                          | Status         |
+| ------------------------------- | -------------- |
+| Backend Foundation              | 🚧 In Progress |
+| Resume Parser                   | ⏳ Planned     |
+| Canonical Resume Model          | ⏳ Planned     |
+| Knowledge Indexing (LlamaIndex) | ⏳ Planned     |
+| RAG Pipeline                    | ⏳ Planned     |
+| AI Agents                       | ⏳ Planned     |
+| Workflow Engine (LangGraph)     | ⏳ Planned     |
+| Guardrails Engine               | ⏳ Planned     |
+| Validation Engine               | ⏳ Planned     |
+| ATS Engine                      | ⏳ Planned     |
+| LaTeX Renderer                  | ⏳ Planned     |
+| Frontend Dashboard              | ⏳ Planned     |
 
 ---
 

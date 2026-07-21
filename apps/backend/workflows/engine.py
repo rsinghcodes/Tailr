@@ -4,6 +4,7 @@ from workflows.state import WorkflowState, WorkflowStatus
 from guardrails.pipeline import GuardrailsEngine
 from guardrails.base import GuardrailContext, GuardrailResultStatus
 from guardrails.exceptions import GuardrailRejectionError
+from validators.engine import ValidationEngine
 
 logger = logging.getLogger(__name__)
 
@@ -11,14 +12,14 @@ logger = logging.getLogger(__name__)
 class WorkflowEngine:
     """LangGraph-aligned event-driven workflow engine orchestrating AI agents, guardrails, and validation."""
 
-    def __init__(self, guardrails_engine: GuardrailsEngine | None = None):
+    def __init__(self, guardrails_engine: GuardrailsEngine | None = None, validation_engine: ValidationEngine | None = None):
         self.guardrails = guardrails_engine or GuardrailsEngine()
+        self.validation_engine = validation_engine or ValidationEngine()
 
     async def run_step_parse_resume(self, state: WorkflowState) -> WorkflowState:
         state.status = WorkflowStatus.PARSING
         state.telemetry.step_history.append("PARSING")
         logger.info("Executing parse_resume workflow step", extra={"workflow_id": state.workflow_id})
-        # Simulate parsing to canonical dict if text present
         if state.raw_resume_text:
             state.canonical_resume = {
                 "summary": "Software Engineer experienced in Python, FastAPI, and Cloud systems.",
@@ -118,7 +119,8 @@ class WorkflowEngine:
         state.status = WorkflowStatus.VALIDATING
         state.telemetry.step_history.append("VALIDATING")
         logger.info("Executing validation workflow step", extra={"workflow_id": state.workflow_id})
-        state.validation_report = {"status": "PASSED", "checks_run": 8, "violations": []}
+        report = await self.validation_engine.validate(state.rewritten_resume, state.canonical_resume)
+        state.validation_report = report.model_dump()
         return state
 
     async def run_step_ats_analysis(self, state: WorkflowState) -> WorkflowState:

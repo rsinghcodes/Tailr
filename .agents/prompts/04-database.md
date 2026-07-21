@@ -12,7 +12,7 @@ The implementation must follow:
 - Domain Driven Design (DDD)
 - Async-first design
 - SQLAlchemy 2.x
-- PostgreSQL 17+
+- PostgreSQL 18
 - Pydantic v2
 - Structured logging
 - OpenTelemetry-ready observability

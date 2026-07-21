@@ -3,8 +3,6 @@
 **Project:** Tailr
 **Document Version:** 1.0
 
----
-
 # 1. Purpose
 
 This document defines the intelligent reasoning architecture of Tailr.
@@ -12,8 +10,6 @@ This document defines the intelligent reasoning architecture of Tailr.
 Unlike traditional AI applications that rely on a single LLM prompt, Tailr decomposes resume optimization into specialized reasoning agents coordinated through a workflow engine.
 
 Each agent has a single responsibility and communicates using structured data models.
-
----
 
 # 2. Design Philosophy
 
@@ -35,14 +31,9 @@ Deterministic software handles:
 
 This separation minimizes hallucinations and increases system reliability.
 
----
-
 # 3. Workflow Overview
 
 ```
-
-```
-
 START
 │
 ▼
@@ -80,8 +71,6 @@ END
 
 ```
 
----
-
 # 4. Agent Communication
 
 All agents communicate through typed Pydantic models.
@@ -106,7 +95,7 @@ RewriteOutput
 
 ValidationInput
 
-````
+```
 
 This improves:
 
@@ -115,20 +104,16 @@ This improves:
 - debugging
 - observability
 
----
-
 # 5. AI Agents
 
 Tailr contains four primary AI agents.
 
-| Agent | Responsibility |
-|---------|---------------|
+| Agent       | Responsibility              |
+| ----------- | --------------------------- |
 | JD Analyzer | Understand job descriptions |
-| Planner | Decide what should change |
-| Rewriter | Rewrite resume content |
-| ATS Advisor | Explain ATS improvements |
-
----
+| Planner     | Decide what should change   |
+| Rewriter    | Rewrite resume content      |
+| ATS Advisor | Explain ATS improvements    |
 
 # 6. JD Analyzer Agent
 
@@ -136,13 +121,9 @@ Tailr contains four primary AI agents.
 
 Convert an unstructured Job Description into structured requirements.
 
----
-
 ### Inputs
 
 Job Description
-
----
 
 ### Outputs
 
@@ -155,9 +136,7 @@ Job Description
   "keywords": [],
   "soft_skills": []
 }
-````
-
----
+```
 
 ### Responsibilities
 
@@ -171,15 +150,11 @@ Extract
 - Certifications
 - Soft skills
 
----
-
 ### Constraints
 
 Must never rewrite resumes.
 
 Must never infer user experience.
-
----
 
 ### Success Criteria
 
@@ -187,8 +162,6 @@ Must never infer user experience.
 - Consistent schema
 - High recall
 - Deterministic JSON
-
----
 
 # 7. Planning Agent
 
@@ -200,8 +173,6 @@ The planner never edits text.
 
 It only creates an optimization strategy.
 
----
-
 ### Inputs
 
 Canonical Resume
@@ -209,8 +180,6 @@ Canonical Resume
 Job Requirement Model
 
 Retrieved Knowledge
-
----
 
 ### Outputs
 
@@ -223,8 +192,6 @@ Retrieved Knowledge
 }
 ```
 
----
-
 ### Responsibilities
 
 Decide
@@ -234,16 +201,12 @@ Decide
 - bullets to reorder
 - projects to prioritize
 
----
-
 ### Forbidden Actions
 
 - rewrite text
 - invent skills
 - fabricate projects
 - modify dates
-
----
 
 ### Example
 
@@ -257,15 +220,11 @@ Reason
 Agentic AI appears in JD
 ```
 
----
-
 # 8. Rewrite Agent
 
 ## Purpose
 
 Rewrite resume content according to the approved plan.
-
----
 
 ### Inputs
 
@@ -275,13 +234,9 @@ Rewrite Plan
 
 Retrieved Context
 
----
-
 ### Outputs
 
 Updated Resume Model
-
----
 
 ### Responsibilities
 
@@ -289,8 +244,6 @@ Updated Resume Model
 - strengthen action verbs
 - improve ATS alignment
 - preserve facts
-
----
 
 ### Constraints
 
@@ -302,8 +255,6 @@ Cannot
 - invent dates
 - invent technologies
 
----
-
 ### Prompt Philosophy
 
 Rewrite only.
@@ -311,8 +262,6 @@ Rewrite only.
 Never reason about whether a section should change.
 
 Planning has already happened.
-
----
 
 # 9. Guardrails Engine
 
@@ -322,16 +271,12 @@ Ensure every AI-generated output is safe, structurally valid, and compliant with
 
 The Guardrails Engine is deterministic software and is executed for every AI response.
 
----
-
 ### Inputs
 
 - Rewrite Output
 - Workflow State
 - Validation Policies
 - Resume Schema
-
----
 
 ### Outputs
 
@@ -343,8 +288,6 @@ The Guardrails Engine is deterministic software and is executed for every AI res
   "metadata": {}
 }
 ```
-
----
 
 ### Responsibilities
 
@@ -359,8 +302,6 @@ Validate
 - ATS formatting
 - Business policies
 
----
-
 ### Repair Strategy
 
 If possible the engine will
@@ -371,8 +312,6 @@ If possible the engine will
 
 Otherwise the workflow is rejected.
 
----
-
 ### Constraints
 
 Must never rewrite resume content.
@@ -381,15 +320,11 @@ Must never invent information.
 
 Must remain deterministic.
 
----
-
 # 10. ATS Advisor Agent
 
 ## Purpose
 
 Explain optimization quality.
-
----
 
 ### Inputs
 
@@ -398,8 +333,6 @@ Original Resume
 Optimized Resume
 
 Job Requirements
-
----
 
 ### Outputs
 
@@ -412,8 +345,6 @@ Job Requirements
 }
 ```
 
----
-
 ### Responsibilities
 
 Generate
@@ -423,19 +354,13 @@ Generate
 - readability analysis
 - ATS explanation
 
----
-
 ### Constraints
 
 Cannot modify resumes.
 
----
-
 # 11. Software Components
 
 These are **not AI agents**.
-
----
 
 ## Resume Parser
 
@@ -447,8 +372,6 @@ LaTeX
 
 Canonical Resume Model
 
----
-
 ## Knowledge Builder
 
 Creates
@@ -457,8 +380,6 @@ Creates
 - chunks
 - metadata
 - vector indexes
-
----
 
 ## Hybrid Retriever
 
@@ -469,8 +390,6 @@ Performs
 - reranking
 
 No LLM involved.
-
----
 
 ## Guardrails Engine
 
@@ -489,8 +408,6 @@ Checks
 
 The Guardrails Engine is provider-independent and reusable across all AI workflows.
 
----
-
 ## Validation Engine
 
 Responsible for business validation after Guardrails have approved the AI output.
@@ -503,13 +420,9 @@ Checks
 - business policies
 - deterministic constraints
 
----
-
 ## Renderer
 
 Generates deterministic LaTeX.
-
----
 
 ## PDF Compiler
 
@@ -520,8 +433,6 @@ resume.tex
 ↓
 
 resume.pdf
-
----
 
 # 12. Shared Memory
 
@@ -555,8 +466,6 @@ ats_report
 
 Every agent reads only the fields it requires.
 
----
-
 # 13. Context Window Strategy
 
 Instead of sending the entire resume,
@@ -564,19 +473,19 @@ Instead of sending the entire resume,
 Tailr retrieves only relevant information.
 
 ```
-Job Description
+                  Job Description
 
-↓
+                     ↓
 
-Retriever
+                  Retriever
 
-↓
+                     ↓
 
-Top 5 Resume Chunks
+              Top 5 Resume Chunks
 
-↓
+                     ↓
 
-Planner
+                  Planner
 ```
 
 Benefits
@@ -585,13 +494,9 @@ Benefits
 - lower latency
 - higher accuracy
 
----
-
 # 14. Failure Handling
 
 Every agent defines explicit failure modes.
-
----
 
 ## JD Analyzer
 
@@ -603,8 +508,6 @@ Recovery
 
 Retry extraction
 
----
-
 ## Planner
 
 Failure
@@ -614,8 +517,6 @@ Invalid JSON
 Recovery
 
 Retry with schema enforcement
-
----
 
 ## Rewriter
 
@@ -631,8 +532,6 @@ Validation rejection
 
 Retry
 
----
-
 ## ATS Advisor
 
 Failure
@@ -642,8 +541,6 @@ Incomplete report
 Recovery
 
 Regenerate explanation
-
----
 
 ## Guardrails Engine
 
@@ -659,8 +556,6 @@ Reject response
 
 Retry with hardened prompt
 
----
-
 Failure
 
 Invalid schema
@@ -672,8 +567,6 @@ Attempt automatic repair
 ↓
 
 Revalidate
-
----
 
 Failure
 
@@ -687,8 +580,6 @@ Reject output
 
 Retry generation
 
----
-
 Failure
 
 PII leakage
@@ -700,8 +591,6 @@ Sanitize output
 ↓
 
 Continue validation
-
----
 
 # 15. Agent Boundaries
 
@@ -715,8 +604,6 @@ Continue validation
 | Validation Engine | Guardrail Report | Validation Report     |
 
 No agent may directly modify another agent's output.
-
----
 
 # 16. Model Selection
 
@@ -732,8 +619,6 @@ Example
 | ATS Analysis  | Gemma 3   |
 
 The architecture allows model replacement without changing workflows.
-
----
 
 # 17. Prompt Contracts
 
@@ -773,8 +658,6 @@ Every AI response must satisfy the following before acceptance:
 - No prompt injection execution
 - ATS compliant
 
----
-
 # 18. Observability
 
 Each agent emits telemetry.
@@ -795,8 +678,6 @@ Metrics
 
 These metrics are stored in Langfuse for monitoring and evaluation.
 
----
-
 # 19. Human-in-the-Loop
 
 The workflow pauses before rendering.
@@ -809,8 +690,6 @@ Users can
 - regenerate individual sections
 
 AI suggestions are never applied silently.
-
----
 
 # 20. Future Agents
 
@@ -838,8 +717,6 @@ Future workflow components may also introduce specialized Guardrails modules suc
 - Output Repair Engine
 
 These modules integrate into the Guardrails Engine without affecting existing AI agents.
-
----
 
 # 21. Summary
 

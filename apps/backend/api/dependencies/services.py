@@ -14,6 +14,11 @@ from domain.shared.llm_provider import LLMProvider
 from infrastructure.ollama.llm_provider import OllamaProvider
 from prompts.registry import PromptRegistry
 
+from infrastructure.repositories.workflow_repository import WorkflowRepositoryImpl
+from infrastructure.repositories.guardrail_repository import GuardrailRepositoryImpl
+from application.workflow.service import WorkflowApplicationService
+from application.guardrails.service import GuardrailApplicationService
+
 # Registry and Provider DI Singletons
 _prompt_registry = PromptRegistry()
 _llm_provider = OllamaProvider()
@@ -55,3 +60,24 @@ async def get_job_description_service(
     analyzer: JobDescriptionAnalyzer = Depends(get_job_description_analyzer),
 ) -> JobDescriptionService:
     return JobDescriptionService(repo, analyzer)
+
+
+async def get_workflow_repository(session: AsyncSession = Depends(get_db)) -> WorkflowRepositoryImpl:
+    return WorkflowRepositoryImpl(session)
+
+
+async def get_guardrail_repository(session: AsyncSession = Depends(get_db)) -> GuardrailRepositoryImpl:
+    return GuardrailRepositoryImpl(session)
+
+
+async def get_workflow_service(
+    workflow_repo: WorkflowRepositoryImpl = Depends(get_workflow_repository),
+    guardrail_repo: GuardrailRepositoryImpl = Depends(get_guardrail_repository),
+) -> WorkflowApplicationService:
+    return WorkflowApplicationService(workflow_repo=workflow_repo, guardrail_repo=guardrail_repo)
+
+
+async def get_guardrail_service(
+    guardrail_repo: GuardrailRepositoryImpl = Depends(get_guardrail_repository),
+) -> GuardrailApplicationService:
+    return GuardrailApplicationService(guardrail_repo=guardrail_repo)

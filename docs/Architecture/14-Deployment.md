@@ -267,10 +267,6 @@ No internal services are publicly exposed.
 Persistent volumes
 
 ```
-postgres_data
-
-qdrant_data
-
 redis_data
 
 ollama_models

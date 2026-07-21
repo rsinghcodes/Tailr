@@ -12,7 +12,7 @@ Priority: CRITICAL
 
 Primary Database
 
-PostgreSQL 17+
+PostgreSQL 18
 
 ORM
 

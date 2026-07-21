@@ -1,16 +1,14 @@
 import logging
-import uuid
 from typing import Any
-from fastapi import APIRouter, Depends, HTTPException, Body
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from workflows.state import WorkflowState, WorkflowStatus
-from workflows.engine import WorkflowEngine
+from application.workflow.service import WorkflowApplicationService
+from api.dependencies.services import get_workflow_service
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Workflows"])
-engine = WorkflowEngine()
 
 
 class WorkflowStartRequest(BaseModel):
@@ -28,15 +26,16 @@ class WorkflowResponse(BaseModel):
 
 
 @router.post("/workflows", response_model=WorkflowResponse, status_code=201)
-async def start_workflow(request: WorkflowStartRequest):
+async def start_workflow(
+    request: WorkflowStartRequest,
+    workflow_service: WorkflowApplicationService = Depends(get_workflow_service),
+):
     """Start an event-driven resume optimization workflow."""
-    state = WorkflowState(
-        raw_resume_text=request.raw_resume_text,
-        job_description_text=request.job_description_text,
-    )
-
     try:
-        final_state = await engine.execute_workflow(state)
+        final_state = await workflow_service.start_workflow(
+            raw_resume_text=request.raw_resume_text,
+            job_description_text=request.job_description_text,
+        )
         return WorkflowResponse(
             workflow_id=final_state.workflow_id,
             status=final_state.status.value,
