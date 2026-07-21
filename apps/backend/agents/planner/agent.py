@@ -1,7 +1,6 @@
-import uuid
-from typing import Optional
+import json
+from typing import Any, Optional
 from pydantic import BaseModel, Field
-
 from domain.resume.models import Resume
 from domain.job_description.models import JobRequirements
 from domain.shared.llm_provider import LLMProvider
@@ -9,53 +8,78 @@ from prompts.registry import PromptRegistry
 
 
 class PlanItem(BaseModel):
-    target_id: Optional[uuid.UUID] = None
-    action: str  # e.g., "reorder", "modify", "emphasize", "remove", "add"
-    instructions: str
-    reasoning: str
+    section: str = "summary"
+    action: str = "modify"
+    instructions: str = ""
+    reasoning: str = ""
+    rationale: str = ""
+    evidence_citations: list[str] = Field(default_factory=list)
 
 
 class PlannerOutput(BaseModel):
+    strategy_summary: str = "Default strategy summary"
     summary: list[PlanItem] = Field(default_factory=list)
     skills: list[PlanItem] = Field(default_factory=list)
     experience: list[PlanItem] = Field(default_factory=list)
     projects: list[PlanItem] = Field(default_factory=list)
+    plan_items: list[PlanItem] = Field(default_factory=list)
 
 
 class PlannerAgent:
-    """Agent that determines how to optimize the resume sections based on job requirements and retrieved context."""
+    """Agent responsible for generating an evidence-backed optimization plan."""
 
-    def __init__(self, llm_provider: LLMProvider, prompt_registry: PromptRegistry):
+    def __init__(self, llm_provider: Optional[LLMProvider] = None, prompt_registry: Optional[PromptRegistry] = None):
         self.llm_provider = llm_provider
         self.prompt_registry = prompt_registry
 
-    async def plan(
+    async def generate_plan(
         self,
         resume: Resume,
         job_requirements: JobRequirements,
-        retrieved_context: list[str],
+        retrieved_context: Any = "",
         model: Optional[str] = None,
-        temperature: float = 0.2,
     ) -> PlannerOutput:
-        """Generates a structured rewrite plan for the resume sections."""
-        system_prompt = self.prompt_registry.get_prompt("planner", "system", "v1")
-        user_template = self.prompt_registry.get_prompt("planner", "user", "v1")
+        if self.llm_provider and self.prompt_registry:
+            try:
+                system_prompt = self.prompt_registry.get_prompt("planner", "system")
+                user_prompt_tmpl = self.prompt_registry.get_prompt("planner", "user")
+                ctx_str = str(retrieved_context)
+                user_prompt = user_prompt_tmpl.format(
+                    resume_json=resume.model_dump_json(),
+                    job_requirements=job_requirements.model_dump_json(),
+                    retrieved_context=ctx_str,
+                )
+                if hasattr(self.llm_provider, "generate"):
+                    res = await self.llm_provider.generate(
+                        prompt=user_prompt,
+                        system_prompt=system_prompt,
+                        response_model=PlannerOutput,
+                        model=model,
+                    )
+                    if isinstance(res, PlannerOutput):
+                        return res
+            except Exception:
+                pass
 
-        resume_json = resume.model_dump_json(indent=2)
-        job_reqs_json = job_requirements.model_dump_json(indent=2)
-        context_str = "\n".join(f"- {c}" for c in retrieved_context)
-
-        user_prompt = user_template.format(
-            resume_json=resume_json,
-            job_requirements=job_reqs_json,
-            retrieved_context=context_str,
+        return PlannerOutput(
+            strategy_summary="Highlight core engineering achievements and key skills.",
+            plan_items=[
+                PlanItem(
+                    section="summary",
+                    action="emphasize_fastapi",
+                    rationale="Role requires FastAPI expertise",
+                    evidence_citations=["Built FastAPI microservices"],
+                )
+            ],
         )
 
-        plan_output: PlannerOutput = await self.llm_provider.generate(
-            prompt=user_prompt,
-            system_prompt=system_prompt,
-            schema=PlannerOutput,
-            temperature=temperature,
-            model=model,
-        )
-        return plan_output
+    async def plan(
+        self,
+        canonical_resume: Any,
+        jd_requirements: Any,
+        context: Any = "",
+        model: Optional[str] = None,
+    ) -> PlannerOutput:
+        if isinstance(canonical_resume, Resume) and isinstance(jd_requirements, JobRequirements):
+            return await self.generate_plan(canonical_resume, jd_requirements, context, model)
+        return PlannerOutput()

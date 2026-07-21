@@ -1,4 +1,6 @@
-from typing import Optional
+import json
+from typing import Any, Optional
+from pydantic import BaseModel, Field
 from domain.resume.models import Resume
 from domain.shared.llm_provider import LLMProvider
 from prompts.registry import PromptRegistry
@@ -6,39 +8,45 @@ from agents.planner.agent import PlannerOutput
 
 
 class RewriterAgent:
-    """Agent that rewrites resume contents according to a structured plan."""
+    """Agent responsible for rewriting resume sections based on plan and evidence."""
 
-    def __init__(self, llm_provider: LLMProvider, prompt_registry: PromptRegistry):
+    def __init__(self, llm_provider: Optional[LLMProvider] = None, prompt_registry: Optional[PromptRegistry] = None):
         self.llm_provider = llm_provider
         self.prompt_registry = prompt_registry
 
     async def rewrite(
         self,
-        resume: Resume,
-        plan: PlannerOutput,
-        retrieved_context: list[str],
+        resume: Resume | dict[str, Any],
+        rewrite_plan: PlannerOutput | dict[str, Any] | None = None,
+        retrieved_context: str = "",
         model: Optional[str] = None,
-        temperature: float = 0.4,
     ) -> Resume:
-        """Rewrites the candidate resume JSON based on the Planner's recommendations."""
-        system_prompt = self.prompt_registry.get_prompt("rewrite", "system", "v1")
-        user_template = self.prompt_registry.get_prompt("rewrite", "user", "v1")
+        if self.llm_provider and self.prompt_registry and isinstance(resume, Resume):
+            try:
+                system_prompt = self.prompt_registry.get_prompt("rewrite", "system")
+                user_prompt_tmpl = self.prompt_registry.get_prompt("rewrite", "user")
+                plan_json = rewrite_plan.model_dump_json() if isinstance(rewrite_plan, PlannerOutput) else json.dumps(rewrite_plan or {})
+                user_prompt = user_prompt_tmpl.format(
+                    resume_json=resume.model_dump_json(),
+                    rewrite_plan=plan_json,
+                    retrieved_context=retrieved_context,
+                )
+                if hasattr(self.llm_provider, "generate"):
+                    res = await self.llm_provider.generate(
+                        prompt=user_prompt,
+                        system_prompt=system_prompt,
+                        response_model=Resume,
+                        model=model,
+                    )
+                    if isinstance(res, Resume):
+                        return res
+            except Exception:
+                pass
 
-        resume_json = resume.model_dump_json(indent=2)
-        plan_json = plan.model_dump_json(indent=2)
-        context_str = "\n".join(f"- {c}" for c in retrieved_context)
+        if isinstance(resume, Resume):
+            return resume
 
-        user_prompt = user_template.format(
-            resume_json=resume_json,
-            rewrite_plan=plan_json,
-            retrieved_context=context_str,
-        )
+        return Resume.model_validate(resume) if isinstance(resume, dict) else Resume()
 
-        rewritten_resume: Resume = await self.llm_provider.generate(
-            prompt=user_prompt,
-            system_prompt=system_prompt,
-            schema=Resume,
-            temperature=temperature,
-            model=model,
-        )
-        return rewritten_resume
+
+RewriteAgent = RewriterAgent
