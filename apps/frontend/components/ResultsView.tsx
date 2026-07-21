@@ -1,7 +1,7 @@
 "use client";
 
 import { useUIStore } from "@/lib/store";
-import { ShieldCheck, Target, FileText, CheckCircle2, ArrowLeft, Copy, Sparkles } from "lucide-react";
+import { ShieldCheck, Target, FileText, CheckCircle2, ArrowLeft, Copy, Cpu } from "lucide-react";
 import { useState } from "react";
 
 export function ResultsView() {
@@ -10,20 +10,18 @@ export function ResultsView() {
 
   if (!activeWorkflowResponse) {
     return (
-      <div className="glass-panel rounded-3xl p-12 text-center space-y-6">
-        <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center mx-auto text-slate-500">
-          <FileText className="w-8 h-8" />
-        </div>
+      <div className="min-panel p-12 text-center space-y-4">
+        <FileText className="w-8 h-8 text-zinc-600 mx-auto" />
         <div>
-          <h3 className="text-xl font-bold text-white">No Active Tailoring Results</h3>
-          <p className="text-sm text-slate-400 mt-1">Run the tailoring wizard to generate an ATS-optimized, Guardrail-verified resume.</p>
+          <h3 className="text-base font-semibold text-zinc-200">No Active Tailoring Results</h3>
+          <p className="text-xs text-zinc-400 mt-1">Run the tailoring wizard to generate an ATS-optimized, Guardrail-verified resume.</p>
         </div>
         <button
           onClick={() => {
             setWizardStep(1);
             setActiveTab("wizard");
           }}
-          className="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-medium shadow-lg shadow-sky-500/20"
+          className="min-button min-button-primary"
         >
           Open Tailoring Wizard
         </button>
@@ -31,7 +29,7 @@ export function ResultsView() {
     );
   }
 
-  const { guardrail_report, ats_report, rewritten_resume, workflow_id } = activeWorkflowResponse;
+  const { guardrail_report, ats_report, rewritten_resume, workflow_id, telemetry } = activeWorkflowResponse;
 
   const handleCopySummary = () => {
     if (rewritten_resume?.summary) {
@@ -42,104 +40,110 @@ export function ResultsView() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Top Header & Badges */}
-      <div className="glass-panel rounded-3xl p-8 border border-slate-800 space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="min-panel p-6 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-800 pb-4">
           <div>
-            <div className="flex items-center gap-2 text-xs font-mono text-slate-400 mb-1">
+            <div className="flex items-center gap-2 text-xs font-mono text-zinc-400 mb-1">
               <span>WORKFLOW ID:</span>
-              <span className="text-sky-400 font-bold">{workflow_id}</span>
+              <span className="text-zinc-200 font-bold">{workflow_id}</span>
             </div>
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-              <Sparkles className="w-6 h-6 text-sky-400" /> Tailored Resume Results
+            <h2 className="text-xl font-semibold text-zinc-100 flex items-center gap-2">
+              <FileText className="w-5 h-5 text-zinc-400" /> Tailored Resume Results
             </h2>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => {
                 setWizardStep(1);
                 setActiveTab("wizard");
               }}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-sm font-medium hover:bg-slate-700 transition-all"
+              className="min-button min-button-secondary text-xs"
             >
-              <ArrowLeft className="w-4 h-4" /> Tailor Another
+              <ArrowLeft className="w-3.5 h-3.5" /> Tailor Another
             </button>
           </div>
         </div>
 
+        {/* Model Architecture Allocation Telemetry */}
+        {telemetry?.model_versions && (
+          <div className="p-3 bg-zinc-900 border border-zinc-800 rounded-md font-mono text-xs space-y-1">
+            <div className="text-zinc-500 font-semibold flex items-center gap-1.5">
+              <Cpu className="w-3.5 h-3.5" /> AI Model Allocation Architecture:
+            </div>
+            <div className="flex flex-wrap gap-3 text-zinc-300">
+              {Object.entries(telemetry.model_versions).map(([agent, model]) => (
+                <span key={agent} className="text-[11px]">
+                  <strong className="text-zinc-400">{agent}:</strong> {model}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Status Highlights */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {/* Guardrails Safety Badge */}
-          <div className="p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-start gap-4">
-            <div className="p-3 rounded-xl bg-emerald-500/20 text-emerald-400">
-              <ShieldCheck className="w-6 h-6" />
+          <div className="p-4 rounded-md bg-zinc-900 border border-zinc-800 space-y-1">
+            <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400 uppercase">
+              <ShieldCheck className="w-4 h-4" /> Guardrails Status: {guardrail_report?.status || "APPROVED"}
             </div>
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-emerald-400">Guardrails Engine Status</div>
-              <div className="text-lg font-bold text-white mt-0.5 capitalize">
-                {guardrail_report?.status || "APPROVED"}
-              </div>
-              <p className="text-xs text-slate-400 mt-1">
-                Passed 8 safety checks: Grounded against Canonical Model, Prompt Injection Scan, PII Scan, and LaTeX Safety.
-              </p>
-            </div>
+            <p className="text-xs text-zinc-400">
+              Passed 8 safety checks: Grounded against Canonical Model, Prompt Injection Scan, PII Scan, and LaTeX Safety.
+            </p>
           </div>
 
           {/* ATS Compatibility Badge */}
-          <div className="p-5 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-start gap-4">
-            <div className="p-3 rounded-xl bg-sky-500/20 text-sky-400">
-              <Target className="w-6 h-6" />
+          <div className="p-4 rounded-md bg-zinc-900 border border-zinc-800 space-y-1">
+            <div className="flex items-center gap-2 text-xs font-semibold text-zinc-200 uppercase font-mono">
+              <Target className="w-4 h-4 text-zinc-400" /> ATS Score: {ats_report?.score || 92} / 100
             </div>
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-sky-400">ATS Score Card</div>
-              <div className="text-lg font-bold text-white mt-0.5">{ats_report?.score || 92} / 100</div>
-              <p className="text-xs text-slate-400 mt-1">
-                Keyword Coverage: {Math.round((ats_report?.keyword_coverage || 0.88) * 100)}%. Fully compliant with ATS syntax.
-              </p>
-            </div>
+            <p className="text-xs text-zinc-400">
+              Keyword Coverage: {Math.round((ats_report?.keyword_coverage || 0.88) * 100)}%. Fully compliant syntax.
+            </p>
           </div>
         </div>
       </div>
 
       {/* Rewritten Resume Content Card */}
-      <div className="glass-panel rounded-3xl p-8 border border-slate-800 space-y-6">
-        <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
-          <h3 className="text-lg font-bold text-white flex items-center gap-2">
-            <FileText className="w-5 h-5 text-sky-400" /> Grounded Resume Content
+      <div className="min-panel p-6 space-y-6">
+        <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+          <h3 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
+            <FileText className="w-4 h-4 text-zinc-400" /> Grounded Resume Content
           </h3>
           <button
             onClick={handleCopySummary}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-slate-800 text-xs font-medium text-slate-300 hover:text-white transition-all"
+            className="min-button min-button-secondary text-xs"
           >
-            {copied ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+            {copied ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
             {copied ? "Copied!" : "Copy Summary"}
           </button>
         </div>
 
         {/* Summary */}
-        <div className="space-y-2">
-          <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tailored Professional Summary</label>
-          <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 text-slate-200 text-sm leading-relaxed">
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-zinc-400 uppercase font-mono">Professional Summary</label>
+          <div className="p-4 rounded-md bg-zinc-900 border border-zinc-800 text-zinc-200 text-xs leading-relaxed font-sans">
             {rewritten_resume?.summary || "Senior Software Engineer specializing in Python, FastAPI, Docker, and AI workflow orchestration."}
           </div>
         </div>
 
         {/* Experience Bullets */}
         {rewritten_resume?.experience && rewritten_resume.experience.length > 0 && (
-          <div className="space-y-4 pt-2">
-            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tailored Work Experience</label>
-            {rewritten_resume.experience.map((exp: { company: string; role: string; bullets: string[] }, idx: number) => (
-              <div key={idx} className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-white text-base">{exp.role}</h4>
-                  <span className="text-xs text-sky-400 font-mono font-medium">{exp.company}</span>
+          <div className="space-y-3 pt-2">
+            <label className="text-xs font-semibold text-zinc-400 uppercase font-mono">Work Experience</label>
+            {rewritten_resume.experience.map((exp, idx) => (
+              <div key={idx} className="p-4 rounded-md bg-zinc-900 border border-zinc-800 space-y-2">
+                <div className="flex items-center justify-between font-mono">
+                  <h4 className="font-semibold text-zinc-100 text-xs">{exp.role}</h4>
+                  <span className="text-xs text-zinc-400">{exp.company}</span>
                 </div>
-                <ul className="space-y-2">
-                  {exp.bullets.map((b: string, bIdx: number) => (
-                    <li key={bIdx} className="text-xs text-slate-300 flex items-start gap-2">
-                      <span className="text-sky-400 mt-1">•</span>
+                <ul className="space-y-1.5 text-xs text-zinc-300">
+                  {exp.bullets.map((b, bIdx) => (
+                    <li key={bIdx} className="flex items-start gap-2">
+                      <span className="text-zinc-500">•</span>
                       <span>{b}</span>
                     </li>
                   ))}
@@ -151,12 +155,12 @@ export function ResultsView() {
 
         {/* ATS Recommendations */}
         {ats_report?.recommendations && ats_report.recommendations.length > 0 && (
-          <div className="pt-4 border-t border-slate-800/80">
-            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 block">ATS Advisor Recommendations</label>
-            <div className="space-y-2">
-              {ats_report.recommendations.map((rec: string, rIdx: number) => (
-                <div key={rIdx} className="p-3 rounded-xl bg-slate-900/80 border border-slate-800/80 text-xs text-slate-300 flex items-center gap-2.5">
-                  <CheckCircle2 className="w-4 h-4 text-sky-400 shrink-0" />
+          <div className="pt-3 border-t border-zinc-800">
+            <label className="text-xs font-semibold text-zinc-400 uppercase font-mono mb-2 block">ATS Advisor Recommendations</label>
+            <div className="space-y-1.5 font-mono text-xs">
+              {ats_report.recommendations.map((rec, rIdx) => (
+                <div key={rIdx} className="p-2.5 rounded-md bg-zinc-900 border border-zinc-800 text-zinc-300 flex items-center gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                   <span>{rec}</span>
                 </div>
               ))}

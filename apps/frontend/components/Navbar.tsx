@@ -1,7 +1,7 @@
 "use client";
 
 import { useUIStore, TabType } from "@/lib/store";
-import { ShieldCheck, Cpu, FileText, LayoutDashboard, History } from "lucide-react";
+import { LayoutDashboard, Cpu, FileText, Briefcase, ShieldCheck, History } from "lucide-react";
 
 export function Navbar() {
   const { activeTab, setActiveTab } = useUIStore();
@@ -9,28 +9,30 @@ export function Navbar() {
   const navItems: { id: TabType; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "wizard", label: "Tailor Resume", icon: Cpu },
+    { id: "resumes", label: "Resumes", icon: FileText },
+    { id: "job_descriptions", label: "Job Descriptions", icon: Briefcase },
     { id: "results", label: "Results", icon: FileText },
     { id: "audit", label: "Audit Log", icon: History },
   ];
 
   return (
-    <header className="sticky top-0 z-50 glass-panel border-b border-slate-800">
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+    <header className="sticky top-0 z-50 bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800">
+      <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
         {/* Brand */}
-        <div className="flex items-center gap-3 cursor-pointer" onClick={() => setActiveTab("dashboard")}>
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-500/20">
-            <Cpu className="w-6 h-6 text-white" />
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab("dashboard")}>
+          <div className="w-7 h-7 rounded-md bg-zinc-100 flex items-center justify-center font-bold text-zinc-950 text-xs">
+            T
           </div>
-          <div>
-            <h1 className="font-bold text-xl tracking-tight text-white flex items-center gap-2">
-              Tailr <span className="text-xs px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20 font-mono">v1.0</span>
-            </h1>
-            <p className="text-xs text-slate-400">AI Resume Intelligence Platform</p>
-          </div>
+          <span className="font-semibold text-base tracking-tight text-zinc-100">
+            Tailr
+          </span>
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">
+            v1.0
+          </span>
         </div>
 
         {/* Navigation Tabs */}
-        <nav className="flex items-center gap-1 bg-slate-900/60 p-1.5 rounded-xl border border-slate-800">
+        <nav className="flex items-center gap-1 bg-zinc-900 p-1 rounded-md border border-zinc-800">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -38,13 +40,13 @@ export function Navbar() {
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                   isActive
-                    ? "bg-gradient-to-r from-sky-500/20 to-indigo-500/20 text-sky-400 border border-sky-500/30 shadow-sm"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                    ? "bg-zinc-800 text-zinc-100 font-semibold border border-zinc-700 shadow-xs"
+                    : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40"
                 }`}
               >
-                <Icon className="w-4 h-4" />
+                <Icon className="w-3.5 h-3.5" />
                 {item.label}
               </button>
             );
@@ -52,9 +54,9 @@ export function Navbar() {
         </nav>
 
         {/* Guardrails Status Badge */}
-        <div className="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
-          <ShieldCheck className="w-4 h-4 text-emerald-400 animate-pulse" />
-          <span>Guardrails Engine Active</span>
+        <div className="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs">
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+          <span>Guardrails Active</span>
         </div>
       </div>
     </header>

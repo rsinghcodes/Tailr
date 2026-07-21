@@ -19,82 +19,82 @@ export function AuditLogTable() {
   });
 
   return (
-    <div className="glass-panel rounded-3xl p-8 border border-slate-800 space-y-6">
+    <div className="min-panel p-6 space-y-4">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800/80 pb-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-800 pb-4">
         <div>
-          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-            <History className="w-6 h-6 text-sky-400" /> Guardrail Audit Events Log
+          <h2 className="text-lg font-semibold text-zinc-100 flex items-center gap-2">
+            <History className="w-5 h-5 text-zinc-400" /> Guardrail Audit Events Log
           </h2>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-xs text-zinc-400 mt-0.5">
             Immutable security audit trail recording every validator execution, violation, and repair.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <input
             type="text"
             value={filterWorkflowId}
             onChange={(e) => setFilterWorkflowId(e.target.value)}
-            placeholder="Enter Workflow ID..."
-            className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white font-mono focus:outline-none focus:border-sky-500/50 w-64"
+            placeholder="Workflow ID..."
+            className="min-input text-xs font-mono w-56"
           />
           <button
             onClick={() => refetch()}
             disabled={isLoading || !filterWorkflowId}
-            className="p-2.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition-all disabled:opacity-50"
+            className="min-button min-button-secondary text-xs disabled:opacity-50"
           >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} /> Refresh
           </button>
         </div>
       </div>
 
       {/* Audit Log Content */}
       {!filterWorkflowId ? (
-        <div className="p-12 text-center space-y-4">
-          <Lock className="w-10 h-10 text-slate-600 mx-auto" />
-          <p className="text-sm text-slate-400">Enter a valid Workflow ID above or run the tailoring wizard to view audit events.</p>
+        <div className="p-12 text-center space-y-2">
+          <Lock className="w-8 h-8 text-zinc-600 mx-auto" />
+          <p className="text-xs text-zinc-400">Enter a valid Workflow ID above or run the tailoring wizard to view audit events.</p>
         </div>
       ) : isLoading ? (
-        <div className="p-12 text-center space-y-3">
-          <Loader2 className="w-8 h-8 text-sky-400 animate-spin mx-auto" />
-          <p className="text-xs text-slate-400 font-mono">Fetching audit trail from database...</p>
+        <div className="p-12 text-center space-y-2">
+          <Loader2 className="w-6 h-6 text-zinc-400 animate-spin mx-auto" />
+          <p className="text-xs text-zinc-500 font-mono">Fetching audit trail from database...</p>
         </div>
       ) : isError ? (
-        <div className="p-6 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 shrink-0" />
+        <div className="p-4 rounded-md bg-rose-950/40 border border-rose-900/60 text-rose-400 text-xs flex items-center gap-2 font-mono">
+          <AlertCircle className="w-4 h-4 shrink-0" />
           <span>Failed to fetch audit events: {error instanceof Error ? error.message : "Database error"}</span>
         </div>
       ) : data?.items.length === 0 ? (
         <div className="p-12 text-center space-y-2">
-          <ShieldCheck className="w-10 h-10 text-emerald-500/50 mx-auto" />
-          <p className="text-sm font-semibold text-white">Zero Violations Recorded</p>
-          <p className="text-xs text-slate-400">All AI outputs passed guardrail checks cleanly without requiring repair or rejection.</p>
+          <ShieldCheck className="w-8 h-8 text-emerald-500/50 mx-auto" />
+          <p className="text-xs font-semibold text-zinc-200">Zero Violations Recorded</p>
+          <p className="text-xs text-zinc-500">All AI outputs passed guardrail checks cleanly without requiring repair or rejection.</p>
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-900/80 text-slate-400 font-mono uppercase tracking-wider">
+          <table className="w-full text-left text-xs font-mono text-zinc-300">
+            <thead className="bg-zinc-900 text-zinc-400 font-semibold border-b border-zinc-800">
               <tr>
-                <th className="p-3.5 rounded-l-xl">Validator</th>
-                <th className="p-3.5">Severity</th>
-                <th className="p-3.5">Violation Code</th>
-                <th className="p-3.5">Repaired</th>
-                <th className="p-3.5 rounded-r-xl">Timestamp</th>
+                <th className="p-3">Validator</th>
+                <th className="p-3">Severity</th>
+                <th className="p-3">Violation Code</th>
+                <th className="p-3">Repaired</th>
+                <th className="p-3">Timestamp</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/50 font-mono">
+            <tbody className="divide-y divide-zinc-800/60">
               {data?.items.map((item: GuardrailEventItem) => (
-                <tr key={item.id} className="hover:bg-slate-900/50 transition-colors">
-                  <td className="p-3.5 font-bold text-white">{item.validator_name}</td>
-                  <td className="p-3.5">
-                    <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs">
+                <tr key={item.id} className="hover:bg-zinc-900/50 transition-colors">
+                  <td className="p-3 font-semibold text-zinc-100">{item.validator_name}</td>
+                  <td className="p-3">
+                    <span className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700 text-[11px]">
                       {item.severity}
                     </span>
                   </td>
-                  <td className="p-3.5 text-sky-400">{item.violation_code || "N/A"}</td>
-                  <td className="p-3.5">{item.repaired ? "YES" : "NO"}</td>
-                  <td className="p-3.5 text-slate-500">{new Date(item.created_at).toLocaleString()}</td>
+                  <td className="p-3 text-zinc-400">{item.violation_code || "N/A"}</td>
+                  <td className="p-3">{item.repaired ? "YES" : "NO"}</td>
+                  <td className="p-3 text-zinc-500">{new Date(item.created_at).toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>

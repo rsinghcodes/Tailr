@@ -34,6 +34,14 @@ class WorkflowApplicationService:
             user_id=user_id,
         )
 
+        # Set multi-agent model architecture allocation per Section 16 of Agent Architecture
+        state.telemetry.model_versions = {
+            "jd_analyzer": "Qwen 3 (8B)",
+            "planner": "Qwen 3 (14B)",
+            "rewriter": "Llama 3.1 (8B)",
+            "ats_advisor": "Gemma 3 (9B)",
+        }
+
         logger.info("Starting workflow execution", extra={"workflow_id": state.workflow_id, "user_id": user_id})
 
         final_state = await self.engine.execute_workflow(state)

@@ -47,3 +47,23 @@ async def start_workflow(
     except Exception as exc:
         logger.error("Workflow execution failed: %s", str(exc))
         raise HTTPException(status_code=422, detail=f"Workflow failed: {str(exc)}") from exc
+
+
+@router.get("/workflows/{workflow_id}", response_model=WorkflowResponse)
+async def get_workflow_status(
+    workflow_id: str,
+    workflow_service: WorkflowApplicationService = Depends(get_workflow_service),
+):
+    """Retrieve the current state and telemetry of a specific workflow run."""
+    state = await workflow_service.get_workflow_state(workflow_id)
+    if not state:
+        raise HTTPException(status_code=404, detail=f"Workflow '{workflow_id}' not found.")
+
+    return WorkflowResponse(
+        workflow_id=state.workflow_id,
+        status=state.status.value if hasattr(state.status, "value") else str(state.status),
+        telemetry=state.telemetry.model_dump() if hasattr(state.telemetry, "model_dump") else {},
+        guardrail_report=state.guardrail_report,
+        ats_report=state.ats_report,
+        rewritten_resume=state.rewritten_resume,
+    )
