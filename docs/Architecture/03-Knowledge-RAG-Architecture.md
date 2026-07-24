@@ -410,6 +410,7 @@ Guardrails
 
 Validation
 ```
+
 # 11. Retrieval Types
 
 ## Dense Search
@@ -421,6 +422,7 @@ Suitable for
 - related technologies
 - responsibilities
 - concepts
+
 ## Sparse Search
 
 Keyword matching.
@@ -430,11 +432,13 @@ Suitable for
 - exact technologies
 - company names
 - certifications
+
 ## Hybrid Search
 
 Combines both.
 
 Tailr uses hybrid retrieval by default.
+
 # 12. Reranking
 
 Initial retrieval returns the top 30 candidates.
@@ -450,6 +454,7 @@ Final
 Top 10
 
 are passed to the LLM.
+
 # 13. Retrieval Examples
 
 Query
@@ -469,6 +474,7 @@ ResearchMind
 
 REST APIs
 ```
+
 Query
 
 ```
@@ -488,6 +494,7 @@ Agentic AI
 
 Prompt Engineering
 ```
+
 # 14. Agent Retrieval
 
 Each agent retrieves different knowledge.
@@ -503,6 +510,7 @@ Each agent retrieves different knowledge.
 Each agent receives only the minimum context required for its task.
 
 The Guardrails Engine retrieves deterministic policy documents instead of semantic resume content.
+
 # 15. Knowledge Lifecycle
 
 ```
@@ -556,6 +564,7 @@ Validation
 
 Archive
 ```
+
 # 16. LlamaIndex Components
 
 Tailr uses the following components.
@@ -568,21 +577,27 @@ Load
 - Markdown
 - PDF
 - DOCX
+
 ### Node Parser
 
 Creates semantic nodes.
+
 ### VectorStoreIndex
 
 Stores vectors in Qdrant.
+
 ### Retriever
 
 Performs semantic retrieval.
+
 ### Query Engine
 
 Provides unified access.
+
 ### Workflows
 
 Coordinates retrieval and reasoning.
+
 ### Context Assembler
 
 Combines retrieved nodes into a deterministic context package.
@@ -596,6 +611,7 @@ Responsibilities
 - preserve citations
 
 The assembled context becomes the only knowledge visible to downstream AI agents.
+
 # 17. Future Knowledge Graph
 
 Future versions will augment vector search with graph reasoning.
@@ -637,6 +653,7 @@ Possible implementation
 - LlamaIndex KnowledgeGraphIndex
 - NetworkX
 - Neo4j Community
+
 # 18. Caching
 
 Frequently accessed queries are cached.
@@ -654,6 +671,7 @@ Caching reduces
 - embedding computation
 - retrieval latency
 - LLM calls
+
 # 19. Evaluation
 
 Knowledge quality is measured.
@@ -673,6 +691,7 @@ Evaluation framework
 ```
 Ragas
 ```
+
 Additional evaluation metrics
 
 - Context Relevance
@@ -683,6 +702,7 @@ Additional evaluation metrics
 - Policy Violation Rate
 
 These metrics help evaluate both retrieval quality and downstream AI reliability.
+
 # 20. Security
 
 Knowledge stores contain sensitive personal information.
@@ -700,6 +720,7 @@ Resume embeddings are never shared with external services without explicit user 
 Guardrail rule sets are treated as trusted system knowledge.
 
 They are immutable during workflow execution and may only be modified through administrative configuration or version-controlled deployments.
+
 # 21. Future Enhancements
 
 The knowledge architecture is designed to evolve.
@@ -726,6 +747,7 @@ Future retrieval capabilities
 - Temporal retrieval
 - Personalized ranking
 - Context compression
+
 # 22. Architecture Decisions
 
 | Decision                 | Rationale                                            |
@@ -741,6 +763,7 @@ Future retrieval capabilities
 | Guardrail Knowledge      | Separates AI safety policies from semantic knowledge |
 | Agent-specific Retrieval | Minimizes unnecessary context                        |
 | Metadata-first Filtering | Metadata-first Filtering                             |
+
 # 23. Summary
 
 Tailr treats the resume as a structured knowledge system rather than a document.

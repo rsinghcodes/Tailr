@@ -2,6 +2,7 @@
 
 **Project:** Tailr
 **Version:** 1.0
+
 # 1. Purpose
 
 This document defines the prompt engineering strategy used by Tailr.
@@ -11,6 +12,7 @@ Rather than treating prompts as plain text templates, Tailr models prompts as ve
 Every AI interaction follows a strict contract to ensure consistency, reliability, explainability, and safety.
 
 Prompts are treated as production software assets rather than experimental text snippets.
+
 # 2. Design Goals
 
 The prompt system must:
@@ -25,6 +27,7 @@ The prompt system must:
 - Enforce AI safety policies
 - Support automated output repair
 - Provide full execution traceability
+
 # 3. Prompt Engineering Philosophy
 
 Tailr follows five principles.
@@ -42,6 +45,7 @@ Examples
 - Detect Resume Risks
 
 Prompts never combine unrelated tasks.
+
 ## Retrieval Before Prompting
 
 Prompts never receive the complete resume.
@@ -59,6 +63,7 @@ LLM
 ```
 
 The LLM only receives information required for the current reasoning task.
+
 ## Structured Inputs
 
 Every prompt receives typed inputs.
@@ -78,11 +83,13 @@ PlanningRequest(
     retrieved_context=list[ContextChunk],
 )
 ```
+
 ## Structured Outputs
 
 Every prompt returns machine-readable JSON.
 
 Natural language is reserved for explanations shown to the user.
+
 ## Validation & Guardrails First
 
 Prompt output is never trusted.
@@ -96,6 +103,7 @@ Every response passes:
 - Resume integrity validation
 - ATS validation
 - Prompt injection checks
+
 # 4. Prompt Lifecycle
 
 ```text
@@ -119,6 +127,7 @@ Workflow State
 ```
 
 The Guardrails Pipeline executes before business validation to ensure AI safety and structural correctness.
+
 # 5. Prompt Architecture
 
 Each prompt consists of seven sections.
@@ -140,6 +149,7 @@ Examples
 ```
 
 No prompt should omit any section.
+
 # 6. Prompt Template
 
 Every prompt follows a common structure.
@@ -177,6 +187,7 @@ BEGIN
 ```
 
 This keeps prompts consistent across agents.
+
 # 7. Prompt Components
 
 ## Role
@@ -188,6 +199,7 @@ Example
 “**You are an expert technical resume reviewer.**”
 
 The role should be specific and domain-oriented.
+
 ## Objective
 
 Defines the exact task.
@@ -197,6 +209,7 @@ One objective only.
 Example
 
 “Generate a rewrite plan for the summary and experience sections.”
+
 ## Context
 
 Provides retrieved knowledge.
@@ -210,6 +223,7 @@ Examples
 - Previously approved rewrites
 
 Context is always retrieved dynamically.
+
 ## Constraints
 
 Explicit rules.
@@ -224,6 +238,7 @@ Examples
 - Do not add unsupported metrics.
 
 Constraints are treated as hard requirements.
+
 ## Guardrail Instructions
 
 Every prompt includes mandatory safety instructions.
@@ -239,6 +254,7 @@ Example
 - If evidence is insufficient, return `INSUFFICIENT_EVIDENCE`.
 
 These instructions have higher priority than user content.
+
 ## Output Schema
 
 Every prompt references a predefined schema.
@@ -255,6 +271,7 @@ Example
 ```
 
 Schemas are implemented as Pydantic models and versioned alongside prompts.
+
 ## Few-Shot Examples
 
 Representative examples demonstrate expected behavior.
@@ -266,6 +283,7 @@ Few-shot examples are:
 - version controlled
 - free of personal data
 - aligned with current schema versions
+
 # 8. Prompt Catalog
 
 Tailr maintains a catalog of prompts.
@@ -280,6 +298,7 @@ Tailr maintains a catalog of prompts.
 | Validator   | Perform AI-assisted validation checks |
 
 Each prompt is independently versioned and evaluated.
+
 # 9. Prompt Contracts
 
 Every prompt defines:
@@ -303,6 +322,7 @@ When the prompt must refuse or return `INSUFFICIENT_EVIDENCE`.
 ## Validation Strategy
 
 Which Guardrails and validators must run after generation.
+
 # 10. Context Strategy
 
 Context is assembled dynamically.
@@ -327,6 +347,7 @@ Additional rules:
 - Duplicate chunks are removed.
 - Context is truncated to fit the model budget.
 - Source citations are preserved.
+
 # 11. Prompt Versioning
 
 Every prompt has an explicit version.
@@ -350,6 +371,7 @@ Each version records:
 - change summary
 - evaluation results
 - rollback status
+
 # 12. Prompt Configuration
 
 Prompt configuration is externalized.
@@ -368,6 +390,7 @@ planner:
 ```
 
 Configuration changes should not require code changes.
+
 # 13. Model Selection
 
 Different prompts may use different models.
@@ -382,6 +405,7 @@ Different prompts may use different models.
 | Validator   | Qwen3 8B          |
 
 The workflow remains model-agnostic through the provider abstraction.
+
 # 14. Temperature Strategy
 
 Different reasoning tasks require different creativity.
@@ -396,6 +420,7 @@ Different reasoning tasks require different creativity.
 | Critique        | 0.3         |
 
 Deterministic tasks always use low temperature.
+
 # 15. Prompt Security
 
 Prompt construction must defend against prompt injection.
@@ -432,6 +457,7 @@ The Guardrails Pipeline checks for:
 - “Bypass safety rules”
 
 Detected injections are logged and rejected.
+
 # 16. Hallucination Prevention
 
 Prompts explicitly prohibit unsupported claims.
@@ -450,6 +476,7 @@ Rules include:
 The model must cite supporting resume evidence for every new claim.
 
 Validation enforces these constraints after generation.
+
 # 17. Guardrails & Output Validation
 
 Every response passes:
@@ -481,6 +508,7 @@ Workflow
 ```
 
 Invalid outputs trigger retries or repair attempts.
+
 # 18. Retry & Repair Strategy
 
 If validation fails:
@@ -507,6 +535,7 @@ Repair prompts receive:
 - original request context
 
 Retry count is configurable per prompt.
+
 # 19. Prompt Evaluation
 
 Prompt quality is continuously measured.
@@ -525,6 +554,7 @@ Metrics include:
 - User edits after generation
 
 Evaluation results are stored for each prompt version.
+
 # 20. Observability
 
 Each prompt execution records:
@@ -545,6 +575,7 @@ Each prompt execution records:
 - trace ID
 
 Logs are stored in Langfuse and correlated with workflow traces.
+
 # 21. Prompt Repository
 
 Suggested project structure.
@@ -570,6 +601,7 @@ backend/
 ```
 
 Prompt assets are version-controlled alongside code.
+
 # 22. Testing Strategy
 
 Prompt changes require automated testing.
@@ -588,6 +620,7 @@ Tests include:
 - Latency benchmarks
 
 A prompt is promoted only after passing evaluation.
+
 # 23. Future Enhancements
 
 The prompt architecture supports:
@@ -604,6 +637,7 @@ The prompt architecture supports:
 - Policy-driven prompt generation
 
 These features can be introduced without changing workflow contracts.
+
 # 24. Architecture Decisions
 
 | Decision                   | Rationale                           |
@@ -616,6 +650,7 @@ These features can be introduced without changing workflow contracts.
 | External configuration     | Easier experimentation              |
 | Prompt observability       | Debugging and evaluation            |
 | Immutable prompt versions  | Reproducibility and rollback        |
+
 # 25. Summary
 
 Tailr treats prompts as first-class engineering artifacts rather than static text templates.

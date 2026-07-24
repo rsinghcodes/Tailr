@@ -2,6 +2,7 @@
 
 **Project:** Tailr
 **Version:** 1.0
+
 # 1. Purpose
 
 This document defines the testing strategy for Tailr.
@@ -11,6 +12,7 @@ The objective is to ensure that every component of the platform—from resume pa
 Unlike traditional software, Tailr requires testing of deterministic code, AI agents, prompt behavior, retrieval quality, workflow orchestration, and user experience.
 
 Testing is integrated throughout the Software Development Lifecycle (SDLC) and Continuous Integration/Continuous Deployment (CI/CD) pipeline.
+
 # 2. Testing Goals
 
 The testing strategy aims to:
@@ -24,6 +26,7 @@ The testing strategy aims to:
 - Validate guardrail enforcement
 - Protect against security vulnerabilities
 - Guarantee production readiness
+
 # 3. Testing Philosophy
 
 Tailr follows six testing principles.
@@ -31,21 +34,27 @@ Tailr follows six testing principles.
 ## Test Early
 
 Every component is tested during development.
+
 ## Test Automatically
 
 All repeatable tests run automatically in CI.
+
 ## Test Deterministic Components First
 
 Business logic should never depend on LLM behavior.
+
 ## AI Requires Evaluation
 
 AI outputs are evaluated instead of compared literally.
+
 ## Prevent Regression
 
 Every bug becomes a permanent test case.
+
 ## Production Monitoring Complements Testing
 
 Observability validates assumptions after deployment.
+
 # 4. Testing Pyramid
 
 ```
@@ -65,6 +74,7 @@ Observability validates assumptions after deployment.
 ```
 
 AI evaluations and guardrail evaluations execute alongside workflow tests.
+
 # 5. Unit Testing
 
 Unit tests verify deterministic business logic.
@@ -90,6 +100,7 @@ pytest
 Coverage Target
 
 > 90%
+
 # 6. Component Testing
 
 Each subsystem is tested independently.
@@ -105,6 +116,7 @@ Validator
 Renderer
 
 No external dependencies are required.
+
 # 7. Integration Testing
 
 Verify interactions between services.
@@ -127,6 +139,7 @@ pytest
 
 Docker Compose
 ```
+
 # 8. Workflow Testing
 
 Entire AI workflows are executed.
@@ -172,6 +185,7 @@ Renderer
 ```
 
 The workflow must complete successfully and all guardrail checks must pass or be repaired.
+
 # 9. API Testing
 
 Every REST endpoint is tested.
@@ -198,6 +212,7 @@ pytest
 
 httpx
 ```
+
 # 10. Parser Testing
 
 Parser tests include
@@ -211,6 +226,7 @@ Parser tests include
 - Canonical model generation
 
 Golden files verify parser stability.
+
 # 11. Validation Engine Testing
 
 Verify
@@ -223,6 +239,7 @@ Verify
 - Retry behavior
 
 Validation must remain deterministic.
+
 # 12. RAG Testing
 
 Evaluate retrieval quality.
@@ -236,6 +253,7 @@ Metrics
 - Chunk quality
 
 Poor retrieval should fail evaluation.
+
 # 13. Prompt Testing
 
 Each prompt version is tested.
@@ -252,6 +270,7 @@ Verify
 - Token usage
 
 Prompt versions are regression tested.
+
 # 14. LLM Evaluation
 
 LLM responses are evaluated using
@@ -271,6 +290,7 @@ Rule validation
 Human review (selected cases)
 
 Exact string matching is avoided.
+
 # 15. Agent Testing
 
 Every agent is tested independently.
@@ -286,6 +306,7 @@ Rewriter
 ATS Advisor
 
 Each agent receives predefined inputs and expected structured outputs. Agent outputs must pass guardrail validation before being considered successful.
+
 # 16. Guardrail Testing
 
 Guardrail testing verifies AI safety enforcement independently of business logic.
@@ -317,6 +338,7 @@ tests/guardrails/
 ```
 
 Guardrail tests must execute in CI for every pull request.
+
 # 17. Golden Dataset
 
 Tailr maintains a benchmark dataset.
@@ -334,6 +356,7 @@ Contents
 - Expected repair outcomes
 
 Changes are evaluated against this dataset before release. The dataset must contain both valid and intentionally malicious samples.
+
 # 18. Regression Testing
 
 Every resolved bug becomes a regression test.
@@ -343,6 +366,7 @@ Regression suite runs on every pull request.
 No previously fixed issue should reappear.
 
 Security incidents and guardrail bypasses also become permanent regression tests.
+
 # 19. Performance Testing
 
 Measure
@@ -363,6 +387,7 @@ k6
 ```
 
 Performance targets are defined in deployment documents.
+
 # 20. Load Testing
 
 Simulate
@@ -373,6 +398,7 @@ Simulate
 - Simultaneous ATS analysis
 
 The system should degrade gracefully under load.
+
 # 21. Security Testing
 
 Security verification includes
@@ -391,6 +417,7 @@ Security verification includes
 - PII Leakage Detection
 
 Security and guardrail tests run automatically in CI.
+
 # 22. Chaos Testing
 
 Introduce controlled failures.
@@ -403,6 +430,7 @@ Examples
 - PostgreSQL restart
 
 Workflows should recover gracefully.
+
 # 23. End-to-End Testing
 
 User scenario
@@ -442,6 +470,7 @@ Framework
 ```
 Playwright
 ```
+
 # 24. Manual QA
 
 Manual evaluation focuses on
@@ -453,6 +482,7 @@ Manual evaluation focuses on
 - Generated PDFs
 
 Human review complements automated testing.
+
 # 25. Continuous Integration
 
 GitHub Actions pipeline
@@ -498,6 +528,7 @@ Deploy
 ```
 
 Deployment occurs only if all required stages pass.
+
 # 26. Test Data Management
 
 Test datasets include
@@ -512,6 +543,7 @@ Test datasets include
 - Guardrail benchmark cases
 
 No real user resumes are used in automated testing.
+
 # 27. Coverage Goals
 
 | Component         | Target |
@@ -525,6 +557,7 @@ No real user resumes are used in automated testing.
 | Frontend          | 80%    |
 
 Coverage complements—not replaces—quality evaluation.
+
 # 28. AI Evaluation Metrics
 
 Track
@@ -542,6 +575,7 @@ Track
 - Rewrite acceptance
 
 These metrics are monitored continuously and compared across model versions and prompt versions.
+
 # 29. Future Enhancements
 
 Planned capabilities
@@ -557,6 +591,7 @@ Planned capabilities
 - Continuous red-team evaluation
 - Guardrail effectiveness scoring
 - AI safety benchmark automation
+
 # 30. Architecture Decisions
 
 | Decision             | Rationale                                |
@@ -569,6 +604,7 @@ Planned capabilities
 | Adversarial testing  | Detects prompt injection vulnerabilities |
 | Docker Compose       | Consistent integration environment       |
 | CI-first testing     | Prevent regressions before deployment    |
+
 # 31. Summary
 
 Tailr adopts a comprehensive multi-layer testing strategy that combines traditional software testing with AI-specific evaluation and guardrail validation techniques.

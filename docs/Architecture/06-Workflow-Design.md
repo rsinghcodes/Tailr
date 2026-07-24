@@ -2,6 +2,7 @@
 
 **Project:** Tailr
 **Version:** 1.0
+
 # 1. Purpose
 
 This document defines the execution workflow of Tailr.
@@ -18,6 +19,7 @@ The workflow is designed to be:
 - auditable
 - scalable
 - human-supervised
+
 # 2. Workflow Philosophy
 
 Tailr follows several workflow principles.
@@ -31,6 +33,7 @@ Each step consumes state.
 Each step produces a new state.
 
 No component mutates previous state directly.
+
 ## Event Driven
 
 Every completed task emits an event.
@@ -52,6 +55,7 @@ ValidationCompleted
 ```
 
 Events are persisted for replay, debugging, and audit purposes.
+
 ## Deterministic Execution
 
 Every workflow execution should produce reproducible results given identical:
@@ -63,6 +67,7 @@ Every workflow execution should produce reproducible results given identical:
 - Configuration
 
 Determinism is critical for debugging and evaluation.
+
 ## Failure Isolation
 
 Each workflow step can fail independently.
@@ -70,11 +75,13 @@ Each workflow step can fail independently.
 Failures do not corrupt previous states.
 
 Retries occur at the step level rather than restarting the entire workflow.
+
 ## Human Approval
 
 Rendering only occurs after user approval.
 
 AI suggestions are never applied silently.
+
 ## Guardrail First
 
 Every AI-generated artifact passes through deterministic Guardrail policies before validation.
@@ -88,6 +95,7 @@ Guardrails enforce:
 - output safety
 
 Only Guardrail-approved outputs continue through the workflow.
+
 # 3. High-Level Workflow
 
 ```text
@@ -138,6 +146,7 @@ Only Guardrail-approved outputs continue through the workflow.
                         ▼
                     Download
 ```
+
 # 4. Workflow States
 
 ```text
@@ -209,6 +218,7 @@ Cancelled workflows transition to:
 ```text
 CANCELLED
 ```
+
 # 5. Workflow State Object
 
 Every step receives the same workflow state.
@@ -274,6 +284,7 @@ prompt_versions
 ```
 
 The workflow state is the single communication mechanism between all components.
+
 # 6. Step 1 — Resume Upload
 
 **Input**
@@ -303,6 +314,7 @@ UploadState
 ```text
 ResumeUploaded
 ```
+
 # 7. Step 2 — Resume Parsing
 
 **Input**
@@ -330,6 +342,7 @@ ResumeModel
 ```text
 ResumeParsed
 ```
+
 # 8. Step 3 — Knowledge Building
 
 **Actions**
@@ -352,6 +365,7 @@ KnowledgeStore
 ```text
 KnowledgeIndexed
 ```
+
 # 9. Step 4 — Job Description Analysis
 
 **Input**
@@ -381,6 +395,7 @@ JobRequirements
 ```text
 JDAnalyzed
 ```
+
 # 10. Step 5 — Retrieval
 
 **Actions**
@@ -451,6 +466,7 @@ RewritePlan
 ```text
 PlanningCompleted
 ```
+
 ## 12. Step 7 — Rewriting
 
 **AI Agent:** Rewriter
@@ -490,6 +506,7 @@ UpdatedResume
 ```text
 RewriteCompleted
 ```
+
 ## 13. Step 8 — Guardrail Evaluation
 
 **Software Component:** Guardrails Engine
@@ -560,6 +577,7 @@ GuardrailsStarted
 
 GuardrailsCompleted
 ```
+
 ## 14. Step 9 — Validation
 
 **Software Component:** Validation Engine
@@ -609,6 +627,7 @@ Retry Rewrite
 ```text
 ValidationCompleted
 ```
+
 ## 15. Step 10 — ATS Analysis
 
 **AI Agent:** ATS Advisor
@@ -635,6 +654,7 @@ The ATS Advisor only analyzes validated resumes and never modifies workflow stat
 ```text
 ATSGenerated
 ```
+
 ## 16. Step 11 — Human Review
 
 The user reviews:
@@ -672,6 +692,7 @@ Request Different Tone
 ```text
 ResumeApproved
 ```
+
 ## 17. Step 12 — Rendering
 
 **Software Component:** Renderer
@@ -705,6 +726,7 @@ RenderResult
 ```text
 RenderingCompleted
 ```
+
 ## 18. Step 13 — PDF Compilation
 
 ### Actions

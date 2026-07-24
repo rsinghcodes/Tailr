@@ -359,6 +359,7 @@ Support
 Future
 
 multi-user deployment
+
 ## Maintainability
 
 Each module shall have
@@ -366,6 +367,7 @@ Each module shall have
 - single responsibility
 - unit tests
 - API documentation
+
 ## Explainability
 
 Every recommendation shall contain
