@@ -4,9 +4,9 @@ JD[JD Analyzer]
 
 Resume[Resume Analyzer]
 
-Planner[Planning Agent]
-
 Retriever[Hybrid Retriever]
+
+Planner[Planning Agent]
 
 Rewrite[Rewrite Agent]
 
@@ -16,13 +16,13 @@ Validate[Validation Engine]
 
 ATS[ATS Engine]
 
-JD --> Planner
+JD --> Retriever
 
-Resume --> Planner
+Resume --> Retriever
 
-Planner --> Retriever
+Retriever --> Planner
 
-Retriever --> Rewrite
+Planner --> Rewrite
 
 Rewrite --> Guardrails
 

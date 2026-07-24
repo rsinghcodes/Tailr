@@ -3,13 +3,17 @@ sequenceDiagram
 participant User
 participant API
 participant Workflow
-participant Planner
+participant Parser
+participant Knowledge
+participant JDAnalyzer
 participant Retriever
+participant Planner
 participant Rewrite
 participant LLM
 participant Guardrails
 participant Validator
 participant ATS
+participant Renderer
 participant DB
 participant Storage
 
@@ -17,11 +21,25 @@ User->>API: Upload Resume + Job Description
 
 API->>Workflow: Start Optimization Workflow
 
-Workflow->>Planner: Analyze resume and JD
+Workflow->>Parser: Parse resume
 
-Planner->>Retriever: Request relevant resume context
+Parser-->>Workflow: Canonical Resume Model
 
-Retriever-->>Planner: Return ranked context
+Workflow->>Knowledge: Build knowledge index
+
+Knowledge-->>Workflow: Indexed entities
+
+Workflow->>JDAnalyzer: Analyze job description
+
+JDAnalyzer-->>Workflow: Structured requirements
+
+Workflow->>Retriever: Retrieve relevant context
+
+Retriever-->>Workflow: Ranked context
+
+Workflow->>Planner: Generate optimization plan
+
+Planner-->>Workflow: Structured plan
 
 Workflow->>Rewrite: Generate optimized sections
 
@@ -40,6 +58,14 @@ Validator-->>Rewrite: Approved changes
 Rewrite->>ATS: Calculate ATS score
 
 ATS-->>Rewrite: ATS report + recommendations
+
+Workflow->>User: Present changes for approval
+
+User-->>Workflow: Approve changes
+
+Workflow->>Renderer: Generate LaTeX and compile PDF
+
+Renderer-->>Workflow: Compiled PDF
 
 Rewrite->>DB: Save optimization metadata
 

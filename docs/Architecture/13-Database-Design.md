@@ -2,9 +2,6 @@
 
 **Project:** Tailr
 **Version:** 1.1
-
----
-
 # 1. Purpose
 
 This document defines the persistence architecture for Tailr.
@@ -12,9 +9,6 @@ This document defines the persistence architecture for Tailr.
 The platform stores several fundamentally different categories of information, including structured business data, semantic embeddings, workflow state, generated artifacts, AI telemetry, and guardrail validation events.
 
 Rather than forcing all data into a single database, Tailr uses a polyglot persistence architecture where each storage technology is selected according to its strengths.
-
----
-
 # 2. Design Goals
 
 The persistence layer must:
@@ -28,9 +22,6 @@ The persistence layer must:
 - Minimize operational complexity
 - Provide auditability for AI-generated content
 - Store guardrail validation outcomes
-
----
-
 # 3. Database Architecture
 
 ```text
@@ -47,9 +38,6 @@ Structured Data      Vector Search       Cache & Workflow
  Object Storage
 (.tex, PDFs, Reports)
 ```
-
----
-
 # 4. Storage Responsibilities
 
 | Storage        | Purpose                           |
@@ -58,9 +46,6 @@ Structured Data      Vector Search       Cache & Workflow
 | Qdrant         | Embeddings and semantic retrieval |
 | Redis          | Cache, workflow state, queues     |
 | Object Storage | Resume files, PDFs, reports       |
-
----
-
 # 5. PostgreSQL Schema
 
 Core tables
@@ -78,9 +63,6 @@ guardrail_events
 projects
 skills
 ```
-
----
-
 # 6. Entity Relationship Diagram
 
 ```text
@@ -103,9 +85,6 @@ User
  │
  └── Feedback
 ```
-
----
-
 # 7. Users Table
 
 ```text
@@ -121,9 +100,6 @@ updated_at
 Version 1 may support a single local user.
 
 Authentication can be introduced later without changing the schema.
-
----
-
 # 8. Resumes Table
 
 ```text
@@ -139,9 +115,6 @@ updated_at
 ```
 
 Each resume acts as a logical container.
-
----
-
 # 9. Resume Versions
 
 ```text
@@ -157,9 +130,6 @@ created_at
 ```
 
 Each optimization creates a new immutable version.
-
----
-
 # 10. Job Descriptions
 
 ```text
@@ -174,9 +144,6 @@ created_at
 ```
 
 Parsed requirements are stored as JSONB.
-
----
-
 # 11. Workflow Runs
 
 ```text
@@ -194,9 +161,6 @@ latency_ms
 ```
 
 Supports resumable workflows.
-
----
-
 # 12. ATS Reports
 
 ```text
@@ -211,9 +175,6 @@ created_at
 ```
 
 Dimension scores are stored as JSONB.
-
----
-
 # 13. Feedback
 
 ```text
@@ -227,9 +188,6 @@ created_at
 ```
 
 User feedback becomes training data for future improvements.
-
----
-
 # 14. Optimization History
 
 ```text
@@ -245,9 +203,6 @@ created_at
 ```
 
 Supports historical analytics.
-
----
-
 # 15. Guardrail Events
 
 The Guardrails layer produces structured audit events for every AI interaction.
@@ -298,9 +253,6 @@ This table provides:
 - Prompt injection detection
 - Output repair analytics
 - Compliance reporting
-
----
-
 # 16. JSONB Usage
 
 PostgreSQL JSONB stores semi-structured AI data.
@@ -319,9 +271,6 @@ pii_detection_report
 ```
 
 Frequently queried fields should remain relational.
-
----
-
 # 17. Qdrant Collections
 
 ```text
@@ -331,13 +280,14 @@ experience
 skills
 career_guides
 job_descriptions
+resume_versions
+guardrail_rules
+ats_rules
+prompt_patterns
 feedback
 ```
 
 Each collection stores vectors plus metadata.
-
----
-
 # 18. Vector Metadata
 
 Example
@@ -353,9 +303,6 @@ Example
 ```
 
 Metadata supports hybrid retrieval.
-
----
-
 # 19. Redis Usage
 
 Redis stores transient data only.
@@ -375,9 +322,6 @@ Output repair cache
 ```
 
 Persistent business data never resides exclusively in Redis.
-
----
-
 # 20. Object Storage
 
 Stored artifacts include:
@@ -401,9 +345,6 @@ storage/
   guardrails/
   logs/
 ```
-
----
-
 # 21. Indexing Strategy
 
 ### PostgreSQL Indexes
@@ -432,9 +373,6 @@ metadata
 ```
 
 Qdrant indexes vectors automatically.
-
----
-
 # 22. Transactions
 
 Transactional operations include:
@@ -446,9 +384,6 @@ Transactional operations include:
 - Guardrail event persistence
 
 Database transactions prevent partial writes and ensure audit consistency.
-
----
-
 # 23. Data Retention
 
 Policies
@@ -462,9 +397,6 @@ Policies
 - Feedback: retained
 
 Retention policies are configurable.
-
----
-
 # 24. Backup Strategy
 
 ### PostgreSQL
@@ -484,9 +416,6 @@ Retention policies are configurable.
 ### Redis
 
 - No backup required (cache only)
-
----
-
 # 25. Migration Strategy
 
 Database schema evolves using Alembic.
@@ -499,9 +428,6 @@ Every migration includes:
 Schema versions are tracked in source control.
 
 Guardrail schema changes must remain backward compatible whenever possible.
-
----
-
 # 26. Security
 
 Sensitive data protections include:
@@ -517,9 +443,6 @@ Sensitive data protections include:
 - Guardrail event access restricted to administrators
 
 Raw LLM prompts and outputs should not be stored unless explicitly enabled for debugging.
-
----
-
 # 27. Performance Targets
 
 Target metrics
@@ -532,9 +455,6 @@ Target metrics
 | Vector search               | <100 ms |
 | Cache lookup                | <5 ms   |
 | Guardrail validation lookup | <15 ms  |
-
----
-
 # 28. Scaling Strategy
 
 ### PostgreSQL
@@ -556,9 +476,6 @@ Target metrics
 - S3-compatible backend
 
 The application layer remains unchanged.
-
----
-
 # 29. Monitoring
 
 Database metrics
@@ -576,9 +493,6 @@ Database metrics
 - Output repair success rate
 
 Metrics integrate with Grafana and Prometheus.
-
----
-
 # 30. Future Tables
 
 Future schema additions
@@ -596,9 +510,6 @@ Future schema additions
 - model_benchmarks
 
 The schema is designed to accommodate these without major restructuring.
-
----
-
 # 31. Architecture Decisions
 
 | Decision                        | Rationale                                |
@@ -611,9 +522,6 @@ The schema is designed to accommodate these without major restructuring.
 | Immutable resume versions       | Auditability and rollback                |
 | Guardrail event table           | AI safety auditability and observability |
 | Provider-independent guardrails | Consistent validation across all LLMs    |
-
----
-
 # 32. Summary
 
 Tailr adopts a polyglot persistence architecture that separates transactional, semantic, transient, binary, and AI safety data into specialized storage systems.

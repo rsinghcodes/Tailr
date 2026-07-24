@@ -1,14 +1,7 @@
 # Requirements
 
 **Project:** Tailr
-
 **Document Version:** 1.0
-
-**Status:** Draft
-
-**Last Updated:** July 2026
-
----
 
 # 1. Introduction
 
@@ -20,8 +13,6 @@ It serves as the foundation for system architecture, implementation, testing, an
 
 The purpose of this document is to clearly define what the system must do before describing how it will be implemented.
 
----
-
 ## 1.2 Scope
 
 Tailr enables users to optimize resumes for specific job descriptions using AI while ensuring:
@@ -31,10 +22,12 @@ Tailr enables users to optimize resumes for specific job descriptions using AI w
 - ATS optimization
 - deterministic document generation
 - reproducible workflows
+- AI safety through Guardrails
+- prompt injection resistance
+- structured output validation
+- resume integrity preservation
 
 The system accepts a master resume written in LaTeX and produces tailored resume variants without modifying the user's factual information.
-
----
 
 # 2. Stakeholders
 
@@ -46,8 +39,6 @@ The system accepts a master resume written in LaTeX and produces tailored resume
 | Validator   | Ensures factual correctness |
 | Recruiter   | Consumes optimized resumes  |
 | ATS         | Evaluates generated resumes |
-
----
 
 # 3. User Personas
 
@@ -64,8 +55,6 @@ Pain Points
 - little experience
 - repetitive tailoring
 
----
-
 ## Software Engineer
 
 Needs
@@ -79,8 +68,6 @@ Pain Points
 - many applications
 - manual rewriting
 
----
-
 ## AI Engineer
 
 Needs
@@ -92,8 +79,6 @@ Needs
 Pain Points
 
 - difficult to match AI-specific JDs
-
----
 
 # 4. Functional Requirements
 
@@ -121,8 +106,6 @@ Acceptance Criteria
 - upload succeeds
 - parser validates structure
 
----
-
 ## FR-002 Resume Parsing
 
 Priority
@@ -138,7 +121,11 @@ Output
   "summary": "",
   "skills": [],
   "experience": [],
-  "projects": []
+  "projects": [],
+  "education": [],
+  "certifications": [],
+  "achievements": [],
+  "metadata": {}
 }
 ```
 
@@ -147,8 +134,6 @@ Acceptance Criteria
 - parser extracts all supported sections
 - parser detects invalid templates
 - parser produces deterministic output
-
----
 
 ## FR-003 Resume Validation
 
@@ -166,8 +151,6 @@ The system shall verify:
 
 The validator shall reject invalid outputs.
 
----
-
 ## FR-004 Job Description Upload
 
 Supported
@@ -181,8 +164,6 @@ Future
 - LinkedIn URL
 - company careers page
 
----
-
 ## FR-005 JD Analysis
 
 The system shall identify
@@ -193,10 +174,9 @@ The system shall identify
 - preferred skills
 - soft skills
 - ATS keywords
+- experience level
 
 Output shall be structured JSON.
-
----
 
 ## FR-006 Knowledge Indexing
 
@@ -210,8 +190,6 @@ The system shall create searchable indexes for
 - Resume Versions
 - Career Guides
 
----
-
 ## FR-007 Semantic Retrieval
 
 The system shall retrieve only relevant information before invoking the LLM.
@@ -221,8 +199,6 @@ Retrieval sources
 - Resume Knowledge Base
 - Job Description Index
 - Career Knowledge Base
-
----
 
 ## FR-008 Rewrite Planning
 
@@ -234,8 +210,6 @@ The plan shall specify
 - keywords to introduce
 - bullet ordering
 - suggested emphasis
-
----
 
 ## FR-009 Resume Rewriting
 
@@ -254,20 +228,50 @@ The rewrite agent shall not
 - invent employers
 - invent dates
 
----
+## FR-010 Validation & Guardrails
 
-## FR-010 Validation
+Priority
 
-Every generated resume shall pass validation.
+Critical
 
-Validation includes
+Every generated resume shall pass both Guardrails validation and business validation before it is returned to the user.
 
-- schema validation
-- factual validation
-- hallucination detection
-- formatting validation
+### Guardrails Validation
 
----
+The Guardrails Pipeline shall execute immediately after AI generation and before business validation.
+
+The pipeline shall support:
+
+- Prompt injection detection
+- Prompt leakage detection
+- Structured JSON validation
+- Schema validation
+- Resume integrity validation
+- ATS formatting validation
+- PII detection
+- Toxicity detection
+- Hallucination detection
+- Citation validation
+- Configurable validation policies
+- Automatic repair of recoverable outputs
+
+### Business Validation
+
+The Validation Engine shall verify:
+
+- factual correctness
+- dates
+- company names
+- project consistency
+- skill consistency
+- formatting consistency
+- confidence thresholds
+
+If any validation stage fails, the workflow shall:
+
+- retry with a stricter prompt when possible
+- attempt output repair when safe
+- reject the generated resume if safety or correctness cannot be guaranteed
 
 ## FR-011 ATS Analysis
 
@@ -279,8 +283,6 @@ The system shall generate
 - readability score
 - optimization recommendations
 
----
-
 ## FR-012 Resume Rendering
 
 The renderer shall generate
@@ -289,8 +291,6 @@ The renderer shall generate
 - PDF
 
 Renderer output shall compile successfully.
-
----
 
 ## FR-013 Version Management
 
@@ -302,8 +302,6 @@ The system shall store
 - optimization plans
 - diffs
 
----
-
 ## FR-014 Change Report
 
 The system shall explain
@@ -313,32 +311,9 @@ The system shall explain
 - affected section
 - supporting JD requirement
 
----
-
 ## FR-015 User Review
 
 Users shall review changes before export.
-
----
-
-### FR-016: AI Guardrails
-
-The system shall validate all LLM inputs and outputs using a Guardrails Pipeline before returning responses to users.
-
-The Guardrails Pipeline shall support:
-
-- Prompt injection detection
-- Structured output validation
-- JSON schema validation
-- Resume integrity validation
-- ATS compatibility validation
-- PII detection
-- Toxicity detection
-- Hallucination detection
-- Citation validation
-- Configurable validation policies
-
-The system shall reject or repair invalid outputs before returning results.
 
 # 5. Non-Functional Requirements
 
@@ -346,7 +321,7 @@ The system shall reject or repair invalid outputs before returning results.
 
 Resume parsing
 
-< 1 second
+< 500 ms
 
 Retrieval
 
@@ -360,19 +335,18 @@ Rendering
 
 < 3 seconds
 
----
-
 ## Reliability
 
 - deterministic parser
 - retry failed agents
 - recover from LLM failures
+- recover from Guardrail validation failures
+- support automatic output repair
+- provide fallback safety responses
 
 Target uptime
 
 99%
-
----
 
 ## Scalability
 
@@ -385,9 +359,6 @@ Support
 Future
 
 multi-user deployment
-
----
-
 ## Maintainability
 
 Each module shall have
@@ -395,9 +366,6 @@ Each module shall have
 - single responsibility
 - unit tests
 - API documentation
-
----
-
 ## Explainability
 
 Every recommendation shall contain
@@ -405,8 +373,10 @@ Every recommendation shall contain
 - reason
 - evidence
 - confidence
-
----
+- affected resume section
+- supporting JD requirement
+- validation status
+- guardrail status
 
 ## Security
 
@@ -416,16 +386,17 @@ The system shall
 - isolate prompts
 - sanitize user input
 - validate uploaded files
-
----
+- detect prompt injection attempts
+- prevent prompt leakage
+- validate all LLM outputs
+- prevent PII leakage
+- enforce output safety policies
 
 ## Privacy
 
 No resume data shall be shared with third-party services unless explicitly configured.
 
 The system shall support fully local execution.
-
----
 
 ## Portability
 
@@ -437,14 +408,13 @@ Tailr shall run on
 
 using Docker.
 
----
-
 # 6. Constraints
 
 Technical
 
 - Python backend
 - FastAPI
+- Langgraph
 - LlamaIndex
 - Qdrant
 - Ollama
@@ -456,16 +426,12 @@ Project
 - Student friendly
 - Minimal cloud cost
 
----
-
 # 7. Assumptions
 
 - User owns a master resume.
 - Resume information is truthful.
 - Job descriptions are well formatted.
 - Users review generated resumes.
-
----
 
 # 8. Out of Scope
 
@@ -477,118 +443,139 @@ The first release will not support
 - salary prediction
 - resume fabrication
 
----
-
 # 9. Acceptance Criteria
 
 The MVP is complete when:
 
 ✓ Resume parser works
-
 ✓ Renderer reproduces original LaTeX
-
 ✓ Job description parser extracts structured data
-
 ✓ Resume optimization succeeds
-
 ✓ Validation prevents hallucinations
-
 ✓ PDF compiles successfully
-
 ✓ ATS report generated
-
 ✓ User can download optimized resume
-
----
 
 # 10. Success Metrics
 
 Engineering
 
-- Parser accuracy > 99%
-
-- Rendering success > 99%
-
-- Retrieval precision > 90%
-
 - Validation precision > 95%
-
-- API latency < 2 seconds
-
----
+- Guardrail detection precision > 95%
+- Prompt injection detection recall > 90%
+- Output repair success rate > 80%
+- Hallucination detection precision > 90%
 
 User Experience
 
 - Resume optimization < 30 seconds
-
 - Manual editing reduced by 70%
-
 - ATS score improvement
-
 - High user satisfaction
-
----
 
 # 11. Risks
 
-| Risk           | Impact | Mitigation             |
-| -------------- | ------ | ---------------------- |
-| Hallucinations | High   | Validation Engine      |
-| Invalid LaTeX  | High   | Deterministic Renderer |
-| Poor Retrieval | Medium | Hybrid Search          |
-| Model Drift    | Medium | Prompt Versioning      |
-| Slow Responses | Medium | Caching                |
-
----
+| Risk                     | Impact | Mitigation                       |
+| ------------------------ | ------ | -------------------------------- |
+| Hallucinations           | High   | Guardrails + Validation Engine   |
+| Prompt Injection         | High   | Prompt Injection Detector        |
+| Prompt Leakage           | High   | Guardrails Output Filter         |
+| Invalid LaTeX            | High   | Deterministic Renderer           |
+| PII Leakage              | High   | PII Validator                    |
+| Poor Retrieval           | Medium | Hybrid Search                    |
+| Model Drift              | Medium | Prompt Versioning + Validation   |
+| Slow Responses           | Medium | Caching                          |
+| False Positive Rejection | Medium | Configurable Validation Policies |
 
 # 12. Future Requirements
 
 The platform should eventually support
 
 - Cover Letter Generation
-
 - LinkedIn Optimization
-
 - Portfolio Optimization
-
 - GitHub Analysis
-
 - Career Knowledge Graph
-
 - Interview Preparation
-
 - Resume Analytics
-
 - Application Tracking
-
 - Recruiter Feedback Learning
-
 - Multi-language Resume Support
-
----
 
 # 13. Requirement Traceability
 
-| Requirement     | Component           |
-| --------------- | ------------------- |
-| Resume Upload   | Upload Service      |
-| Resume Parsing  | Parser Engine       |
-| Knowledge Index | LlamaIndex          |
-| Retrieval       | Qdrant              |
-| Planning        | Planner Agent       |
-| Rewrite         | Rewrite Agent       |
-| Validation      | Rule Engine         |
-| ATS Analysis    | ATS Engine          |
-| Rendering       | LaTeX Renderer      |
-| PDF             | Compilation Service |
+| Requirement             | Component                         |
+| ----------------------- | --------------------------------- |
+| Resume Upload           | Upload Service                    |
+| Resume Parsing          | Parser Engine                     |
+| Knowledge Index         | LlamaIndex                        |
+| Retrieval               | Qdrant                            |
+| Planning                | Planner Agent                     |
+| Rewrite                 | Rewrite Agent                     |
+| Validation & Guardrails | Guardrails Pipeline + Rule Engine |
+| ATS Analysis            | ATS Engine                        |
+| Rendering               | LaTeX Renderer                    |
+| PDF                     | Compilation Service               |
 
----
+# 14. Guardrails Requirements
 
-# 14. Exit Criteria
+The Guardrails subsystem shall operate as a first-class architectural component.
+
+## Input Guardrails
+
+Validate:
+
+- uploaded file types
+- file size limits
+- encoding
+- malformed job descriptions
+- malicious prompt patterns
+
+## Output Guardrails
+
+Validate:
+
+- JSON structure
+- schema compliance
+- required fields
+- hallucinated entities
+- unsupported technologies
+- unsupported achievements
+- PII exposure
+- toxic content
+
+## Resume Integrity Rules
+
+The system shall never:
+
+- invent employers
+- invent projects
+- invent certifications
+- invent metrics
+- modify employment dates
+- modify company names
+- introduce unsupported claims
+
+## Recovery Strategy
+
+On Guardrail failure, the system shall:
+
+1. retry with a stricter prompt
+2. retry with a fallback model
+3. attempt automatic repair
+4. escalate for manual review
+5. abort the workflow if safety cannot be guaranteed
+
+# 15. Exit Criteria
 
 The Requirements phase is complete when
 
 - all functional requirements are approved
+- Guardrails prevent hallucinations
+- Prompt injection detection works
+- Structured output validation works
+- Resume integrity validation works
+- Validation Engine enforces business correctness
 - architecture can be derived without ambiguity
 - implementation milestones are defined
 - acceptance criteria are measurable

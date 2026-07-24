@@ -2,9 +2,6 @@
 
 **Project:** Tailr
 **Version:** 1.0
-
----
-
 # 1. Purpose
 
 This document defines the security architecture of Tailr.
@@ -12,9 +9,6 @@ This document defines the security architecture of Tailr.
 Security protects user data, AI workflows, infrastructure, generated artifacts, and AI-generated outputs from unauthorized access, malicious inputs, prompt injection, hallucinated content, data leakage, and system abuse.
 
 Because Tailr is an AI-native application, its security model extends beyond traditional web security to include LLM security, RAG security, vector database protection, and AI workflow isolation.
-
----
-
 # 2. Security Goals
 
 The platform must:
@@ -29,9 +23,6 @@ The platform must:
 - Prevent data leakage
 - Enforce guardrail policies
 - Support auditability
-
----
-
 # 3. Security Principles
 
 Tailr follows six core principles.
@@ -41,15 +32,9 @@ Tailr follows six core principles.
 Every request is untrusted.
 
 Every component validates its inputs.
-
----
-
 ## Least Privilege
 
 Every service receives only the permissions it requires.
-
----
-
 ## Defense in Depth
 
 Security exists at multiple layers.
@@ -67,27 +52,15 @@ Guardrails
 Database
 ↓
 Storage
-
----
-
 ## Secure by Default
 
 Unsafe configuration is never the default.
-
----
-
 ## Privacy First
 
 User data is never shared with external services unless explicitly configured.
-
----
-
 ## Audit Everything
 
 Security events are logged for investigation.
-
----
-
 # 4. Threat Model
 
 Major threats include
@@ -106,9 +79,6 @@ Major threats include
 - Denial of Service
 
 Each threat has dedicated mitigation.
-
----
-
 # 5. Authentication
 
 Version 1
@@ -127,9 +97,6 @@ Future
 - Google Login
 - GitHub Login
 - Multi-factor Authentication
-
----
-
 # 6. Authorization
 
 Role-Based Access Control (RBAC)
@@ -145,9 +112,6 @@ System
 ```
 
 Every request verifies ownership before accessing resources.
-
----
-
 # 7. Password Security
 
 Passwords
@@ -158,9 +122,6 @@ Passwords
 - Expiring reset links
 
 Passwords are never stored in plaintext.
-
----
-
 # 8. API Security
 
 Every endpoint enforces
@@ -172,9 +133,6 @@ Every endpoint enforces
 - Output sanitization
 
 Sensitive endpoints require valid JWTs.
-
----
-
 # 9. Input Validation
 
 Validate
@@ -189,9 +147,6 @@ Validate
 - Embedded control instructions
 
 Reject malformed or suspicious input immediately.
-
----
-
 # 10. File Upload Security
 
 Supported files
@@ -212,9 +167,6 @@ Checks
 - Template validation
 
 Executable files are rejected.
-
----
-
 # 11. LaTeX Security
 
 Generated LaTeX is sandboxed.
@@ -236,9 +188,6 @@ Blocked commands include
 ```
 
 Only a safe subset of LaTeX commands is allowed.
-
----
-
 # 12. LLM Security
 
 System prompts are immutable.
@@ -254,9 +203,6 @@ Prompt construction separates
 - user content
 
 Every model response passes through the Guardrails layer before it is accepted by the application.
-
----
-
 # 13. Prompt Injection Protection
 
 Potential attacks
@@ -282,9 +228,6 @@ Mitigation
 - Automatic request rejection for high-risk patterns
 
 Prompt injection attempts are logged and included in security telemetry.
-
----
-
 # 14. Guardrails Security
 
 The Guardrails layer enforces AI safety policies independently of the underlying model provider.
@@ -318,9 +261,6 @@ Cross-user retrieval is prohibited.
 Every chunk includes ownership metadata.
 
 Retrieved chunks are also scanned for prompt injection markers before being inserted into the model context.
-
----
-
 # 16. Vector Database Security
 
 Each vector stores
@@ -340,9 +280,6 @@ Queries are filtered by ownership before retrieval.
 Embedding similarity alone never grants access.
 
 Suspicious or poisoned embeddings can be quarantined without affecting other user collections.
-
----
-
 # 17. Data Privacy
 
 Sensitive data
@@ -364,9 +301,6 @@ Never appears in
 - Guardrail internal state
 
 PII is masked whenever possible.
-
----
-
 # 18. Encryption
 
 Data in transit
@@ -380,9 +314,6 @@ Data at rest
 - Object storage encryption
 
 Secrets remain encrypted.
-
----
-
 # 19. Secrets Management
 
 Secrets include
@@ -407,9 +338,6 @@ Future
 Vault
 
 Secrets are never committed to Git.
-
----
-
 # 20. Database Security
 
 Mitigations
@@ -421,9 +349,6 @@ Mitigations
 - Audit logging
 
 SQL Injection is prevented through ORM usage.
-
----
-
 # 21. Redis Security
 
 Redis
@@ -433,9 +358,6 @@ Redis
 - No public exposure
 
 Redis stores only temporary data.
-
----
-
 # 22. Object Storage Security
 
 Resume files
@@ -446,9 +368,6 @@ Resume files
 - Server-side encryption
 
 Deleted files are securely removed.
-
----
-
 # 23. Dependency Security
 
 Dependencies are monitored using
@@ -459,9 +378,6 @@ Dependencies are monitored using
 - Trivy (containers)
 
 Outdated packages are reviewed regularly.
-
----
-
 # 24. Container Security
 
 Containers
@@ -473,9 +389,6 @@ Containers
 - No unnecessary ports
 
 Images are scanned before deployment.
-
----
-
 # 25. Network Security
 
 Internal services communicate over private Docker networks.
@@ -486,9 +399,6 @@ Public exposure is limited to
 - API Gateway
 
 Databases remain private.
-
----
-
 # 26. Logging Security
 
 Logs include
@@ -509,9 +419,6 @@ Logs exclude
 - Guardrail internal metadata
 
 Sensitive values are automatically redacted.
-
----
-
 # 27. Rate Limiting
 
 Example limits
@@ -529,9 +436,6 @@ Authentication
 10 attempts/minute
 
 Limits reduce abuse.
-
----
-
 # 28. Audit Logging
 
 Security events
@@ -548,9 +452,6 @@ Security events
 - Output repair event
 
 Audit records are immutable.
-
----
-
 # 29. Incident Response
 
 Detection
@@ -576,9 +477,6 @@ Recovery
 Postmortem
 
 Every security incident follows a documented process.
-
----
-
 # 30. Compliance Considerations
 
 Tailr is designed with principles aligned to
@@ -589,9 +487,6 @@ Tailr is designed with principles aligned to
 - AI security best practices
 
 Formal certification is outside Version 1 scope.
-
----
-
 # 31. Future Enhancements
 
 Future capabilities
@@ -609,9 +504,6 @@ Future capabilities
 - Prompt risk scoring
 - Real-time output quarantine
 - AI safety policy engine
-
----
-
 # 32. Security Testing
 
 Security testing includes
@@ -630,9 +522,6 @@ Security testing includes
 - Fuzz testing
 
 Security tests run automatically in CI/CD.
-
----
-
 # 33. Architecture Decisions
 
 | Decision                     | Rationale                                  |
@@ -646,9 +535,6 @@ Security tests run automatically in CI/CD.
 | Ownership-based retrieval    | Prevent cross-user data leakage            |
 | Sandboxed LaTeX              | Prevent arbitrary code execution           |
 | Structured audit logs        | Traceability and compliance                |
-
----
-
 # 34. Summary
 
 Tailr adopts a defense-in-depth security architecture that protects both traditional application components and AI-specific workflows.

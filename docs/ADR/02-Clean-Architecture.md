@@ -5,9 +5,6 @@
 **Date:** 2026-07-20
 
 **Authors:** Tailr Engineering
-
----
-
 # Context
 
 Tailr is not a traditional CRUD application.
@@ -47,9 +44,6 @@ The system requires an architecture that:
 - allows infrastructure replacement,
 - supports future microservices,
 - integrates AI guardrails as a first-class concern.
-
----
-
 # Decision
 
 Tailr adopts **Clean Architecture** with **Hexagonal (Ports & Adapters) boundaries** and selected **Domain-Driven Design (DDD)** principles.
@@ -80,9 +74,6 @@ Infrastructure Adapters
 Dependencies always point **inward**.
 
 The Domain layer must not depend on FastAPI, SQLAlchemy, Qdrant, Redis, Ollama, or any external framework.
-
----
-
 # Decision Drivers
 
 The architecture must:
@@ -96,9 +87,6 @@ The architecture must:
 - reduce framework lock-in,
 - support observability and tracing,
 - enforce guardrails consistently.
-
----
-
 # Layer Responsibilities
 
 ## Presentation Layer
@@ -113,9 +101,6 @@ Responsible for:
 - Streaming responses
 
 **No business logic exists here.**
-
----
-
 ## Application Layer
 
 Responsible for:
@@ -136,9 +121,6 @@ Examples:
 - Evaluate Prompt Quality
 
 The Application layer depends only on **Ports / Interfaces** and the **Domain layer**.
-
----
-
 ## Domain Layer
 
 Contains:
@@ -153,9 +135,6 @@ Contains:
 - Domain events
 
 This layer contains the core business knowledge and remains completely framework-independent.
-
----
-
 ## Ports & Interfaces
 
 Defines contracts for external dependencies.
@@ -175,9 +154,6 @@ PDFCompiler
 ```
 
 Infrastructure adapters implement these interfaces.
-
----
-
 ## Infrastructure Adapters
 
 Responsible for:
@@ -193,9 +169,6 @@ Responsible for:
 - Telemetry exporters
 
 Infrastructure can change without affecting business logic.
-
----
-
 # Knowledge Layer
 
 The Knowledge Layer is implemented inside the infrastructure boundary but exposed through ports.
@@ -210,9 +183,6 @@ Responsibilities:
 - reranking
 
 This separation allows Qdrant to be replaced without changing application logic.
-
----
-
 # Guardrails Layer
 
 A dedicated Guardrails layer is introduced between AI generation and business validation.
@@ -229,9 +199,6 @@ Responsibilities:
 - output repair
 
 The Guardrails layer is provider-independent and reusable across all AI workflows.
-
----
-
 # Repository Pattern
 
 Application services communicate through interfaces.
@@ -256,9 +223,6 @@ Repositories must **not**:
 - generate prompts,
 - perform business validation,
 - orchestrate workflows.
-
----
-
 # Dependency Rule
 
 ## Allowed
@@ -276,9 +240,6 @@ Domain
 ```text
 Infrastructure ──implements──> Ports
 ```
-
----
-
 ## Forbidden
 
 ```text
@@ -297,9 +258,6 @@ Application → Ollama
 ```
 
 The Domain layer remains completely framework-independent.
-
----
-
 # Project Structure
 
 ```text
@@ -325,9 +283,6 @@ backend/
 ```
 
 This structure separates business concerns from implementation details and supports future extraction into independent services.
-
----
-
 # Alternatives Considered
 
 ## Option 1 — Layered MVC
@@ -345,9 +300,6 @@ This structure separates business concerns from implementation details and suppo
 - Poor fit for AI workflows
 
 **Decision:** Rejected
-
----
-
 ## Option 2 — Feature-Based Structure
 
 ### Advantages
@@ -362,9 +314,6 @@ This structure separates business concerns from implementation details and suppo
 - Infrastructure concerns leak into features
 
 **Decision:** Rejected
-
----
-
 ## Option 3 — Clean Architecture + Hexagonal Boundaries
 
 ### Advantages
@@ -386,9 +335,6 @@ This structure separates business concerns from implementation details and suppo
 - Additional abstractions
 
 **Decision:** Accepted
-
----
-
 # Consequences
 
 ## Positive
@@ -402,9 +348,6 @@ This structure separates business concerns from implementation details and suppo
 - Enables deterministic validation
 - Enables centralized guardrails
 - Improves observability
-
----
-
 ## Negative
 
 - More files
@@ -413,9 +356,6 @@ This structure separates business concerns from implementation details and suppo
 - Requires discipline during code reviews
 
 The long-term benefits outweigh the initial complexity.
-
----
-
 # Risks
 
 | Risk                  | Mitigation                               |
@@ -426,9 +366,6 @@ The long-term benefits outweigh the initial complexity.
 | Layer violations      | Enforce through code reviews and linters |
 | Interface explosion   | Introduce ports only when needed         |
 | Guardrail duplication | Centralize guardrail policies            |
-
----
-
 # Impact
 
 This decision influences:
@@ -446,9 +383,6 @@ This decision influences:
 - Future Microservices
 
 Every backend component must follow this architectural pattern.
-
----
-
 # Migration Strategy
 
 Tailr will evolve through the following stages.
@@ -475,9 +409,6 @@ Tailr will evolve through the following stages.
 - Independent service deployment
 
 The current architecture is intentionally designed to make these transitions incremental rather than requiring a rewrite.
-
----
-
 # Related ADRs
 
 - ADR-0001 — Adopt a Canonical Resume Model
@@ -486,9 +417,6 @@ The current architecture is intentionally designed to make these transitions inc
 - ADR-0005 — Use Qdrant as the Vector Database
 - ADR-0006 — Adopt a Multi-Agent Workflow
 - ADR-0008 — Adopt a Validation & Guardrails Engine
-
----
-
 # References
 
 - system-architecture.md
@@ -497,9 +425,6 @@ The current architecture is intentionally designed to make these transitions inc
 - workflow-design.md
 - testing.md
 - guardrails-architecture.md
-
----
-
 # Review Notes
 
 This ADR should be revisited if:

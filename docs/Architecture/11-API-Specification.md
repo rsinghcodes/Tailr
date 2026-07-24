@@ -2,9 +2,6 @@
 
 **Project:** Tailr
 **Version:** 1.0
-
----
-
 # 1. Purpose
 
 This document defines the REST API exposed by Tailr.
@@ -12,9 +9,6 @@ This document defines the REST API exposed by Tailr.
 The API provides access to all platform capabilities including resume management, knowledge indexing, workflow orchestration, AI optimization, guardrail validation, ATS scoring, rendering, and analytics.
 
 The API follows RESTful principles and exchanges JSON unless otherwise specified.
-
----
-
 # 2. Design Principles
 
 The API follows these principles.
@@ -29,17 +23,11 @@ Examples
 - Workflow
 - Job Description
 - ATS Report
-
----
-
 ## Stateless
 
 Each request contains all required information.
 
 No server-side session state.
-
----
-
 ## Versioned
 
 Every endpoint belongs to an API version.
@@ -49,27 +37,15 @@ Example
 ```
 /api/v1/
 ```
-
----
-
 ## Typed
 
 Every request and response follows a schema.
-
----
-
 ## Explainable Errors
 
 Every failure returns structured information.
-
----
-
 ## Secure by Default
 
 All AI-facing endpoints are protected by request validation, guardrails, rate limiting, and structured error handling.
-
----
-
 # 3. API Overview
 
 ```
@@ -90,9 +66,6 @@ ATS Service
 Rendering Service
 Analytics Service
 ```
-
----
-
 # 4. Base URL
 
 ```
@@ -104,9 +77,6 @@ Production
 ```
 https://api.tailr.ai/v1
 ```
-
----
-
 # 5. Authentication
 
 Version 1
@@ -136,9 +106,6 @@ X-Request-ID: 9f3c1b2a-7d4e-4c2f-9a11-8b2c7d5e1f90
 ```
 
 The same identifier is returned in the response and propagated through workflow traces.
-
----
-
 # 6. Standard Response
 
 ## Success Response
@@ -170,9 +137,6 @@ The same identifier is returned in the response and propagated through workflow 
   "request_id": "9f3c1b2a-7d4e-4c2f-9a11-8b2c7d5e1f90"
 }
 ```
-
----
-
 # 7. Resume APIs
 
 ## Upload Resume
@@ -199,9 +163,6 @@ Response
   "status": "uploaded"
 }
 ```
-
----
-
 ## List Resumes
 
 ```
@@ -211,9 +172,6 @@ GET
 ```
 
 Returns all stored resumes.
-
----
-
 ## Resume Details
 
 ```
@@ -221,9 +179,6 @@ GET
 
 /resumes/{resume_id}
 ```
-
----
-
 ## Delete Resume
 
 ```
@@ -231,9 +186,6 @@ DELETE
 
 /resumes/{resume_id}
 ```
-
----
-
 # 8. Job Description APIs
 
 ## Analyze Job Description
@@ -261,9 +213,6 @@ Response
   "skills": []
 }
 ```
-
----
-
 ## Get Parsed JD
 
 ```
@@ -271,9 +220,6 @@ GET
 
 /job-descriptions/{id}
 ```
-
----
-
 # 9. Knowledge APIs
 
 ## Build Knowledge Index
@@ -291,9 +237,6 @@ Request
   "resume_id": "..."
 }
 ```
-
----
-
 ## Search Knowledge
 
 ```
@@ -318,9 +261,6 @@ Response
   "count": 5
 }
 ```
-
----
-
 # 10. Workflow APIs
 
 ## Start Optimization
@@ -349,9 +289,6 @@ Response
   "status": "PENDING"
 }
 ```
-
----
-
 ## Workflow Status
 
 ```
@@ -371,9 +308,6 @@ Response
   "estimated_seconds_remaining": 12
 }
 ```
-
----
-
 ## Cancel Workflow
 
 ```
@@ -381,9 +315,6 @@ POST
 
 /workflows/{workflow_id}/cancel
 ```
-
----
-
 # 11. Optimization APIs
 
 ## Generate Rewrite Plan
@@ -393,9 +324,6 @@ POST
 
 /optimization/plan
 ```
-
----
-
 ## Rewrite Resume
 
 ```
@@ -403,9 +331,6 @@ POST
 
 /optimization/rewrite
 ```
-
----
-
 ## Validate Resume
 
 ```
@@ -413,9 +338,6 @@ POST
 
 /optimization/validate
 ```
-
----
-
 # 12. Guardrails APIs
 
 ## Validate AI Output
@@ -437,15 +359,16 @@ Response
 
 ```json
 {
-  "valid": true,
-  "repaired": false,
+  "status": "approved",
+  "repair_applied": false,
   "violations": [],
-  "severity": "INFO"
+  "warnings": [],
+  "metadata": {
+    "validator_count": 8,
+    "execution_time_ms": 42
+  }
 }
 ```
-
----
-
 ## Detect Prompt Injection
 
 ```http
@@ -469,9 +392,6 @@ Response
   "rule": "PROMPT_INJECTION"
 }
 ```
-
----
-
 ## Repair Invalid Output
 
 ```http
@@ -495,9 +415,6 @@ Response
   "content": "{ \\"summary\\": \\"...\\" }"
 }
 ```
-
----
-
 # 13. ATS APIs
 
 ## Generate ATS Report
@@ -525,9 +442,6 @@ Response
   "recommendations": []
 }
 ```
-
----
-
 ## Compare ATS Reports
 
 ```
@@ -535,9 +449,6 @@ GET
 
 /ats/compare
 ```
-
----
-
 # 14. Rendering APIs
 
 ## Generate LaTeX
@@ -547,9 +458,6 @@ POST
 
 /render/latex
 ```
-
----
-
 ## Compile PDF
 
 ```
@@ -566,9 +474,6 @@ Response
   "compile_logs": []
 }
 ```
-
----
-
 # 15. Version APIs
 
 ## List Resume Versions
@@ -578,9 +483,6 @@ GET
 
 /resumes/{id}/versions
 ```
-
----
-
 ## Restore Version
 
 ```
@@ -588,9 +490,6 @@ POST
 
 /resumes/{id}/versions/{version}/restore
 ```
-
----
-
 # 16. Analytics APIs
 
 ## Optimization History
@@ -600,9 +499,6 @@ GET
 
 /history
 ```
-
----
-
 ## Dashboard Metrics
 
 ```
@@ -620,9 +516,6 @@ Response
   "optimizations": 42
 }
 ```
-
----
-
 # 17. Health APIs
 
 ```
@@ -642,9 +535,6 @@ Returns the status of:
 - OpenTelemetry
 - Disk Space
 - Memory Usage
-
----
-
 # 18. Error Codes
 
 | Code               | Meaning                        |
@@ -660,9 +550,6 @@ Returns the status of:
 | INJECTION_DETECTED | Prompt injection detected      |
 | PII_DETECTED       | Sensitive information detected |
 | RATE_LIMITED       | Request rate limit exceeded    |
-
----
-
 # 19. HTTP Status Codes
 
 | Status | Meaning               |
@@ -678,9 +565,6 @@ Returns the status of:
 | 422    | Validation Failed     |
 | 429    | Too Many Requests     |
 | 500    | Internal Server Error |
-
----
-
 # 20. Rate Limiting
 
 ## Default API Limits
@@ -708,9 +592,6 @@ Returns the status of:
 ```
 
 Limits are configurable per user and per API key.
-
----
-
 # 21. Idempotency
 
 The following endpoints are idempotent:
@@ -724,9 +605,6 @@ Workflow creation supports an optional `Idempotency-Key` header to prevent dupli
 ```
 Idempotency-Key: 7f6b2a1c-9d3e-4f7a-b2c1-1d9e5f7a3c11
 ```
-
----
-
 # 22. Pagination
 
 Collection endpoints support:
@@ -740,9 +618,6 @@ Collection endpoints support:
 
 &order=desc
 ```
-
----
-
 # 23. Filtering
 
 Example
@@ -758,9 +633,6 @@ GET
 
 /history?company=OpenAI
 ```
-
----
-
 # 24. Security
 
 API protections include:
@@ -779,9 +651,6 @@ API protections include:
 - Request tracing
 - Security headers (HSTS, CSP, X-Content-Type-Options)
 - Dependency vulnerability scanning
-
----
-
 # 25. OpenAPI Support
 
 The API is fully documented using OpenAPI 3.1.
@@ -807,9 +676,6 @@ Raw OpenAPI schema
 ```
 
 This schema is used for SDK generation and API contract testing.
-
----
-
 # 26. Future APIs
 
 Future endpoints include:
@@ -823,9 +689,6 @@ Future endpoints include:
 - Resume Benchmarking
 
 The existing API version remains backward compatible.
-
----
-
 # 27. Summary
 
 The Tailr API exposes every platform capability through a versioned, resource-oriented REST interface.

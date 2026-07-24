@@ -1,12 +1,7 @@
 # Vision.md
 
 **Project:** Tailr
-
 **Version:** 1.1
-
-**Status:** Draft
-
----
 
 # 1. Vision Statement
 
@@ -16,15 +11,11 @@ Unlike conventional AI resume builders that rewrite resumes through a single pro
 
 The long-term vision is to build an intelligent career assistant that continuously learns from a user’s professional history and helps throughout the entire job application lifecycle.
 
----
-
 # 2. Mission
 
 Enable every developer to create the best possible version of their resume for every opportunity without compromising honesty, consistency, technical quality, or AI safety.
 
 Tailr aims to reduce the time spent tailoring resumes from hours to minutes while ensuring that every generated resume remains factually correct, fully explainable, and protected by deterministic guardrails.
-
----
 
 # 3. Background
 
@@ -47,8 +38,6 @@ Although Large Language Models have made resume rewriting easier, existing solut
 Most tools treat resumes as plain text instead of structured knowledge.
 
 Tailr approaches resumes as structured engineering artifacts rather than editable documents and introduces a dedicated Guardrails layer to ensure safe and reliable AI behavior.
-
----
 
 # 4. Problem Statement
 
@@ -75,8 +64,6 @@ The repetitive nature of this workflow results in:
 
 AI tools can accelerate this process, but without proper guardrails they may introduce fabricated content or unsafe outputs.
 
----
-
 # 5. Vision Goals
 
 Tailr will become an intelligent career platform capable of:
@@ -91,8 +78,6 @@ Tailr will become an intelligent career platform capable of:
 - Learning from previous resume optimizations
 - Detecting unsafe or hallucinated AI outputs
 - Enforcing structured and verifiable resume generation
-
----
 
 # 6. Product Philosophy
 
@@ -112,8 +97,6 @@ Tailr never fabricates:
 - Skills
 - Achievements
 
----
-
 ## 6.2 Explainability
 
 Every optimization must be explainable.
@@ -128,8 +111,6 @@ Users should understand:
 
 No change should appear without justification.
 
----
-
 ## 6.3 Determinism
 
 AI should generate recommendations.
@@ -137,8 +118,6 @@ AI should generate recommendations.
 Software should enforce correctness.
 
 Tailr prioritizes deterministic processing over creative generation.
-
----
 
 ## 6.4 Modularity
 
@@ -157,19 +136,13 @@ Examples:
 
 This enables testing, replacement, and independent improvement.
 
----
-
 ## 6.5 Human Control
 
-Users remain the final decision maker.
-
-AI suggests.
-
-Humans approve.
+- Users remain the final decision maker.
+- AI suggests.
+- Humans approve.
 
 Tailr never silently changes resumes.
-
----
 
 ## 6.6 AI Safety
 
@@ -186,8 +159,6 @@ The Guardrails layer enforces:
 
 AI output is never trusted by default.
 
----
-
 # 7. Design Principles
 
 The system is designed around the following principles.
@@ -198,23 +169,17 @@ The master resume is the single source of truth.
 
 Every optimized resume is derived from the master resume.
 
----
-
 ## 7.2 Structured Knowledge
 
 Resumes are not treated as text documents.
 
 They are transformed into structured knowledge models.
 
----
-
 ## 7.3 Retrieval Before Generation
 
 The LLM should receive only the most relevant resume context.
 
 Retrieval should happen before every reasoning step.
-
----
 
 ## 7.4 Guardrails Before Validation
 
@@ -229,21 +194,15 @@ The pipeline verifies:
 - Resume integrity
 - ATS constraints
 
----
-
 ## 7.5 Validation Before Rendering
 
 Every approved modification must pass business validation before becoming part of the final resume.
-
----
 
 ## 7.6 Rendering Is Deterministic
 
 Only the rendering engine generates LaTeX.
 
 LLMs never directly edit LaTeX templates.
-
----
 
 # 8. Target Users
 
@@ -258,16 +217,12 @@ LLMs never directly edit LaTeX templates.
 - Students
 - New Graduates
 
----
-
 ## Future Users
 
 - Designers
 - Product Managers
 - Data Scientists
 - Researchers
-
----
 
 # 9. Product Scope
 
@@ -282,8 +237,6 @@ Tailr focuses on optimizing:
 - Experience
 - Summary
 
----
-
 ## Future Scope
 
 - Cover Letters
@@ -294,8 +247,6 @@ Tailr focuses on optimizing:
 - Career Analytics
 - Application Tracking
 - Career Knowledge Graph
-
----
 
 # 10. Success Metrics
 
@@ -309,8 +260,6 @@ The platform will be considered successful if it achieves the following.
 - Deterministic rendering
 - Structured output validation passes
 
----
-
 ## Quality
 
 - Higher ATS score
@@ -319,16 +268,12 @@ The platform will be considered successful if it achieves the following.
 - Faster optimization
 - Consistent AI behavior
 
----
-
 ## Safety
 
 - Prompt injection attempts blocked
 - Invalid AI outputs rejected
 - Resume integrity preserved
 - PII leakage prevented
-
----
 
 ## Engineering
 
@@ -337,8 +282,6 @@ The platform will be considered successful if it achieves the following.
 - Explainable reasoning
 - Production-ready workflows
 - Observable AI pipelines
-
----
 
 # 11. Long-Term Vision
 
@@ -365,8 +308,6 @@ This knowledge can power future capabilities such as:
 - Career roadmap generation
 - Personalized learning suggestions
 
----
-
 # 12. Engineering Vision
 
 Tailr will be built as an engineering-first AI system.
@@ -385,55 +326,28 @@ Instead of relying on a single Large Language Model prompt, the system will comb
 
 Every architectural decision should prioritize reliability, transparency, maintainability, correctness, and AI safety over convenience.
 
----
-
 # 13. AI Safety & Guardrails Vision
 
 Tailr introduces a dedicated Guardrails architecture that sits between AI reasoning and business validation.
 
 ## Guardrails Pipeline
 
-LLM Output
-
-↓
-
-JSON Validation
-
-↓
-
-Schema Validation
-
-↓
-
-Prompt Injection Detection
-
-↓
-
-Hallucination Detection
-
-↓
-
-Resume Integrity Validation
-
-↓
-
-ATS Formatting Validation
-
-↓
-
-PII Detection
-
-↓
-
-Business Validation
-
-↓
-
-Rendering
+```mermaid
+flowchart TD
+    A["LLM Output"] --> B["JSON Validation"]
+    B --> C["Schema Validation"]
+    C --> D["Prompt Injection Detection"]
+    D --> E["Hallucination Detection"]
+    E --> F["Resume Integrity Validation"]
+    F --> G["PII / Secret Scan"]
+    G --> H["ATS Formatting Validation"]
+    H --> I["LaTeX Safety Validation"]
+    I --> J["Repair Engine"]
+    J --> K["Business Validation"]
+    K --> L["Rendering"]
+```
 
 This pipeline ensures that every AI-generated recommendation is verifiable, safe, and compliant with system policies before it reaches the user.
-
----
 
 # 14. Guiding Principles
 
@@ -447,8 +361,6 @@ The following principles must never be violated.
 6. Rendering must never depend on LLM-generated LaTeX.
 7. Every AI output must pass Guardrails before validation.
 8. The user always has the final approval.
-
----
 
 # 15. Vision Summary
 

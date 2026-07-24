@@ -2,9 +2,6 @@
 
 **Project:** Tailr
 **Version:** 1.0
-
----
-
 # 1. Purpose
 
 This document defines the Canonical Knowledge Model used throughout Tailr.
@@ -20,9 +17,6 @@ The knowledge model ensures:
 - deterministic behavior
 - validation
 - long-term extensibility
-
----
-
 # 2. Why a Knowledge Model?
 
 Traditional resume tools treat resumes as documents.
@@ -70,9 +64,6 @@ Renderer
 ```
 
 The resume becomes an engineering artifact instead of plain text.
-
----
-
 # 3. Core Principles
 
 ## Single Source of Truth
@@ -80,9 +71,6 @@ The resume becomes an engineering artifact instead of plain text.
 Only one canonical resume exists.
 
 Every optimized resume is derived from it.
-
----
-
 ## Immutable Facts
 
 Facts never change.
@@ -96,9 +84,6 @@ Examples
 - education
 
 AI cannot modify immutable facts.
-
----
-
 ## Mutable Presentation
 
 Presentation may change.
@@ -110,17 +95,11 @@ Examples
 - ordering
 - emphasis
 - action verbs
-
----
-
 ## Typed Entities
 
 Everything is represented as strongly typed entities.
 
 No free-form JSON blobs.
-
----
-
 ## Relationships
 
 Knowledge is connected through explicit relationships.
@@ -136,9 +115,6 @@ AI agents may only modify entities explicitly marked as mutable.
 All immutable entities are protected through policy validation before any changes are accepted.
 
 This separation ensures that semantic reasoning never compromises factual correctness.
-
----
-
 # 4. High-Level Knowledge Model
 
 ```
@@ -170,9 +146,6 @@ This separation ensures that semantic reasoning never compromises factual correc
                    ▼
           Validation Engine
 ```
-
----
-
 # 5. Root Entity
 
 ```
@@ -190,9 +163,6 @@ Contains
 - Certifications
 
 The Resume entity owns all knowledge.
-
----
-
 # 6. Entity Model
 
 ## Resume
@@ -226,9 +196,6 @@ version
 
 verified
 ```
-
----
-
 ## Experience
 
 ```python
@@ -262,9 +229,6 @@ version
 
 verified
 ```
-
----
-
 ## Project
 
 ```python
@@ -278,7 +242,9 @@ technologies
 
 bullets
 
-links
+repository
+
+demo
 
 category
 
@@ -294,9 +260,6 @@ version
 
 verified
 ```
-
----
-
 ## Skill
 
 ```python
@@ -306,11 +269,15 @@ name
 
 category
 
+proficiency
+
 confidence
 
 years
 
 source
+
+verified
 
 id
 
@@ -321,12 +288,7 @@ created_at
 updated_at
 
 version
-
-verified
 ```
-
----
-
 ## Education
 
 ```python
@@ -338,9 +300,9 @@ degree
 
 cgpa
 
-start
+start_date
 
-end
+end_date
 
 id
 
@@ -354,9 +316,6 @@ version
 
 verified
 ```
-
----
-
 ## Achievement
 
 ```python
@@ -382,9 +341,6 @@ version
 
 verified
 ```
-
----
-
 ## Certification
 
 ```python
@@ -394,9 +350,9 @@ name
 
 issuer
 
-date
+issue_date
 
-credential
+credential_id
 
 id
 
@@ -410,9 +366,6 @@ version
 
 verified
 ```
-
----
-
 # 7. Entity Relationships
 
 Relationships are first-class citizens.
@@ -500,9 +453,6 @@ VERIFIED_BY
 
 Validation Engine
 ```
-
----
-
 # 8. Knowledge Graph
 
 Example
@@ -558,9 +508,6 @@ Backend
 ```
 
 Graph traversal enables reasoning beyond embeddings.
-
----
-
 # 9. Immutable Knowledge
 
 These fields can never change.
@@ -598,9 +545,6 @@ Typical violations include
 - inventing technologies
 - modifying certifications
 - altering education history
-
----
-
 # 10. Mutable Knowledge
 
 Allowed modifications
@@ -624,9 +568,6 @@ Highlighting
 These are presentation-layer optimizations. Mutable fields remain subject to Guardrail validation.
 
 Allowed presentation changes must preserve the semantic meaning of the original content and must not introduce unsupported claims or fabricated achievements.
-
----
-
 # 11. Metadata Model
 
 Every entity stores metadata.
@@ -649,9 +590,6 @@ Example
 ```
 
 Metadata powers retrieval and validation.
-
----
-
 # 12. Chunk Model
 
 Chunks are created from entities.
@@ -675,9 +613,6 @@ Chunk
 Chunks never split an entity.
 
 Semantic integrity is preserved.
-
----
-
 # 13. Embedding Model
 
 Every chunk produces
@@ -701,9 +636,6 @@ Qdrant
 Embeddings never replace structured entities.
 
 Vectors are indexes, not truth.
-
----
-
 # 14. Knowledge Layers
 
 Tailr separates knowledge into layers.
@@ -749,9 +681,6 @@ Renderer
 ```
 
 Every layer has one responsibility.
-
----
-
 # 15. Resume Versioning
 
 ```
@@ -773,9 +702,6 @@ Resume v4
 Each version references the same canonical facts.
 
 Only presentation changes.
-
----
-
 # 16. Knowledge Evolution
 
 The model grows over time.
@@ -792,9 +718,6 @@ New entities
 - Research Paper
 
 The architecture supports expansion without redesign.
-
----
-
 # 17. Query Examples
 
 ```
@@ -810,9 +733,6 @@ Project
 
 category=AI
 ```
-
----
-
 ```
 Show backend experience
 ```
@@ -832,9 +752,6 @@ Technology
 
 Backend
 ```
-
----
-
 ```
 Show LangChain work
 ```
@@ -854,9 +771,6 @@ Technology
 
 LangChain
 ```
-
----
-
 # 18. Validation Rules
 
 Every entity validates itself.
@@ -894,9 +808,6 @@ Before entity validation, the Guardrails Engine verifies
 - duplicate identifiers
 
 Only Guardrail-approved entities proceed to business validation.
-
----
-
 # 19. Serialization
 
 The Canonical Model is serialized as JSON.
@@ -936,9 +847,6 @@ Example
   "version": 3
 }
 ```
-
----
-
 # 20. Knowledge Lifecycle
 
 ```
@@ -990,9 +898,6 @@ Resume.tex
 ```
 
 Knowledge is preserved throughout the pipeline.
-
----
-
 # 21. Future Extensions
 
 Future entities
@@ -1023,9 +928,6 @@ Future knowledge entities
 - Industry Domains
 
 These entities inherit the same validation, versioning, and Guardrail policies as existing entities.
-
----
-
 # 22. Summary
 
 The Canonical Knowledge Model is the foundation of Tailr.

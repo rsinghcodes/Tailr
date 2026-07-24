@@ -2,9 +2,6 @@
 
 **Project:** Tailr
 **Version:** 1.0
-
----
-
 # 1. Purpose
 
 This document defines the observability architecture for Tailr.
@@ -12,9 +9,6 @@ This document defines the observability architecture for Tailr.
 Observability enables developers to understand the internal behavior of the platform by collecting metrics, logs, traces, AI telemetry, and user feedback.
 
 Unlike traditional web applications, Tailr observes not only infrastructure health but also AI reasoning quality, retrieval effectiveness, workflow execution, and user acceptance.
-
----
-
 # 2. Design Goals
 
 The observability platform must:
@@ -29,9 +23,6 @@ The observability platform must:
 - Track user satisfaction
 - Support production debugging
 - Minimize operational overhead
-
----
-
 # 3. Observability Philosophy
 
 Tailr follows five principles.
@@ -39,17 +30,11 @@ Tailr follows five principles.
 ## Everything is Observable
 
 Every request, workflow, agent, and AI interaction should generate telemetry.
-
----
-
 ## Correlation First
 
 Every event shares a common correlation ID.
 
 This enables complete request tracing.
-
----
-
 ## Structured Data
 
 Logs are JSON.
@@ -57,23 +42,14 @@ Logs are JSON.
 Metrics are labeled.
 
 Traces are correlated.
-
----
-
 ## AI-Aware Monitoring
 
 Monitor prompts, retrieval, guardrails, validation, and reasoning—not only APIs.
-
----
-
 ## Privacy by Design
 
 Sensitive user content is never logged.
 
 Only metadata is retained.
-
----
-
 # 4. High-Level Architecture
 
 ```
@@ -102,9 +78,6 @@ Only metadata is retained.
                       ▼
             Guardrail Analytics & Alerts
 ```
-
----
-
 # 5. Observability Components
 
 | Component           | Purpose              |
@@ -117,9 +90,6 @@ Only metadata is retained.
 | Alert Manager       | Notifications        |
 | Guardrail Analytics | AI safety monitoring |
 | Alert Manager       | Notifications        |
-
----
-
 # 6. Correlation IDs
 
 Every request receives:
@@ -142,9 +112,6 @@ These identifiers appear in:
 - workflow events
 
 This enables complete debugging.
-
----
-
 # 7. Structured Logging
 
 Every log entry follows a common schema.
@@ -165,9 +132,6 @@ Example
 ```
 
 Logs never contain raw resumes.
-
----
-
 # 8. Log Levels
 
 Supported levels
@@ -185,9 +149,6 @@ CRITICAL
 ```
 
 Production disables DEBUG logging.
-
----
-
 # 9. Metrics
 
 Tailr exposes Prometheus metrics.
@@ -209,9 +170,6 @@ hallucination_detected_total
 ```
 
 Metrics are labeled.
-
----
-
 # 10. API Metrics
 
 Monitor
@@ -223,9 +181,6 @@ Monitor
 - HTTP status codes
 
 These metrics detect infrastructure problems.
-
----
-
 # 11. Workflow Metrics
 
 Examples
@@ -237,9 +192,6 @@ Examples
 - Queue depth
 
 Each workflow stage is measured independently.
-
----
-
 # 12. LLM Metrics
 
 Important measurements
@@ -253,9 +205,6 @@ Important measurements
 - Model utilization
 
 These metrics identify expensive prompts.
-
----
-
 # 13. Prompt Observability
 
 Langfuse records
@@ -271,9 +220,6 @@ Langfuse records
 - Output repair status
 
 Each prompt execution becomes searchable.
-
----
-
 # 14. Retrieval Metrics
 
 Measure
@@ -285,9 +231,6 @@ Measure
 - Cache hit ratio
 
 Low retrieval quality often leads to poor rewrites.
-
----
-
 # 15. Validation Metrics
 
 Track
@@ -302,9 +245,6 @@ Track
 - Retry frequency
 
 Validation and guardrail trends indicate AI quality and safety.
-
----
-
 # 16. ATS Metrics
 
 Examples
@@ -315,9 +255,6 @@ Examples
 - Missing keyword frequency
 
 These metrics measure product value.
-
----
-
 # 17. Infrastructure Metrics
 
 Monitor
@@ -335,9 +272,6 @@ Network
 Container health
 
 These metrics support operational stability.
-
----
-
 # 18. Distributed Tracing
 
 Every workflow becomes a trace.
@@ -383,9 +317,6 @@ Renderer
 ```
 
 OpenTelemetry propagates trace context.
-
----
-
 # 19. Dashboards
 
 Recommended Grafana dashboards
@@ -419,9 +350,6 @@ Business
 - ATS improvement
 - Workflow success
 - User activity
-
----
-
 # 20. Alerts
 
 Examples
@@ -445,9 +373,6 @@ AI
 - Validation failures
 
 Alerts should prioritize actionable issues.
-
----
-
 # 21. Audit Trail
 
 Every workflow stores
@@ -463,9 +388,6 @@ Every workflow stores
 - Output repair status
 
 Audit trails support reproducibility.
-
----
-
 # 22. User Feedback Metrics
 
 Collect
@@ -476,9 +398,6 @@ Collect
 - Satisfaction score
 
 Feedback improves future prompt evaluation.
-
----
-
 # 23. Retention Policy
 
 Suggested retention
@@ -493,9 +412,6 @@ Suggested retention
 | Audit records    | Permanent |
 
 Policies are configurable.
-
----
-
 # 24. Security
 
 Observability must never expose
@@ -507,9 +423,6 @@ Observability must never expose
 - Personal identifiers
 
 Sensitive values are masked before logging.
-
----
-
 # 25. Testing
 
 Verify
@@ -525,9 +438,6 @@ Verify
 - Telemetry completeness
 
 Observability should be tested continuously.
-
----
-
 # 26. Future Enhancements
 
 Future capabilities
@@ -544,9 +454,6 @@ Future capabilities
 - Automated hallucination clustering
 - AI safety anomaly detection
 - Guardrail policy drift detection
-
----
-
 # 27. Architecture Decisions
 
 | Decision                       | Rationale                             |
@@ -559,9 +466,6 @@ Future capabilities
 | Correlation IDs                | End-to-end traceability               |
 | Guardrail Analytics            | AI safety observability               |
 | Provider-independent telemetry | Consistent monitoring across all LLMs |
-
----
-
 # 28. Summary
 
 Tailr adopts an AI-native observability architecture that combines infrastructure monitoring, distributed tracing, structured logging, LLM telemetry, and guardrail analytics.

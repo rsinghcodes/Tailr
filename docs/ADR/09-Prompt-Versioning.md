@@ -5,9 +5,6 @@
 **Date:** 2026-07-20
 
 **Authors:** Tailr Engineering
-
----
-
 # Context
 
 Tailr relies on prompts for every AI capability.
@@ -37,9 +34,6 @@ Embedding prompt text directly in source code creates several problems:
 - inability to compare prompt performance across releases.
 
 Prompts should therefore be treated as **versioned production assets** rather than embedded strings.
-
----
-
 # Decision
 
 Tailr adopts a **Prompt Registry** with **immutable prompt versions** and a formal **prompt lifecycle**.
@@ -56,9 +50,6 @@ Every prompt:
 - can participate in A/B experiments.
 
 Agents reference **prompt IDs** rather than prompt text.
-
----
-
 # Decision Drivers
 
 The prompt management system must:
@@ -72,9 +63,6 @@ The prompt management system must:
 - support A/B testing,
 - support schema validation,
 - enable future prompt signing.
-
----
-
 # Architecture
 
 <CodeBlock language="text" content="Agent
@@ -101,9 +89,6 @@ Provider Adapter
 LLM"/>
 
 Business logic never embeds prompt text directly.
-
----
-
 # Prompt Registry
 
 Each prompt contains:
@@ -128,9 +113,6 @@ Versions:
 - 1.1.0
 - 1.2.0
 - 2.0.0"/>
-
----
-
 # Immutable Prompt Versions
 
 Each version stores:
@@ -149,9 +131,6 @@ Each version stores:
 Once created, a prompt version **cannot be modified**.
 
 Any change requires a new version.
-
----
-
 # Semantic Versioning
 
 Tailr uses **Semantic Versioning**.
@@ -176,9 +155,6 @@ Improved reasoning or optimization quality.
 ### PATCH
 
 Grammar, formatting, or instruction clarifications that do not materially change behavior.
-
----
-
 # Prompt Template
 
 Prompts use **Jinja2 templates**.
@@ -197,9 +173,6 @@ Optimization Goals:
 Return only valid JSON matching the provided schema."/>
 
 Variables are injected at runtime by the Prompt Resolver.
-
----
-
 # Variable Schema
 
 Each prompt defines a typed variable schema.
@@ -223,9 +196,6 @@ Example:
 }"/>
 
 Invalid variables fail before the LLM call.
-
----
-
 # Prompt Metadata
 
 Example metadata:
@@ -241,9 +211,6 @@ Example metadata:
 }"/>
 
 Metadata supports auditing, debugging, and routing decisions.
-
----
-
 # Storage Strategy
 
 Prompts are stored in PostgreSQL.
@@ -258,9 +225,6 @@ prompt_deployments
 prompt_audit_logs"/>
 
 Templates are loaded dynamically and cached in memory.
-
----
-
 # Prompt Resolution
 
 The Prompt Resolver selects the appropriate version.
@@ -276,9 +240,6 @@ Environment override
 Production version"/>
 
 This enables safe experimentation without code changes.
-
----
-
 # Environment-Aware Resolution
 
 Different environments may use different prompt versions.
@@ -286,9 +247,6 @@ Different environments may use different prompt versions.
 <Table columnSizing="equal" rowDivider={{"size":1,"color":"default"}}><Table.Row header><Table.Cell>Environment</Table.Cell><Table.Cell>Example Version</Table.Cell></Table.Row><Table.Row><Table.Cell>development</Table.Cell><Table.Cell>2.0.0-beta</Table.Cell></Table.Row><Table.Row><Table.Cell>staging</Table.Cell><Table.Cell>1.3.0-rc1</Table.Cell></Table.Row><Table.Row><Table.Cell>production</Table.Cell><Table.Cell>1.2.0</Table.Cell></Table.Row></Table>
 
 Production remains isolated from experimental prompts.
-
----
-
 # Evaluation Integration
 
 Every prompt version records:
@@ -304,9 +262,6 @@ Every prompt version records:
 - retrieval relevance (where applicable).
 
 Poor-performing prompts are automatically flagged for review.
-
----
-
 # A/B Testing
 
 The registry supports controlled experiments.
@@ -316,9 +271,6 @@ Example:
 <Table columnSizing="equal" rowDivider={{"size":1,"color":"default"}}><Table.Row header><Table.Cell>Variant</Table.Cell><Table.Cell align="end">Traffic</Table.Cell></Table.Row><Table.Row><Table.Cell>1.2.0</Table.Cell><Table.Cell align="end">90%</Table.Cell></Table.Row><Table.Row><Table.Cell>1.3.0</Table.Cell><Table.Cell align="end">10%</Table.Cell></Table.Row></Table>
 
 Assignments are deterministic per user/workflow to ensure reproducibility.
-
----
-
 # Canary Rollout
 
 New prompt versions can be deployed gradually.
@@ -326,9 +278,6 @@ New prompt versions can be deployed gradually.
 <CodeBlock language="text" content="5% → 10% → 25% → 50% → 100%"/>
 
 Rollout can be stopped instantly if metrics regress.
-
----
-
 # Rollback
 
 Example:
@@ -342,9 +291,6 @@ Promote 1.2.0
 Traffic restored"/>
 
 Rollback requires **no code deployment** and completes in seconds.
-
----
-
 # Prompt Lifecycle
 
 <CodeBlock language="text" content="Draft
@@ -364,9 +310,6 @@ Deprecated
 Archived"/>
 
 Only **Production** prompts may be used by customer-facing workflows.
-
----
-
 # Guardrails Integration
 
 Each prompt references a **Guardrail Profile**.
@@ -379,9 +322,6 @@ Example profiles:
 - `repair_mode`
 
 The Guardrails Engine uses this profile to apply task-specific validation rules.
-
----
-
 # Security
 
 The Prompt Registry enforces:
@@ -394,9 +334,6 @@ The Prompt Registry enforces:
 - future prompt signing.
 
 Every prompt change is attributable to a user and timestamp.
-
----
-
 # Observability
 
 Every inference logs:
@@ -415,9 +352,6 @@ Every inference logs:
 - experiment assignment.
 
 Logs are exported through **OpenTelemetry** and correlated with workflow traces.
-
----
-
 # Git Integration
 
 Prompts can be exported as files for code review.
@@ -429,9 +363,6 @@ Prompts can be exported as files for code review.
  └── metadata.yaml"/>
 
 Git becomes the review mechanism, while PostgreSQL remains the runtime source of truth.
-
----
-
 # Alternatives Considered
 
 ## Option 1 — Hardcoded Prompts
@@ -449,9 +380,6 @@ Git becomes the review mechanism, while PostgreSQL remains the runtime source of
 - Requires code deployment
 
 **Decision:** Rejected
-
----
-
 ## Option 2 — Prompt Files on Disk
 
 ### Advantages
@@ -467,9 +395,6 @@ Git becomes the review mechanism, while PostgreSQL remains the runtime source of
 - Weak observability
 
 **Decision:** Rejected
-
----
-
 ## Option 3 — Prompt Registry with Immutable Versioning
 
 ### Advantages
@@ -489,9 +414,6 @@ Git becomes the review mechanism, while PostgreSQL remains the runtime source of
 - Requires prompt governance process
 
 **Decision:** Accepted
-
----
-
 # Consequences
 
 ## Positive
@@ -504,18 +426,12 @@ Git becomes the review mechanism, while PostgreSQL remains the runtime source of
 - Cleaner architecture
 - Auditability
 - Environment isolation
-
----
-
 ## Negative
 
 - Additional infrastructure
 - Prompt governance required
 - Slight runtime lookup overhead
 - More operational processes
-
----
-
 # Risks
 
 | Risk                     | Mitigation                 |
@@ -526,9 +442,6 @@ Git becomes the review mechanism, while PostgreSQL remains the runtime source of
 | Variable mismatches      | Schema validation          |
 | Experiment contamination | Deterministic assignment   |
 | Unauthorized changes     | RBAC and audit logs        |
-
----
-
 # Architecture Integration
 
 <CodeBlock language="text" content="FastAPI
@@ -558,9 +471,6 @@ Provider Adapter
 LLM"/>
 
 The Prompt Registry is the **authoritative source for all AI prompts**.
-
----
-
 # Future Enhancements
 
 Planned enhancements include:
@@ -575,18 +485,12 @@ Planned enhancements include:
 - organization-wide prompt sharing.
 
 The current design supports these capabilities without changing agent contracts.
-
----
-
 # Related ADRs
 
 - ADR-0005 — LlamaIndex as the RAG and Knowledge Framework
 - ADR-0006 — Multi-Agent Architecture
 - ADR-0007 — Event-Driven Workflow Engine
 - ADR-0008 — LLM Router and Provider Abstraction Layer
-
----
-
 # References
 
 - llm-prompt-design.md
@@ -595,9 +499,6 @@ The current design supports these capabilities without changing agent contracts.
 - database-design.md
 - evaluation-architecture.md
 - guardrails-architecture.md
-
----
-
 # Review Notes
 
 This decision should be revisited if:

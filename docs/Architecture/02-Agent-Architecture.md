@@ -46,6 +46,9 @@ Knowledge Builder (Software)
 JD Analyzer (AI)
 │
 ▼
+Hybrid Retriever (Software)
+│
+▼
 Planning Agent (AI)
 │
 ▼
@@ -58,7 +61,10 @@ Guardrails Engine (Software)
 Validation Engine (Software)
 │
 ▼
-ATS Analysis Agent (AI)
+ATS Advisor (AI)
+│
+▼
+Human Approval
 │
 ▼
 Renderer (Software)
@@ -134,7 +140,8 @@ Job Description
   "preferred_skills": [],
   "responsibilities": [],
   "keywords": [],
-  "soft_skills": []
+  "soft_skills": [],
+  "experience_level": ""
 }
 ```
 
@@ -282,9 +289,10 @@ The Guardrails Engine is deterministic software and is executed for every AI res
 
 ```json
 {
-  "valid": true,
-  "repaired": false,
+  "status": "approved",
+  "repair_applied": false,
   "violations": [],
+  "warnings": [],
   "metadata": {}
 }
 ```
@@ -338,10 +346,16 @@ Job Requirements
 
 ```json
 {
-  "score": 91,
+  "overall_score": 91,
+  "confidence": 0.96,
+  "keyword_score": 92,
+  "semantic_score": 85,
+  "skills_score": 90,
+  "experience_score": 84,
   "strengths": [],
   "weaknesses": [],
-  "recommendations": []
+  "recommendations": [],
+  "missing_keywords": []
 }
 ```
 
@@ -366,11 +380,13 @@ These are **not AI agents**.
 
 Converts
 
+```
 LaTeX
 
 ↓
 
 Canonical Resume Model
+```
 
 ## Knowledge Builder
 
@@ -428,11 +444,13 @@ Generates deterministic LaTeX.
 
 Compiles
 
+```
 resume.tex
 
 ↓
 
 resume.pdf
+```
 
 # 12. Shared Memory
 
@@ -442,6 +460,8 @@ Example
 
 ```python
 WorkflowState
+
+workflow_id
 
 resume
 
@@ -453,15 +473,17 @@ rewrite_plan
 
 rewritten_resume
 
-guardrail_result
+guardrail_report
 
-validation_result
-
-policy_violations
-
-repair_attempts
+validation_report
 
 ats_report
+
+render_result
+
+telemetry
+
+status
 ```
 
 Every agent reads only the fields it requires.
@@ -481,7 +503,7 @@ Tailr retrieves only relevant information.
 
                      ↓
 
-              Top 5 Resume Chunks
+              Top 10 Resume Chunks
 
                      ↓
 
@@ -526,11 +548,13 @@ Hallucinated content
 
 Recovery
 
+```
 Validation rejection
 
 ↓
 
 Retry
+```
 
 ## ATS Advisor
 

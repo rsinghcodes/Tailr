@@ -5,9 +5,6 @@
 **Date:** 2026-07-20
 
 **Authors:** Tailr Engineering
-
----
-
 # Context
 
 Tailr manages multiple categories of persistent data:
@@ -40,9 +37,6 @@ These datasets require:
 - Future scalability
 
 The platform therefore requires a production-grade relational database capable of serving as the authoritative transactional store.
-
----
-
 # Decision
 
 Tailr will use **PostgreSQL** as its primary transactional database.
@@ -66,9 +60,6 @@ The database is responsible for:
 - System configuration
 
 Large binary artifacts and vector embeddings are stored outside PostgreSQL.
-
----
-
 # Decision Drivers
 
 The selected database must provide:
@@ -83,9 +74,6 @@ The selected database must provide:
 - Open-source licensing
 - Rich JSON capabilities
 - Proven production reliability
-
----
-
 # Why PostgreSQL?
 
 PostgreSQL provides:
@@ -102,9 +90,6 @@ PostgreSQL provides:
 - Native UUID support
 
 Unlike document databases, PostgreSQL allows strict relationships while still supporting semi-structured AI metadata through JSONB.
-
----
-
 # Data Responsibilities
 
 PostgreSQL stores:
@@ -132,9 +117,6 @@ Generated Artifact Metadata
 Audit Logs"/>
 
 Embeddings remain outside PostgreSQL and are stored in **Qdrant Cloud**.
-
----
-
 # JSONB Strategy
 
 Certain entities require flexible metadata.
@@ -159,9 +141,6 @@ Guidelines:
 - **Variable AI metadata → JSONB**
 - **Large documents → object storage**
 - **Vectors → Qdrant**
-
----
-
 # Schema Strategy
 
 Tailr uses a **normalized relational schema**.
@@ -184,9 +163,6 @@ Core tables:
 - audit_logs
 
 Foreign keys enforce referential integrity.
-
----
-
 # Transaction Boundaries
 
 Critical operations execute within a single transaction.
@@ -210,9 +186,6 @@ Commit"/>
 Either **all records are committed or none are**.
 
 This guarantees consistency between resume versions and workflow results.
-
----
-
 # Workflow State Persistence
 
 Workflow execution is persisted explicitly.
@@ -233,9 +206,6 @@ Example states:
 - Failed
 
 State transitions are append-only for auditability.
-
----
-
 # Guardrail Audit Storage
 
 Every guardrail violation is persisted.
@@ -257,9 +227,6 @@ This enables:
 - prompt regression testing,
 - model evaluation,
 - compliance reporting.
-
----
-
 # Migrations
 
 Schema changes are managed using **Alembic**.
@@ -277,9 +244,6 @@ Migration policy:
 - forward-only in production,
 - destructive changes require a deprecation phase,
 - data migrations must be idempotent.
-
----
-
 # Indexing Strategy
 
 Indexes are created for:
@@ -295,9 +259,6 @@ Indexes are created for:
 GIN indexes are used for frequently queried JSONB fields.
 
 Indexes are added based on query profiling and observability metrics.
-
----
-
 # Partitioning Strategy
 
 The following tables are candidates for partitioning:
@@ -308,9 +269,6 @@ The following tables are candidates for partitioning:
 - evaluation_results
 
 Partitioning will be introduced when table growth justifies it.
-
----
-
 # Alternatives Considered
 
 ## Option 1 — MongoDB
@@ -328,9 +286,6 @@ Partitioning will be introduced when table growth justifies it.
 - Harder to enforce resume integrity
 
 **Decision:** Rejected
-
----
-
 ## Option 2 — SQLite
 
 ### Advantages
@@ -346,9 +301,6 @@ Partitioning will be introduced when table growth justifies it.
 - Poor horizontal scalability
 
 **Decision:** Rejected
-
----
-
 ## Option 3 — MySQL
 
 ### Advantages
@@ -363,9 +315,6 @@ Partitioning will be introduced when table growth justifies it.
 - Smaller extension ecosystem
 
 **Decision:** Rejected
-
----
-
 ## Option 4 — PostgreSQL
 
 ### Advantages
@@ -385,9 +334,6 @@ Partitioning will be introduced when table growth justifies it.
 - Requires migration discipline
 
 **Decision:** Accepted
-
----
-
 # Consequences
 
 ## Positive
@@ -401,18 +347,12 @@ Partitioning will be introduced when table growth justifies it.
 - Better auditability
 - Easier workflow analytics
 - Strong guardrail event tracking
-
----
-
 ## Negative
 
 - Requires migration management
 - Additional operational overhead
 - Larger resource footprint than SQLite
 - Backup and maintenance responsibilities
-
----
-
 # Risks
 
 | Risk                      | Mitigation                             |
@@ -423,9 +363,6 @@ Partitioning will be introduced when table growth justifies it.
 | Database growth           | Partitioning and archival strategies   |
 | Long-running transactions | Keep transaction scope small           |
 | Audit table explosion     | Time-based retention policies          |
-
----
-
 # Architecture Integration
 
 <CodeBlock language="text" content="FastAPI
@@ -441,17 +378,11 @@ PostgreSQL      Qdrant Cloud
 (Transactional) (Vector Search)"/>
 
 PostgreSQL and Qdrant have **strictly separate responsibilities**.
-
----
-
 # Data Ownership
 
 <Table columnSizing="equal" rowDivider={{"size":1,"color":"default"}}><Table.Row header><Table.Cell>Component</Table.Cell><Table.Cell>Storage</Table.Cell></Table.Row><Table.Row><Table.Cell>Users</Table.Cell><Table.Cell>PostgreSQL</Table.Cell></Table.Row><Table.Row><Table.Cell>Canonical Resume Metadata</Table.Cell><Table.Cell>PostgreSQL</Table.Cell></Table.Row><Table.Row><Table.Cell>Resume Versions</Table.Cell><Table.Cell>PostgreSQL</Table.Cell></Table.Row><Table.Row><Table.Cell>Workflow State</Table.Cell><Table.Cell>PostgreSQL</Table.Cell></Table.Row><Table.Row><Table.Cell>Workflow Transitions</Table.Cell><Table.Cell>PostgreSQL</Table.Cell></Table.Row><Table.Row><Table.Cell>Prompt Metadata</Table.Cell><Table.Cell>PostgreSQL</Table.Cell></Table.Row><Table.Row><Table.Cell>Validation Results</Table.Cell><Table.Cell>PostgreSQL</Table.Cell></Table.Row><Table.Row><Table.Cell>Guardrail Events</Table.Cell><Table.Cell>PostgreSQL</Table.Cell></Table.Row><Table.Row><Table.Cell>ATS Results</Table.Cell><Table.Cell>PostgreSQL</Table.Cell></Table.Row><Table.Row><Table.Cell>Generated Artifact Metadata</Table.Cell><Table.Cell>PostgreSQL</Table.Cell></Table.Row><Table.Row><Table.Cell>Embeddings</Table.Cell><Table.Cell>Qdrant Cloud</Table.Cell></Table.Row><Table.Row><Table.Cell>Generated PDFs</Table.Cell><Table.Cell>Object Storage</Table.Cell></Table.Row><Table.Row><Table.Cell>LaTeX Source Files</Table.Cell><Table.Cell>Object Storage</Table.Cell></Table.Row></Table>
 
 This separation prevents misuse of the relational database for vector search or large binary storage.
-
----
-
 # Backup & Recovery
 
 Backup strategy:
@@ -466,9 +397,6 @@ Recovery objectives:
 
 - **RPO:** < 15 minutes
 - **RTO:** < 1 hour
-
----
-
 # Future Evolution
 
 If workload characteristics change significantly, PostgreSQL may evolve into:
@@ -480,9 +408,6 @@ If workload characteristics change significantly, PostgreSQL may evolve into:
 - or a dedicated analytics warehouse.
 
 The application architecture isolates persistence behind repository interfaces, minimizing migration impact.
-
----
-
 # Related ADRs
 
 - ADR-0001 — Adopt a Canonical Resume Model
@@ -491,9 +416,6 @@ The application architecture isolates persistence behind repository interfaces, 
 - ADR-0005 — Use Qdrant as the Vector Database
 - ADR-0006 — Adopt a Multi-Agent Workflow
 - ADR-0008 — Adopt a Validation & Guardrails Engine
-
----
-
 # References
 
 - database-design.md
@@ -501,9 +423,6 @@ The application architecture isolates persistence behind repository interfaces, 
 - api-specification.md
 - deployment.md
 - evaluation-architecture.md
-
----
-
 # Review Notes
 
 This decision should be revisited if:

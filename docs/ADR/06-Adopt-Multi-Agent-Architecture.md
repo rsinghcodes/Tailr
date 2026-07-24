@@ -5,9 +5,6 @@
 **Date:** 2026-07-20
 
 **Authors:** Tailr Engineering
-
----
-
 # Context
 
 Tailr performs significantly more than simple text generation.
@@ -38,9 +35,6 @@ Attempting to solve all of these tasks with a **single LLM prompt** creates seve
 - low maintainability.
 
 A modular architecture is required so that each reasoning task can be optimized, tested, and monitored independently.
-
----
-
 # Decision
 
 Tailr adopts a **Multi-Agent Architecture** orchestrated by a **deterministic Workflow Engine**.
@@ -50,9 +44,6 @@ Each agent owns **one well-defined responsibility** and communicates using **str
 The Workflow Engine controls execution order, retries, state persistence, and error handling.
 
 Agents **never invoke one another directly**.
-
----
-
 # Decision Drivers
 
 The architecture must:
@@ -67,9 +58,6 @@ The architecture must:
 - improve observability,
 - allow parallel execution,
 - support future distributed execution.
-
----
-
 # High-Level Architecture
 
 <CodeBlock language="text" content="Job Description
@@ -105,9 +93,6 @@ Rendering Engine
 PDF Artifact"/>
 
 Each agent performs **exactly one responsibility**.
-
----
-
 # Initial Agent Set
 
 ## JD Analyzer Agent
@@ -129,9 +114,6 @@ Each agent performs **exactly one responsibility**.
 "domain": "AI Platform",
 "priority_keywords": ["RAG", "LangGraph"]
 }"/>
-
----
-
 ## Resume Analyzer Agent
 
 ### Responsibilities
@@ -149,9 +131,6 @@ Each agent performs **exactly one responsibility**.
 "missing_keywords": ["Redis", "Docker"],
 "candidate_level": "mid"
 }"/>
-
----
-
 ## Planning Agent
 
 ### Responsibilities
@@ -169,9 +148,6 @@ Each agent performs **exactly one responsibility**.
 "rewrite_order": ["summary", "projects"],
 "expected_ats_delta": 14
 }"/>
-
----
-
 ## Retrieval Pipeline
 
 ### Responsibilities
@@ -183,9 +159,6 @@ Each agent performs **exactly one responsibility**.
 - Assemble structured context
 
 This stage is implemented using **LlamaIndex + Qdrant**.
-
----
-
 ## Rewrite Agent
 
 ### Responsibilities
@@ -202,9 +175,6 @@ This stage is implemented using **LlamaIndex + Qdrant**.
 - No invented projects
 - No fabricated metrics
 - No unsupported skills
-
----
-
 ## Guardrails Engine
 
 ### Responsibilities
@@ -224,9 +194,6 @@ This stage is implemented using **LlamaIndex + Qdrant**.
 - **Rejected**
 
 Guardrails execute immediately after rewriting.
-
----
-
 ## Validation Agent
 
 ### Responsibilities
@@ -236,9 +203,6 @@ Guardrails execute immediately after rewriting.
 - Validate technology references
 - Verify date consistency
 - Ensure deterministic rendering compatibility
-
----
-
 ## ATS Agent
 
 ### Responsibilities
@@ -259,9 +223,6 @@ Guardrails execute immediately after rewriting.
 "Add Redis experience to summary"
 ]
 }"/>
-
----
-
 # Communication Model
 
 Agents communicate only through **typed JSON events**.
@@ -277,9 +238,6 @@ Example:
 }"/>
 
 This eliminates ambiguity and enables deterministic orchestration.
-
----
-
 # Workflow Orchestration
 
 The Workflow Engine executes agents in a controlled sequence.
@@ -309,9 +267,6 @@ Render PDF
 Return Result"/>
 
 Agents do not contain orchestration logic.
-
----
-
 # Parallel Execution
 
 Independent tasks may run concurrently.
@@ -327,9 +282,6 @@ Resume Analysis    Retrieval Prep
         Rewriter"/>
 
 Parallel execution reduces end-to-end latency.
-
----
-
 # Workflow State Persistence
 
 Workflow state is persisted in PostgreSQL.
@@ -350,9 +302,6 @@ States:
 - Failed
 
 State transitions are append-only and auditable.
-
----
-
 # Failure Handling
 
 If an agent fails:
@@ -369,9 +318,6 @@ Example retry policy:
 <Table columnSizing="equal" rowDivider={{"size":1,"color":"default"}}><Table.Row header><Table.Cell>Error Type</Table.Cell><Table.Cell align="end">Retries</Table.Cell></Table.Row><Table.Row><Table.Cell>LLM timeout</Table.Cell><Table.Cell align="end">3</Table.Cell></Table.Row><Table.Row><Table.Cell>Rate limit</Table.Cell><Table.Cell align="end">5</Table.Cell></Table.Row><Table.Row><Table.Cell>Qdrant unavailable</Table.Cell><Table.Cell align="end">3</Table.Cell></Table.Row><Table.Row><Table.Cell>Guardrail rejection</Table.Cell><Table.Cell align="end">0</Table.Cell></Table.Row></Table>
 
 Partial failures must never corrupt user data.
-
----
-
 # Prompt Isolation
 
 Every agent owns:
@@ -385,9 +331,6 @@ Every agent owns:
 - fallback model policy.
 
 Prompt isolation prevents unintended interactions between responsibilities.
-
----
-
 # Human Approval Gate
 
 High-impact changes require explicit approval.
@@ -401,9 +344,6 @@ Examples:
 - major ATS-driven restructuring.
 
 The workflow pauses until the user approves or rejects the proposed changes.
-
----
-
 # Evaluation Strategy
 
 Each agent is evaluated independently.
@@ -421,9 +361,6 @@ Metrics include:
 - retry frequency.
 
 This enables targeted optimization without affecting unrelated agents.
-
----
-
 # Observability
 
 Every execution records:
@@ -441,9 +378,6 @@ Every execution records:
 - correlation ID.
 
 Telemetry is exported through **OpenTelemetry** and stored for evaluation and debugging.
-
----
-
 # LLM Provider Abstraction
 
 Agents do not call providers directly.
@@ -459,9 +393,6 @@ Router
 └── Gemini"/>
 
 This allows model replacement without changing agent logic.
-
----
-
 # Future Distributed Execution
 
 The architecture is designed to evolve into independently scalable services.
@@ -477,9 +408,6 @@ JD  Rewrite   Validation
 Svc   Svc        Svc"/>
 
 Because agents communicate through structured events, they can be moved to separate processes or services with minimal changes.
-
----
-
 # Alternatives Considered
 
 ## Option 1 — Single Prompt
@@ -498,9 +426,6 @@ Because agents communicate through structured events, they can be moved to separ
 - Weak observability
 
 **Decision:** Rejected
-
----
-
 ## Option 2 — Sequential Prompt Chain
 
 ### Advantages
@@ -516,9 +441,6 @@ Because agents communicate through structured events, they can be moved to separ
 - Shared prompt state causes drift
 
 **Decision:** Rejected
-
----
-
 ## Option 3 — Multi-Agent Architecture
 
 ### Advantages
@@ -540,9 +462,6 @@ Because agents communicate through structured events, they can be moved to separ
 - Higher initial complexity
 
 **Decision:** Accepted
-
----
-
 # Consequences
 
 ## Positive
@@ -556,18 +475,12 @@ Because agents communicate through structured events, they can be moved to separ
 - Better observability
 - Parallel execution support
 - Easier future scaling
-
----
-
 ## Negative
 
 - Additional orchestration logic
 - More configuration files
 - More telemetry storage
 - Slightly higher latency overhead per stage
-
----
-
 # Risks
 
 | Risk                        | Mitigation                                       |
@@ -578,9 +491,6 @@ Because agents communicate through structured events, they can be moved to separ
 | Context inconsistency       | Canonical Resume Model as shared source of truth |
 | Event schema changes        | Versioned event contracts                        |
 | Guardrail bypass            | Mandatory guardrail stage before validation      |
-
----
-
 # Architecture Integration
 
 <CodeBlock language="text" content="FastAPI
@@ -612,9 +522,6 @@ Rendering Engine
 PDF Artifact"/>
 
 The **Multi-Agent Layer is responsible for AI reasoning**, while **business orchestration remains deterministic**.
-
----
-
 # Related ADRs
 
 - ADR-0001 — Adopt a Canonical Resume Model
@@ -624,9 +531,6 @@ The **Multi-Agent Layer is responsible for AI reasoning**, while **business orch
 - ADR-0005 — Use LlamaIndex as the RAG and Knowledge Framework
 - ADR-0007 — Event-Driven Workflow Engine (LangGraph)
 - ADR-0008 — Adopt a Validation & Guardrails Engine
-
----
-
 # References
 
 - agent-architecture.md
@@ -636,9 +540,6 @@ The **Multi-Agent Layer is responsible for AI reasoning**, while **business orch
 - testing.md
 - guardrails-architecture.md
 - evaluation-architecture.md
-
----
-
 # Review Notes
 
 This decision should be revisited if:

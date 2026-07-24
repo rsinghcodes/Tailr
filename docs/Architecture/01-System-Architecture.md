@@ -3,8 +3,6 @@
 **Project:** Tailr
 **Document Version:** 1.0
 
----
-
 # 1. Purpose
 
 This document describes the overall system architecture of Tailr.
@@ -12,8 +10,6 @@ This document describes the overall system architecture of Tailr.
 It defines the major components, their responsibilities, communication patterns, data flow, deployment model, and architectural decisions.
 
 This document intentionally focuses on system-level design. Component-level implementation details are described in subsequent documents.
-
----
 
 # 2. Architecture Principles
 
@@ -27,8 +23,6 @@ Every optimized resume is derived from this source.
 
 No AI component may introduce information that does not exist in the canonical resume model.
 
----
-
 ## 2.2 Retrieval Before Generation
 
 Large Language Models should never receive the complete resume.
@@ -39,15 +33,11 @@ Relevant information is retrieved first.
 
 Generation occurs only after retrieval.
 
----
-
 ## 2.3 Deterministic Rendering
 
 LLMs never generate LaTeX.
 
 The renderer is responsible for producing compilable documents.
-
----
 
 ## 2.4 Explainability
 
@@ -58,15 +48,11 @@ Every AI-generated modification must include:
 - confidence
 - affected resume section
 
----
-
 ## 2.5 Modular Components
 
 Each component has exactly one responsibility.
 
 Components communicate using typed schemas.
-
----
 
 ## 2.6 Local-First AI
 
@@ -74,63 +60,33 @@ The architecture supports fully offline execution.
 
 Cloud LLMs remain optional.
 
----
-
 # 3. High-Level Architecture
 
+```mermaid
+flowchart TD
+    U[User] --> N[Next.js Frontend]
+    N --> F[FastAPI Backend]
+    F --> L[LangGraph Workflow Engine]
+
+    L --> RP[Resume Parser]
+    L --> JD[JD Analyzer]
+    L --> KE[Knowledge Engine]
+
+    RP --> CR[Canonical Resume]
+    JD --> CR
+    KE --> QV[Qdrant Vector DB]
+
+    CR --> HR[Hybrid Retriever]
+    QV --> HR
+
+    HR --> PA[Planning Agent]
+    PA --> RA[Rewrite Agent]
+    RA --> VE[Validation Engine]
+    VE --> ATS[ATS Analyzer]
+    ATS --> LR[LaTeX Rendering Engine]
+    LR --> LC[latexmk Compiler]
+    LC --> OUT[PDF + Reports + Diff]
 ```
-
-```
-
-                           User
-                             │
-                             ▼
-                    Next.js Frontend
-                             │
-                             ▼
-                       FastAPI Backend
-                             │
-                             ▼
-                  LangGraph Workflow Engine
-                             │
-      ┌──────────────────────┼───────────────────────┐
-      │                      │                       │
-      ▼                      ▼                       ▼
-
-Resume Parser JD Analyzer Knowledge Engine
-│ │ │
-└──────────────┬───────┴──────────────┬────────┘
-▼ ▼
-Canonical Resume Qdrant Vector DB
-│ │
-└──────────┬───────────┘
-▼
-Hybrid Retriever
-│
-▼
-Planning Agent
-│
-▼
-Rewrite Agent
-│
-▼
-Validation Engine
-│
-▼
-ATS Analyzer
-│
-▼
-LaTeX Rendering Engine
-│
-▼
-latexmk Compiler
-│
-▼
-PDF + Reports + Diff
-
-```
-
----
 
 # 4. Logical Layers
 
@@ -170,8 +126,6 @@ Infrastructure Layer
 
 ```
 
----
-
 # 5. Layer Responsibilities
 
 ## Presentation Layer
@@ -190,8 +144,6 @@ Technology
 - Next.js
 - TailwindCSS
 
----
-
 ## API Layer
 
 Responsibilities
@@ -205,8 +157,6 @@ Responsibilities
 Technology
 
 - FastAPI
-
----
 
 ## Workflow Layer
 
@@ -222,8 +172,6 @@ Responsibilities
 Technology
 
 - LangGraph
-
----
 
 ## Knowledge Layer
 
@@ -241,8 +189,6 @@ Technology
 
 - LlamaIndex
 
----
-
 ## AI Layer
 
 Responsible only for reasoning.
@@ -254,8 +200,6 @@ Contains
 - ATS explanation
 
 LLMs never manipulate raw files.
-
----
 
 ## Guardrails Layer
 
@@ -302,8 +246,6 @@ The Guardrails Layer never performs business decisions.
 
 It only ensures that generated content is safe and structurally correct before validation rules are applied.
 
----
-
 ## Validation Layer
 
 Responsible for enforcing correctness.
@@ -315,25 +257,17 @@ Contains
 - Hallucination detection
 - Confidence scoring
 
----
-
 ## Rendering Layer
 
 Responsible for deterministic output.
 
 Converts
 
-Resume Model
-
-↓
-
-LaTeX
-
-↓
-
-PDF
-
----
+```mermaid
+flowchart TD
+    RM[Resume Model] --> LT[LaTeX]
+    LT --> PDF[PDF]
+```
 
 ## Infrastructure Layer
 
@@ -345,8 +279,6 @@ Contains
 - Qdrant
 - Redis
 - Ollama
-
----
 
 # 6. Core Components
 
@@ -364,8 +296,6 @@ Output
 
 Canonical Resume Model
 
----
-
 ## JD Analyzer
 
 Purpose
@@ -380,8 +310,6 @@ Output
 
 Job Requirement Model
 
----
-
 ## Knowledge Engine
 
 Purpose
@@ -395,8 +323,6 @@ Responsibilities
 - Metadata
 - Indexing
 
----
-
 ## Hybrid Retriever
 
 Purpose
@@ -405,6 +331,7 @@ Retrieve only relevant context.
 
 Pipeline
 
+```
 Dense Search
 
 ↓
@@ -422,8 +349,7 @@ Reranker
 ↓
 
 Top-K
-
----
+```
 
 ## Planner Agent
 
@@ -455,8 +381,6 @@ Promote FastAPI
 
 ```
 
----
-
 ## Rewrite Agent
 
 Purpose
@@ -468,8 +392,6 @@ Cannot
 - invent projects
 - invent employers
 - invent metrics
-
----
 
 ## Validation Engine
 
@@ -487,8 +409,6 @@ Checks include
 
 Unlike the Guardrails Layer, the Validation Engine focuses on business correctness rather than AI safety.
 
----
-
 ## ATS Engine
 
 Responsible for
@@ -499,15 +419,11 @@ Responsible for
 - action verbs
 - quantified impact
 
----
-
 ## Rendering Engine
 
 Responsible for deterministic LaTeX generation.
 
 LLMs never generate LaTeX.
-
----
 
 # 7. Data Flow
 
@@ -561,8 +477,6 @@ PDF
 
 ```
 
----
-
 # 8. Knowledge Architecture
 
 Tailr maintains multiple indexes.
@@ -571,25 +485,31 @@ Tailr maintains multiple indexes.
 
 Qdrant
 
-├── resume_index
+├── resume_chunks
 
-├── jd_index
+├── job_descriptions
 
-├── skills_index
+├── skills
 
-├── project_index
+├── projects
 
-├── guides_index
+├── experience
+
+├── career_guides
 
 ├── resume_versions
 
-└── feedback_index
+├── guardrail_rules
+
+├── ats_rules
+
+├── prompt_patterns
+
+└── feedback
 
 ```
 
 Each collection serves a distinct purpose.
-
----
 
 # 9. Resume Lifecycle
 
@@ -643,8 +563,6 @@ Download
 
 ```
 
----
-
 # 10. Request Lifecycle
 
 ```
@@ -692,8 +610,6 @@ Rendering
 Response
 
 ```
-
----
 
 # 11. Deployment Architecture
 
@@ -757,28 +673,24 @@ Ollama
 
 ```
 
----
-
 # 12. Technology Stack
 
-| Layer | Technology |
-|---------|------------|
-| Frontend | Next.js |
-| Backend | FastAPI |
-| Workflow | LangGraph |
-| RAG | LlamaIndex |
-| Vector DB | Qdrant |
-| Database | PostgreSQL |
-| Cache | Redis |
-| Embeddings | BAAI BGE Small |
-| Reranker | BAAI BGE Reranker |
-| LLM | Ollama + Qwen3 |
-| Observability | Langfuse |
-| Evaluation | Ragas |
-| PDF | latexmk |
-| Containers | Docker Compose |
-
----
+| Layer         | Technology        |
+| ------------- | ----------------- |
+| Frontend      | Next.js           |
+| Backend       | FastAPI           |
+| Workflow      | LangGraph         |
+| RAG           | LlamaIndex        |
+| Vector DB     | Qdrant            |
+| Database      | PostgreSQL        |
+| Cache         | Redis             |
+| Embeddings    | BAAI BGE Small    |
+| Reranker      | BAAI BGE Reranker |
+| LLM           | Ollama + Qwen3    |
+| Observability | Langfuse          |
+| Evaluation    | Ragas             |
+| PDF           | latexmk           |
+| Containers    | Docker Compose    |
 
 # 13. Scalability
 
@@ -791,8 +703,6 @@ The architecture supports independent scaling of:
 - Rendering service
 
 This enables future cloud deployment without architectural changes.
-
----
 
 # 14. Fault Tolerance
 
@@ -820,29 +730,37 @@ Abort
 
 Examples
 
+```
 Parser Failure
 
 ↓
 
 Stop Workflow
+```
 
+```
 LLM Failure
 
 ↓
 
 Retry
+```
 
+```
 Validation Failure
 
 ↓
 
 Reject Rewrite
+```
 
+```
 Compilation Failure
 
 ↓
 
 Return Logs
+```
 
 ### Guardrail Failures
 
@@ -855,8 +773,6 @@ If Guardrails reject AI output, the workflow follows one of the following recove
 5. Abort the workflow if safety cannot be guaranteed.
 
 Guardrail failures are logged for observability and future model evaluation.
-
----
 
 # 15. Security Architecture
 
@@ -884,23 +800,19 @@ Additional security measures include:
 
 Every AI response passes through the Guardrails Layer before entering the Validation Layer.
 
----
-
 # 16. Architecture Decision Summary
 
-| Decision | Reason |
-|-----------|--------|
-| Canonical Resume Model | Single source of truth |
-| LlamaIndex | Native RAG & knowledge retrieval |
-| LangGraph | Workflow orchestration & multi-agent coordination |
-| Qdrant | Open-source vector search |
-| Ollama | Local inference |
-| Hybrid Retrieval | Higher retrieval accuracy |
-| Guardrails Layer | Enforce AI safety, schema validation, and prompt security |
-| Rule-Based Validation | Enforce business correctness and resume integrity |
-| Renderer Generates LaTeX | Deterministic output |
-
----
+| Decision                 | Reason                                                    |
+| ------------------------ | --------------------------------------------------------- |
+| Canonical Resume Model   | Single source of truth                                    |
+| LlamaIndex               | Native RAG & knowledge retrieval                          |
+| LangGraph                | Workflow orchestration & multi-agent coordination         |
+| Qdrant                   | Open-source vector search                                 |
+| Ollama                   | Local inference                                           |
+| Hybrid Retrieval         | Higher retrieval accuracy                                 |
+| Guardrails Layer         | Enforce AI safety, schema validation, and prompt security |
+| Rule-Based Validation    | Enforce business correctness and resume integrity         |
+| Renderer Generates LaTeX | Deterministic output                                      |
 
 # 17. Future Evolution
 
@@ -919,8 +831,6 @@ Future modules may include:
 - Analytics Dashboard
 
 These modules can reuse the existing knowledge, workflow, and validation layers without requiring architectural redesign.
-
----
 
 # 18. AI Safety & Guardrails
 
@@ -954,11 +864,19 @@ Resume Integrity Validation
 
 ↓
 
+PII / Secret Scan
+
+↓
+
 ATS Formatting Validation
 
 ↓
 
-PII Detection
+LaTeX Safety Validation
+
+↓
+
+Repair Engine
 
 ↓
 
@@ -985,4 +903,3 @@ The architecture prioritizes:
 - deterministic rendering over AI-generated formatting
 
 This foundation enables Tailr to evolve from a resume optimizer into a comprehensive AI-powered Career Intelligence Platform.
-```

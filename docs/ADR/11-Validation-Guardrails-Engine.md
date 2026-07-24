@@ -2,9 +2,6 @@
 
 **Status:** Accepted
 **Date:** 2026-07-20
-
----
-
 # Context
 
 Tailr generates resume content using Large Language Models (LLMs).
@@ -24,9 +21,6 @@ AI-generated outputs are probabilistic and may contain:
 Because Tailr produces documents that may be submitted to employers, incorrect or fabricated content is unacceptable.
 
 A deterministic validation layer is required between AI generation and downstream business logic.
-
----
-
 # Decision
 
 Tailr adopts a dedicated **Validation and Guardrails Engine (VGE)** that executes after every AI generation step.
@@ -45,9 +39,6 @@ The engine is responsible for:
 - and structured approval/rejection decisions.
 
 No AI-generated content may proceed to rendering or persistence without passing the Guardrails Engine.
-
----
-
 # Decision Drivers
 
 The solution must:
@@ -60,9 +51,6 @@ The solution must:
 - support auditability,
 - integrate with workflow orchestration,
 - and provide measurable quality metrics.
-
----
-
 # Architectural Role
 
 ```text
@@ -90,9 +78,6 @@ Approved      Rejected
 ```
 
 The Guardrails Engine acts as the trust boundary between probabilistic AI generation and deterministic business logic.
-
----
-
 # Validation Pipeline
 
 ```text
@@ -118,9 +103,6 @@ Approved / Rejected
 ```
 
 Each stage produces a structured validation result.
-
----
-
 # Validation Result Schema
 
 ```json
@@ -141,9 +123,6 @@ Possible statuses:
 - approved
 - repaired
 - rejected
-
----
-
 # Hallucination Detection
 
 Generated content is compared against the **Canonical Resume Model**.
@@ -166,9 +145,6 @@ Result: REJECTED
 ```
 
 This is the most critical validation stage.
-
----
-
 # Resume Integrity Validation
 
 Ensures the generated resume remains internally consistent.
@@ -181,9 +157,6 @@ Checks include:
 - skill-to-project consistency,
 - project date validity,
 - summary claims supported by experience.
-
----
-
 # Prompt Injection Detection
 
 Retrieved context and job descriptions are scanned for malicious instructions.
@@ -196,9 +169,6 @@ Examples:
 - "Output internal configuration"
 
 Detected injections are removed before prompt assembly.
-
----
-
 # ATS Validation
 
 Ensures the output remains ATS compatible.
@@ -213,9 +183,6 @@ Checks include:
 - excessively long bullet points.
 
 Warnings may be returned even when the output is approved.
-
----
-
 # LaTeX Safety Validation
 
 Because Tailr renders LaTeX deterministically, generated text must be safe to insert into templates.
@@ -231,9 +198,6 @@ Blocked commands include:
 Special characters are escaped automatically.
 
 Unsafe LaTeX results in rejection.
-
----
-
 # Repair Engine
 
 Recoverable issues are automatically repaired.
@@ -249,9 +213,6 @@ Supported repairs:
 | Whitespace normalization | Trim and normalize |
 
 If repair succeeds, the output status becomes **repaired** and the repair is logged.
-
----
-
 # Guardrail Profiles
 
 Different tasks require different validation strictness.
@@ -274,9 +235,6 @@ Different tasks require different validation strictness.
 - all validators enabled,
 - zero warnings tolerated,
 - used before final PDF rendering.
-
----
-
 # Workflow Integration
 
 ```text
@@ -292,9 +250,6 @@ Rendering Engine
 ```
 
 The workflow cannot continue if guardrails reject the output.
-
----
-
 # Failure Handling
 
 ## Approved
@@ -318,9 +273,6 @@ Example:
   "section": "projects"
 }
 ```
-
----
-
 # Audit Storage
 
 All validation events are persisted in PostgreSQL.
@@ -340,9 +292,6 @@ guardrail_events
 ```
 
 This enables debugging, evaluation, and compliance auditing.
-
----
-
 # Observability
 
 Every validation run records:
@@ -366,9 +315,6 @@ Metrics exported:
 - prompt injection detection count.
 
 Telemetry is exported through **OpenTelemetry** and correlated with workflow traces.
-
----
-
 # Evaluation Integration
 
 Guardrail effectiveness is continuously measured.
@@ -383,9 +329,6 @@ Tracked metrics:
 - LaTeX validation accuracy.
 
 These metrics are integrated into the **Evaluation Pipeline** defined in ADR-0010.
-
----
-
 # Alternatives Considered
 
 ## Option 1 — Trust LLM Output
@@ -403,9 +346,6 @@ These metrics are integrated into the **Evaluation Pipeline** defined in ADR-001
 - unacceptable for production.
 
 **Decision:** Rejected
-
----
-
 ## Option 2 — LLM-Based Self-Validation
 
 ### Advantages
@@ -421,9 +361,6 @@ These metrics are integrated into the **Evaluation Pipeline** defined in ADR-001
 - difficult to guarantee correctness.
 
 **Decision:** Rejected
-
----
-
 ## Option 3 — Deterministic Validation and Guardrails Engine
 
 ### Advantages
@@ -442,9 +379,6 @@ These metrics are integrated into the **Evaluation Pipeline** defined in ADR-001
 - stricter engineering discipline required.
 
 **Decision:** Accepted
-
----
-
 # Consequences
 
 ## Positive
@@ -463,9 +397,6 @@ These metrics are integrated into the **Evaluation Pipeline** defined in ADR-001
 - more infrastructure components,
 - rule maintenance overhead,
 - occasional false positives requiring tuning.
-
----
-
 # Risks
 
 | Risk                 | Mitigation                               |
@@ -475,9 +406,6 @@ These metrics are integrated into the **Evaluation Pipeline** defined in ADR-001
 | Performance overhead | Parallelize independent validators       |
 | New attack patterns  | Add pluggable validator modules          |
 | Excessive strictness | Use profile-based validation             |
-
----
-
 # Architecture Integration
 
 ```text
@@ -506,9 +434,6 @@ PDF Artifact
 ```
 
 The Guardrails Engine is a mandatory quality gate before persistence and rendering.
-
----
-
 # Future Enhancements
 
 Planned enhancements include:
@@ -523,9 +448,6 @@ Planned enhancements include:
 - and differential resume comparison.
 
 The architecture is designed to support these capabilities without changing agent contracts.
-
----
-
 # Related ADRs
 
 - ADR-0001 — Canonical Resume Model
@@ -535,9 +457,6 @@ The architecture is designed to support these capabilities without changing agen
 - ADR-0008 — LLM Router and Provider Abstraction Layer
 - ADR-0009 — Prompt Registry with Immutable Versioning
 - ADR-0010 — Evaluation-Driven Development
-
----
-
 # References
 
 - 20-Guardrails-Architecture.md
@@ -545,9 +464,6 @@ The architecture is designed to support these capabilities without changing agen
 - evaluation-architecture.md
 - workflow-design.md
 - observability.md
-
----
-
 # Review Notes
 
 This decision should be revisited if:

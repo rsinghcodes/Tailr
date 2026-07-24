@@ -5,9 +5,6 @@
 **Date:** 2026-07-20
 
 **Authors:** Tailr Engineering
-
----
-
 # Context
 
 Tailr is an AI-native Resume Intelligence Platform whose primary input and output format is LaTeX.
@@ -41,9 +38,6 @@ For an LLM, this is primarily formatting rather than structured meaning.
 Supporting DOCX, Markdown, JSON resumes, or future formats would require rewriting most of the platform if LaTeX remained the internal representation.
 
 The system therefore requires a technology-independent, structured internal representation that becomes the canonical source of truth.
-
----
-
 # Decision
 
 Tailr will introduce a **Canonical Resume Model (CRM)**.
@@ -87,9 +81,6 @@ Updated Canonical Resume
 The **Canonical Resume Model becomes the single source of truth** for all downstream components.
 
 No AI agent, workflow, or business service may directly manipulate LaTeX templates.
-
----
-
 # Decision Drivers
 
 This decision is driven by the following requirements:
@@ -105,9 +96,6 @@ This decision is driven by the following requirements:
 - Guardrail enforcement
 - Prompt injection resilience
 - Explainable optimization workflows
-
----
-
 # Canonical Resume Structure
 
 The model contains structured entities such as:
@@ -141,9 +129,6 @@ Example:
 ```
 
 The canonical schema is versioned independently of storage and rendering formats.
-
----
-
 # Guardrails Integration
 
 Every AI-generated modification must pass through the Guardrails pipeline before being applied to the canonical model.
@@ -176,9 +161,6 @@ Business Validation
 ```
 
 The CRM enables deterministic comparison between generated content and the original resume, making hallucination detection practical and reliable.
-
----
-
 # Alternatives Considered
 
 ## Option 1 — Edit Raw LaTeX
@@ -199,9 +181,6 @@ The CRM enables deterministic comparison between generated content and the origi
 - Hard to enforce guardrails
 
 **Decision:** Rejected
-
----
-
 ## Option 2 — Edit PDF
 
 ### Advantages
@@ -216,9 +195,6 @@ The CRM enables deterministic comparison between generated content and the origi
 - Unsuitable for semantic editing
 
 **Decision:** Rejected
-
----
-
 ## Option 3 — Convert to Markdown
 
 ### Advantages
@@ -233,9 +209,6 @@ The CRM enables deterministic comparison between generated content and the origi
 - Ambiguous section boundaries
 
 **Decision:** Rejected
-
----
-
 ## Option 4 — Canonical Resume Model
 
 ### Advantages
@@ -258,9 +231,6 @@ The CRM enables deterministic comparison between generated content and the origi
 - Initial development effort
 
 **Decision:** Accepted
-
----
-
 # Consequences
 
 ## Positive
@@ -278,9 +248,6 @@ The CRM enables:
 - Future support for DOCX, Markdown, and JSON resumes
 - Explainable optimization workflows
 - Improved maintainability
-
----
-
 ## Negative
 
 The system must maintain:
@@ -294,9 +261,6 @@ The system must maintain:
 - Backward compatibility logic
 
 These components increase development effort and operational complexity.
-
----
-
 # Risks
 
 | Risk                      | Mitigation                          |
@@ -308,9 +272,6 @@ These components increase development effort and operational complexity.
 | New template support      | Plugin-based parser architecture    |
 | Guardrail false positives | Configurable validation policies    |
 | Migration complexity      | Backward-compatible schema adapters |
-
----
-
 # Impact
 
 This decision directly affects:
@@ -330,9 +291,6 @@ This decision directly affects:
 - Evaluation Pipeline
 
 Nearly every major subsystem depends on this architectural decision.
-
----
-
 # Related ADRs
 
 - ADR-0002 — Use FastAPI as the Backend Framework
@@ -341,9 +299,6 @@ Nearly every major subsystem depends on this architectural decision.
 - ADR-0005 — Use LlamaIndex as the RAG and Knowledge Framework
 - ADR-0006 — Adopt a Multi-Agent Workflow
 - ADR-0008 — Adopt a Validation & Guardrails Engine
-
----
-
 # References
 
 - system-architecture.md
@@ -353,9 +308,6 @@ Nearly every major subsystem depends on this architectural decision.
 - rag-architecture.md
 - workflow-design.md
 - guardrails-architecture.md
-
----
-
 # Review Notes
 
 This decision should be revisited if:
