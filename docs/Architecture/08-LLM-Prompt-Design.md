@@ -3,8 +3,6 @@
 **Project:** Tailr
 **Version:** 1.0
 
----
-
 # 1. Purpose
 
 This document defines the prompt engineering strategy used by Tailr.
@@ -14,8 +12,6 @@ Rather than treating prompts as plain text templates, Tailr models prompts as ve
 Every AI interaction follows a strict contract to ensure consistency, reliability, explainability, and safety.
 
 Prompts are treated as production software assets rather than experimental text snippets.
-
----
 
 # 2. Design Goals
 
@@ -31,8 +27,6 @@ The prompt system must:
 - Enforce AI safety policies
 - Support automated output repair
 - Provide full execution traceability
-
----
 
 # 3. Prompt Engineering Philosophy
 
@@ -52,8 +46,6 @@ Examples
 
 Prompts never combine unrelated tasks.
 
----
-
 ## Retrieval Before Prompting
 
 Prompts never receive the complete resume.
@@ -71,8 +63,6 @@ LLM
 ```
 
 The LLM only receives information required for the current reasoning task.
-
----
 
 ## Structured Inputs
 
@@ -94,15 +84,11 @@ PlanningRequest(
 )
 ```
 
----
-
 ## Structured Outputs
 
 Every prompt returns machine-readable JSON.
 
 Natural language is reserved for explanations shown to the user.
-
----
 
 ## Validation & Guardrails First
 
@@ -117,8 +103,6 @@ Every response passes:
 - Resume integrity validation
 - ATS validation
 - Prompt injection checks
-
----
 
 # 4. Prompt Lifecycle
 
@@ -144,8 +128,6 @@ Workflow State
 
 The Guardrails Pipeline executes before business validation to ensure AI safety and structural correctness.
 
----
-
 # 5. Prompt Architecture
 
 Each prompt consists of seven sections.
@@ -167,8 +149,6 @@ Examples
 ```
 
 No prompt should omit any section.
-
----
 
 # 6. Prompt Template
 
@@ -208,8 +188,6 @@ BEGIN
 
 This keeps prompts consistent across agents.
 
----
-
 # 7. Prompt Components
 
 ## Role
@@ -222,8 +200,6 @@ Example
 
 The role should be specific and domain-oriented.
 
----
-
 ## Objective
 
 Defines the exact task.
@@ -233,8 +209,6 @@ One objective only.
 Example
 
 “Generate a rewrite plan for the summary and experience sections.”
-
----
 
 ## Context
 
@@ -249,8 +223,6 @@ Examples
 - Previously approved rewrites
 
 Context is always retrieved dynamically.
-
----
 
 ## Constraints
 
@@ -267,8 +239,6 @@ Examples
 
 Constraints are treated as hard requirements.
 
----
-
 ## Guardrail Instructions
 
 Every prompt includes mandatory safety instructions.
@@ -284,8 +254,6 @@ Example
 - If evidence is insufficient, return `INSUFFICIENT_EVIDENCE`.
 
 These instructions have higher priority than user content.
-
----
 
 ## Output Schema
 
@@ -304,8 +272,6 @@ Example
 
 Schemas are implemented as Pydantic models and versioned alongside prompts.
 
----
-
 ## Few-Shot Examples
 
 Representative examples demonstrate expected behavior.
@@ -317,8 +283,6 @@ Few-shot examples are:
 - version controlled
 - free of personal data
 - aligned with current schema versions
-
----
 
 # 8. Prompt Catalog
 
@@ -334,8 +298,6 @@ Tailr maintains a catalog of prompts.
 | Validator   | Perform AI-assisted validation checks |
 
 Each prompt is independently versioned and evaluated.
-
----
 
 # 9. Prompt Contracts
 
@@ -360,8 +322,6 @@ When the prompt must refuse or return `INSUFFICIENT_EVIDENCE`.
 ## Validation Strategy
 
 Which Guardrails and validators must run after generation.
-
----
 
 # 10. Context Strategy
 
@@ -388,8 +348,6 @@ Additional rules:
 - Context is truncated to fit the model budget.
 - Source citations are preserved.
 
----
-
 # 11. Prompt Versioning
 
 Every prompt has an explicit version.
@@ -414,8 +372,6 @@ Each version records:
 - evaluation results
 - rollback status
 
----
-
 # 12. Prompt Configuration
 
 Prompt configuration is externalized.
@@ -435,8 +391,6 @@ planner:
 
 Configuration changes should not require code changes.
 
----
-
 # 13. Model Selection
 
 Different prompts may use different models.
@@ -452,8 +406,6 @@ Different prompts may use different models.
 
 The workflow remains model-agnostic through the provider abstraction.
 
----
-
 # 14. Temperature Strategy
 
 Different reasoning tasks require different creativity.
@@ -468,8 +420,6 @@ Different reasoning tasks require different creativity.
 | Critique        | 0.3         |
 
 Deterministic tasks always use low temperature.
-
----
 
 # 15. Prompt Security
 
@@ -508,8 +458,6 @@ The Guardrails Pipeline checks for:
 
 Detected injections are logged and rejected.
 
----
-
 # 16. Hallucination Prevention
 
 Prompts explicitly prohibit unsupported claims.
@@ -529,8 +477,6 @@ The model must cite supporting resume evidence for every new claim.
 
 Validation enforces these constraints after generation.
 
----
-
 # 17. Guardrails & Output Validation
 
 Every response passes:
@@ -548,9 +494,13 @@ Hallucination Detection
 ↓
 Resume Integrity Validation
 ↓
+PII / Secret Scan
+↓
 ATS Validation
 ↓
-PII Detection
+LaTeX Safety Validation
+↓
+Repair Engine
 ↓
 Business Validation
 ↓
@@ -558,8 +508,6 @@ Workflow
 ```
 
 Invalid outputs trigger retries or repair attempts.
-
----
 
 # 18. Retry & Repair Strategy
 
@@ -588,8 +536,6 @@ Repair prompts receive:
 
 Retry count is configurable per prompt.
 
----
-
 # 19. Prompt Evaluation
 
 Prompt quality is continuously measured.
@@ -608,8 +554,6 @@ Metrics include:
 - User edits after generation
 
 Evaluation results are stored for each prompt version.
-
----
 
 # 20. Observability
 
@@ -631,8 +575,6 @@ Each prompt execution records:
 - trace ID
 
 Logs are stored in Langfuse and correlated with workflow traces.
-
----
 
 # 21. Prompt Repository
 
@@ -660,8 +602,6 @@ backend/
 
 Prompt assets are version-controlled alongside code.
 
----
-
 # 22. Testing Strategy
 
 Prompt changes require automated testing.
@@ -681,8 +621,6 @@ Tests include:
 
 A prompt is promoted only after passing evaluation.
 
----
-
 # 23. Future Enhancements
 
 The prompt architecture supports:
@@ -700,8 +638,6 @@ The prompt architecture supports:
 
 These features can be introduced without changing workflow contracts.
 
----
-
 # 24. Architecture Decisions
 
 | Decision                   | Rationale                           |
@@ -714,8 +650,6 @@ These features can be introduced without changing workflow contracts.
 | External configuration     | Easier experimentation              |
 | Prompt observability       | Debugging and evaluation            |
 | Immutable prompt versions  | Reproducibility and rollback        |
-
----
 
 # 25. Summary
 

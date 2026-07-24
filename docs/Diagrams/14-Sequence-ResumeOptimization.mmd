@@ -4,6 +4,8 @@ participant User
 participant API
 participant Workflow
 participant Parser
+participant Knowledge
+participant JDAnalyzer
 participant Retriever
 participant Planner
 participant Rewriter
@@ -21,6 +23,14 @@ API->>Workflow: Start optimization workflow
 Workflow->>Parser: Parse resume
 
 Parser-->>Workflow: Canonical Resume Model
+
+Workflow->>Knowledge: Build knowledge index
+
+Knowledge-->>Workflow: Indexed entities
+
+Workflow->>JDAnalyzer: Analyze job description
+
+JDAnalyzer-->>Workflow: Structured requirements
 
 Workflow->>Retriever: Retrieve relevant experience
 
@@ -47,6 +57,10 @@ Validator-->>Workflow: Approved changes
 Workflow->>ATS: Calculate ATS score
 
 ATS-->>Workflow: ATS report + recommendations
+
+Workflow->>User: Present changes for approval
+
+User-->>Workflow: Approve changes
 
 Workflow->>Renderer: Generate LaTeX
 

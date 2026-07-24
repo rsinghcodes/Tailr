@@ -5,9 +5,6 @@
 **Date:** 2026-07-20
 
 **Authors:** Tailr Engineering
-
----
-
 # Context
 
 Tailr is an AI-native backend that orchestrates multiple subsystems including:
@@ -41,9 +38,6 @@ The framework must provide:
 - OpenTelemetry compatibility
 
 Several Python web frameworks were evaluated.
-
----
-
 # Decision
 
 Tailr will use **FastAPI** as its primary backend framework.
@@ -64,9 +58,6 @@ FastAPI is responsible for:
 Business logic remains inside the **Application** and **Domain** layers defined in ADR-0002.
 
 FastAPI acts strictly as the **Presentation Layer** in the Clean/Hexagonal Architecture.
-
----
-
 # Decision Drivers
 
 The framework must:
@@ -80,9 +71,6 @@ The framework must:
 - work well with AI and ML ecosystems,
 - support observability and tracing,
 - enforce guardrails consistently.
-
----
-
 # Why FastAPI?
 
 FastAPI provides:
@@ -108,9 +96,6 @@ async def optimize_resume(request: OptimizeResumeRequest):
 return await optimize_use_case.execute(request)"/>
 
 Minimal boilerplate improves maintainability and readability.
-
----
-
 # Architectural Role
 
 <CodeBlock language="text" content="Next.js Frontend
@@ -133,9 +118,6 @@ Infrastructure Adapters"/>
 FastAPI contains **no business logic**.
 
 It only coordinates requests, responses, authentication, and dependency wiring.
-
----
-
 # Async Support
 
 Many Tailr operations are I/O bound.
@@ -153,9 +135,6 @@ Examples:
 Async execution allows these operations to run efficiently without blocking worker threads.
 
 FastAPI runs on **Uvicorn + ASGI**, enabling high concurrency with low overhead.
-
----
-
 # Request Validation
 
 FastAPI uses **Pydantic v2** models.
@@ -175,9 +154,6 @@ Benefits:
 - Better editor support
 - Reduced boilerplate
 - Automatic error responses
-
----
-
 # Structured Responses
 
 All APIs return typed response models.
@@ -194,9 +170,6 @@ This ensures:
 - generated SDK compatibility,
 - easier frontend integration,
 - schema evolution control.
-
----
-
 # Automatic API Documentation
 
 FastAPI automatically generates:
@@ -214,9 +187,6 @@ This enables:
 - external API documentation.
 
 No manual OpenAPI maintenance is required.
-
----
-
 # Dependency Injection
 
 FastAPI provides lightweight dependency injection.
@@ -239,9 +209,6 @@ Benefits:
 - loose coupling,
 - configurable implementations,
 - environment-specific wiring.
-
----
-
 # Streaming Responses
 
 Resume optimization can take several seconds.
@@ -257,9 +224,6 @@ This enables real-time progress updates:
 <CodeBlock language="text" content="Parsing → Indexing → Planning → Rewriting → Guardrails → Validation → Rendering → Completed"/>
 
 Streaming improves user experience for long-running workflows.
-
----
-
 # Background Processing
 
 Heavy operations are executed outside the request lifecycle.
@@ -280,9 +244,6 @@ FastAPI integrates well with future worker systems such as:
 - Redis Queue
 
 The API remains responsive while asynchronous jobs execute independently.
-
----
-
 # Guardrails Integration
 
 Every AI request passes through the Guardrails layer before business validation.
@@ -296,9 +257,6 @@ FastAPI is responsible for:
 - forwarding structured requests to workflows.
 
 Guardrails remain inside the Application layer and are **not implemented as FastAPI middleware**.
-
----
-
 # Observability
 
 FastAPI integrates with **OpenTelemetry**.
@@ -314,9 +272,6 @@ Collected telemetry includes:
 - error rates.
 
 This telemetry is exported to Prometheus/Grafana and future tracing backends.
-
----
-
 # Alternatives Considered
 
 ## Option 1 — Flask
@@ -336,9 +291,6 @@ This telemetry is exported to Prometheus/Grafana and future tracing backends.
 - Weaker typing guarantees
 
 **Decision:** Rejected
-
----
-
 ## Option 2 — Django
 
 ### Advantages
@@ -356,9 +308,6 @@ This telemetry is exported to Prometheus/Grafana and future tracing backends.
 - Harder to keep the Domain layer framework-independent
 
 **Decision:** Rejected
-
----
-
 ## Option 3 — FastAPI
 
 ### Advantages
@@ -379,9 +328,6 @@ This telemetry is exported to Prometheus/Grafana and future tracing backends.
 - Some third-party libraries remain synchronous
 
 **Decision:** Accepted
-
----
-
 # Consequences
 
 ## Positive
@@ -394,18 +340,12 @@ This telemetry is exported to Prometheus/Grafana and future tracing backends.
 - Better developer productivity
 - Easier frontend integration
 - Cleaner API contracts
-
----
-
 ## Negative
 
 - Requires understanding of async programming
 - Blocking synchronous code can hurt performance
 - Additional care is needed for thread safety
 - Background job infrastructure adds operational complexity
-
----
-
 # Risks
 
 | Risk                                     | Mitigation                                       |
@@ -416,9 +356,6 @@ This telemetry is exported to Prometheus/Grafana and future tracing backends.
 | Long-running requests                    | Offload heavy work to background workers         |
 | Accidental business logic in controllers | Enforce code review rules                        |
 | Unbounded streaming connections          | Configure timeouts and connection limits         |
-
----
-
 # API Organization
 
 Endpoints are organized by feature.
@@ -434,9 +371,6 @@ Endpoints are organized by feature.
 └── health/"/>
 
 This structure keeps the presentation layer modular and aligned with application use cases.
-
----
-
 # Impact
 
 This decision affects:
@@ -453,9 +387,6 @@ This decision affects:
 - Deployment Architecture
 
 FastAPI becomes the **public interface of the Tailr backend**.
-
----
-
 # Related ADRs
 
 - ADR-0001 — Adopt a Canonical Resume Model
@@ -464,9 +395,6 @@ FastAPI becomes the **public interface of the Tailr backend**.
 - ADR-0005 — Use Qdrant as the Vector Database
 - ADR-0006 — Adopt a Multi-Agent Workflow
 - ADR-0008 — Adopt a Validation & Guardrails Engine
-
----
-
 # References
 
 - api-specification.md
@@ -475,9 +403,6 @@ FastAPI becomes the **public interface of the Tailr backend**.
 - testing.md
 - guardrails-architecture.md
 - telemetry-architecture.md
-
----
-
 # Review Notes
 
 This decision should be revisited if:

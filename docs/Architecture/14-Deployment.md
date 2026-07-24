@@ -3,8 +3,6 @@
 **Project:** Tailr
 **Version:** 1.0
 
----
-
 # 1. Purpose
 
 This document defines the deployment architecture of Tailr.
@@ -22,8 +20,6 @@ The deployment strategy enables:
 
 The architecture follows a container-first approach using Docker.
 
----
-
 # 2. Deployment Goals
 
 The deployment architecture must:
@@ -37,8 +33,6 @@ The deployment architecture must:
 - Minimize operational cost
 - Enforce AI safety policies consistently
 
----
-
 # 3. Deployment Philosophy
 
 Tailr follows three principles.
@@ -49,19 +43,13 @@ Every component must run locally.
 
 No cloud dependency.
 
----
-
 ## Container Native
 
 Every service runs inside Docker.
 
----
-
 ## Cloud Ready
 
 The same Docker images can be deployed to any cloud.
-
----
 
 # 4. High-Level Deployment
 
@@ -92,8 +80,6 @@ The same Docker images can be deployed to any cloud.
                         ▼
                 Open Source LLMs
 ```
-
----
 
 # 5. Deployment Components
 
@@ -135,8 +121,6 @@ Monitoring
 - Prometheus
 - Grafana
 
----
-
 # 6. Docker Architecture
 
 ```
@@ -165,8 +149,6 @@ docker-compose
 
 Each service has its own Dockerfile.
 
----
-
 # 7. Local Development
 
 Student setup
@@ -191,8 +173,6 @@ Requirements
 - Node.js
 
 GPU is optional.
-
----
 
 # 8. Environment Variables
 
@@ -221,8 +201,6 @@ GUARDRAIL_MAX_RETRIES=1
 ```
 
 Secrets are never committed.
-
----
 
 # 9. Networking
 
@@ -260,17 +238,11 @@ qdrant
 
 No internal services are publicly exposed.
 
----
-
 # 10. Storage Volumes
 
 Persistent volumes
 
 ```
-postgres_data
-
-qdrant_data
-
 redis_data
 
 ollama_models
@@ -281,8 +253,6 @@ grafana_data
 ```
 
 Container recreation does not lose data.
-
----
 
 # 11. AI Model Deployment
 
@@ -322,9 +292,6 @@ Validated Response
 ````
 
 Models remain local.
-
----
-
 # 12. Object Storage
 
 Version 1
@@ -347,9 +314,6 @@ MinIO
 AWS S3
 
 Cloudflare R2
-
----
-
 # 13. Reverse Proxy
 
 Nginx handles
@@ -363,9 +327,6 @@ Nginx handles
 Future
 
 Traefik supports automatic service discovery.
-
----
-
 # 14. HTTPS
 
 Production
@@ -377,9 +338,6 @@ Certificates renewed automatically.
 Development
 
 Self-signed certificates.
-
----
-
 # 15. Background Jobs
 
 Long-running tasks
@@ -398,9 +356,6 @@ Redis
 Workers
 
 FastAPI + ARQ/Celery (future)
-
----
-
 # 16. Monitoring
 
 Application metrics
@@ -419,9 +374,6 @@ Infrastructure metrics
 - Disk
 - GPU
 - Network
-
----
-
 # 17. AI Observability
 
 Langfuse records
@@ -434,9 +386,6 @@ Langfuse records
 - Validation failures
 - Guardrail violations
 - Output repair events
-
----
-
 # 18. Logging
 
 Centralized logs
@@ -449,9 +398,6 @@ Centralized logs
 - Validation
 
 Logs remain structured JSON.
-
----
-
 # 19. CI/CD Pipeline
 
 ```
@@ -493,9 +439,6 @@ Deploy
 ```
 
 Deployment is automated after successful checks.
-
----
-
 # 20. Build Pipeline
 
 ```
@@ -536,8 +479,6 @@ Contract Validation
 Deployment Approval
 ````
 
----
-
 # 21. Scaling Strategy
 
 Current
@@ -562,8 +503,6 @@ Backend 3
 
 Redis enables shared workflow state.
 
----
-
 # 22. Horizontal Scaling
 
 Stateless services
@@ -578,8 +517,6 @@ Stateful services
 - Redis
 
 These require replication strategies.
-
----
 
 # 23. Backup Strategy
 
@@ -599,8 +536,6 @@ Persistent storage
 
 Backups are automated.
 
----
-
 # 24. Disaster Recovery
 
 Recover
@@ -614,8 +549,6 @@ Recover
 Target Recovery Time Objective
 
 < 30 minutes
-
----
 
 # 25. Security
 
@@ -634,8 +567,6 @@ Deployment security
 
 Sensitive data remains encrypted.
 
----
-
 # 26. Performance Targets
 
 | Component            | Target  |
@@ -647,8 +578,6 @@ Sensitive data remains encrypted.
 | Resume optimization  | <30 s   |
 | PDF generation       | <5 s    |
 | Guardrail validation | <2 s    |
-
----
 
 # 27. Production Deployment
 
@@ -679,8 +608,6 @@ Models
 Ollama (GPU VM) or vLLM
 
 This minimizes operational cost while preserving full AI observability and guardrail enforcement.
-
----
 
 # 28. Kubernetes Roadmap
 
@@ -718,8 +645,6 @@ GPU Inference Pods
 
 Helm charts simplify deployment.
 
----
-
 # 29. Infrastructure as Code
 
 Future
@@ -731,8 +656,6 @@ Docker Compose
 Helm
 
 Infrastructure becomes reproducible.
-
----
 
 # 30. Deployment Environments
 
@@ -754,8 +677,6 @@ Cloud + Monitoring
 
 Each environment has isolated configuration and guardrail policies.
 
----
-
 # 31. Architecture Decisions
 
 | Decision                     | Rationale                                  |
@@ -770,8 +691,6 @@ Each environment has isolated configuration and guardrail policies.
 | Nginx                        | Reverse proxy and HTTPS                    |
 | Guardrails Layer             | Provider-independent AI safety enforcement |
 | Structured output validation | Deterministic downstream processing        |
-
----
 
 # 32. Summary
 

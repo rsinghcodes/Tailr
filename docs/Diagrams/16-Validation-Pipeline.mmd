@@ -10,15 +10,15 @@ Schema --> Injection[Prompt Injection Detection]
 
 Injection --> Hallucination[Hallucination Detection]
 
-Hallucination --> PII[PII Detection]
+Hallucination --> ResumeIntegrity[Resume Integrity Validation]
 
-PII --> ResumeIntegrity[Resume Integrity Validation]
+ResumeIntegrity --> PII[PII / Secret Scan]
 
-ResumeIntegrity --> Formatting[Formatting Validation]
+PII --> ATSValid[ATS Formatting Validation]
 
-Formatting --> ATS[ATS Validation]
+ATSValid --> LaTeX[LaTeX Safety Validation]
 
-ATS --> Decision{Valid?}
+LaTeX --> Decision{Valid?}
 
 Decision -- Yes --> Approved[Approved Output]
 

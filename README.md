@@ -8,7 +8,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.13-3776AB?style=for-the-badge&logo=python&logoColor=white)]()
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=for-the-badge&logo=fastapi&logoColor=white)]()
-[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=nextdotjs)]()
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=nextdotjs)]()
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169E1?style=for-the-badge&logo=postgresql)]()
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker)]()
 [![License](https://img.shields.io/badge/License-MIT-success?style=for-the-badge)]()
@@ -212,7 +212,7 @@ LaTeX Renderer → latexmk → PDF
 
 ## Data & Storage
 
-- PostgreSQL 17+
+- PostgreSQL 18
 - Qdrant Cloud (vector search)
 - Redis (caching)
 
@@ -240,18 +240,18 @@ LaTeX Renderer → latexmk → PDF
 
 # 🤖 AI Agents
 
-| Agent | Responsibility |
-|-------|---------------|
-| JD Analyzer | Extract structured requirements from job descriptions |
-| Resume Analyzer | Analyze strengths, weaknesses, and missing keywords |
-| Planner | Create an evidence-backed optimization strategy |
-| Retriever | Retrieve relevant context via hybrid search (LlamaIndex + Qdrant) |
-| Rewriter | Rewrite resume sections using only retrieved evidence |
+| Agent             | Responsibility                                                        |
+| ----------------- | --------------------------------------------------------------------- |
+| JD Analyzer       | Extract structured requirements from job descriptions                 |
+| Resume Analyzer   | Analyze strengths, weaknesses, and missing keywords                   |
+| Planner           | Create an evidence-backed optimization strategy                       |
+| Retriever         | Retrieve relevant context via hybrid search (LlamaIndex + Qdrant)     |
+| Rewriter          | Rewrite resume sections using only retrieved evidence                 |
 | Guardrails Engine | Validate every AI output for safety, integrity, and schema compliance |
-| Validator | Verify business correctness after guardrails approval |
-| ATS Scorer | Evaluate ATS compatibility and generate recommendations |
-| Critic | Identify weaknesses in the rewritten draft |
-| Optimizer | Improve the draft (output re-validated through Guardrails) |
+| Validator         | Verify business correctness after guardrails approval                 |
+| ATS Scorer        | Evaluate ATS compatibility and generate recommendations               |
+| Critic            | Identify weaknesses in the rewritten draft                            |
+| Optimizer         | Improve the draft (output re-validated through Guardrails)            |
 
 All agents communicate via **typed JSON events**. Agents never call each other directly — **LangGraph** orchestrates execution.
 
@@ -372,20 +372,20 @@ This starts:
 
 # 📊 Development Status
 
-| Module | Status |
-|--------|--------|
-| Backend Foundation | 🚧 In Progress |
-| Resume Parser | ⏳ Planned |
-| Canonical Resume Model | ⏳ Planned |
-| Knowledge Indexing (LlamaIndex) | ⏳ Planned |
-| RAG Pipeline | ⏳ Planned |
-| AI Agents | ⏳ Planned |
-| Workflow Engine (LangGraph) | ⏳ Planned |
-| Guardrails Engine | ⏳ Planned |
-| Validation Engine | ⏳ Planned |
-| ATS Engine | ⏳ Planned |
-| LaTeX Renderer | ⏳ Planned |
-| Frontend Dashboard | ⏳ Planned |
+| Module                          | Status         |
+| ------------------------------- | -------------- |
+| Backend Foundation              | 🚧 In Progress |
+| Resume Parser                   | ⏳ Planned     |
+| Canonical Resume Model          | ⏳ Planned     |
+| Knowledge Indexing (LlamaIndex) | ⏳ Planned     |
+| RAG Pipeline                    | ⏳ Planned     |
+| AI Agents                       | ⏳ Planned     |
+| Workflow Engine (LangGraph)     | ⏳ Planned     |
+| Guardrails Engine               | ⏳ Planned     |
+| Validation Engine               | ⏳ Planned     |
+| ATS Engine                      | ⏳ Planned     |
+| LaTeX Renderer                  | ⏳ Planned     |
+| Frontend Dashboard              | ⏳ Planned     |
 
 ---
 

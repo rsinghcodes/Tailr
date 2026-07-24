@@ -3,8 +3,6 @@
 **Project:** Tailr
 **Document Version:** 1.0
 
----
-
 # 1. Purpose
 
 This document defines the intelligent reasoning architecture of Tailr.
@@ -12,8 +10,6 @@ This document defines the intelligent reasoning architecture of Tailr.
 Unlike traditional AI applications that rely on a single LLM prompt, Tailr decomposes resume optimization into specialized reasoning agents coordinated through a workflow engine.
 
 Each agent has a single responsibility and communicates using structured data models.
-
----
 
 # 2. Design Philosophy
 
@@ -35,14 +31,9 @@ Deterministic software handles:
 
 This separation minimizes hallucinations and increases system reliability.
 
----
-
 # 3. Workflow Overview
 
 ```
-
-```
-
 START
 │
 ▼
@@ -53,6 +44,9 @@ Knowledge Builder (Software)
 │
 ▼
 JD Analyzer (AI)
+│
+▼
+Hybrid Retriever (Software)
 │
 ▼
 Planning Agent (AI)
@@ -67,7 +61,10 @@ Guardrails Engine (Software)
 Validation Engine (Software)
 │
 ▼
-ATS Analysis Agent (AI)
+ATS Advisor (AI)
+│
+▼
+Human Approval
 │
 ▼
 Renderer (Software)
@@ -79,8 +76,6 @@ PDF Compiler (Software)
 END
 
 ```
-
----
 
 # 4. Agent Communication
 
@@ -106,7 +101,7 @@ RewriteOutput
 
 ValidationInput
 
-````
+```
 
 This improves:
 
@@ -115,20 +110,16 @@ This improves:
 - debugging
 - observability
 
----
-
 # 5. AI Agents
 
 Tailr contains four primary AI agents.
 
-| Agent | Responsibility |
-|---------|---------------|
+| Agent       | Responsibility              |
+| ----------- | --------------------------- |
 | JD Analyzer | Understand job descriptions |
-| Planner | Decide what should change |
-| Rewriter | Rewrite resume content |
-| ATS Advisor | Explain ATS improvements |
-
----
+| Planner     | Decide what should change   |
+| Rewriter    | Rewrite resume content      |
+| ATS Advisor | Explain ATS improvements    |
 
 # 6. JD Analyzer Agent
 
@@ -136,13 +127,9 @@ Tailr contains four primary AI agents.
 
 Convert an unstructured Job Description into structured requirements.
 
----
-
 ### Inputs
 
 Job Description
-
----
 
 ### Outputs
 
@@ -153,11 +140,10 @@ Job Description
   "preferred_skills": [],
   "responsibilities": [],
   "keywords": [],
-  "soft_skills": []
+  "soft_skills": [],
+  "experience_level": ""
 }
-````
-
----
+```
 
 ### Responsibilities
 
@@ -171,15 +157,11 @@ Extract
 - Certifications
 - Soft skills
 
----
-
 ### Constraints
 
 Must never rewrite resumes.
 
 Must never infer user experience.
-
----
 
 ### Success Criteria
 
@@ -187,8 +169,6 @@ Must never infer user experience.
 - Consistent schema
 - High recall
 - Deterministic JSON
-
----
 
 # 7. Planning Agent
 
@@ -200,8 +180,6 @@ The planner never edits text.
 
 It only creates an optimization strategy.
 
----
-
 ### Inputs
 
 Canonical Resume
@@ -209,8 +187,6 @@ Canonical Resume
 Job Requirement Model
 
 Retrieved Knowledge
-
----
 
 ### Outputs
 
@@ -223,8 +199,6 @@ Retrieved Knowledge
 }
 ```
 
----
-
 ### Responsibilities
 
 Decide
@@ -234,16 +208,12 @@ Decide
 - bullets to reorder
 - projects to prioritize
 
----
-
 ### Forbidden Actions
 
 - rewrite text
 - invent skills
 - fabricate projects
 - modify dates
-
----
 
 ### Example
 
@@ -257,15 +227,11 @@ Reason
 Agentic AI appears in JD
 ```
 
----
-
 # 8. Rewrite Agent
 
 ## Purpose
 
 Rewrite resume content according to the approved plan.
-
----
 
 ### Inputs
 
@@ -275,13 +241,9 @@ Rewrite Plan
 
 Retrieved Context
 
----
-
 ### Outputs
 
 Updated Resume Model
-
----
 
 ### Responsibilities
 
@@ -289,8 +251,6 @@ Updated Resume Model
 - strengthen action verbs
 - improve ATS alignment
 - preserve facts
-
----
 
 ### Constraints
 
@@ -302,8 +262,6 @@ Cannot
 - invent dates
 - invent technologies
 
----
-
 ### Prompt Philosophy
 
 Rewrite only.
@@ -311,8 +269,6 @@ Rewrite only.
 Never reason about whether a section should change.
 
 Planning has already happened.
-
----
 
 # 9. Guardrails Engine
 
@@ -322,8 +278,6 @@ Ensure every AI-generated output is safe, structurally valid, and compliant with
 
 The Guardrails Engine is deterministic software and is executed for every AI response.
 
----
-
 ### Inputs
 
 - Rewrite Output
@@ -331,20 +285,17 @@ The Guardrails Engine is deterministic software and is executed for every AI res
 - Validation Policies
 - Resume Schema
 
----
-
 ### Outputs
 
 ```json
 {
-  "valid": true,
-  "repaired": false,
+  "status": "approved",
+  "repair_applied": false,
   "violations": [],
+  "warnings": [],
   "metadata": {}
 }
 ```
-
----
 
 ### Responsibilities
 
@@ -359,8 +310,6 @@ Validate
 - ATS formatting
 - Business policies
 
----
-
 ### Repair Strategy
 
 If possible the engine will
@@ -371,8 +320,6 @@ If possible the engine will
 
 Otherwise the workflow is rejected.
 
----
-
 ### Constraints
 
 Must never rewrite resume content.
@@ -381,15 +328,11 @@ Must never invent information.
 
 Must remain deterministic.
 
----
-
 # 10. ATS Advisor Agent
 
 ## Purpose
 
 Explain optimization quality.
-
----
 
 ### Inputs
 
@@ -399,20 +342,22 @@ Optimized Resume
 
 Job Requirements
 
----
-
 ### Outputs
 
 ```json
 {
-  "score": 91,
+  "overall_score": 91,
+  "confidence": 0.96,
+  "keyword_score": 92,
+  "semantic_score": 85,
+  "skills_score": 90,
+  "experience_score": 84,
   "strengths": [],
   "weaknesses": [],
-  "recommendations": []
+  "recommendations": [],
+  "missing_keywords": []
 }
 ```
-
----
 
 ### Responsibilities
 
@@ -423,31 +368,25 @@ Generate
 - readability analysis
 - ATS explanation
 
----
-
 ### Constraints
 
 Cannot modify resumes.
-
----
 
 # 11. Software Components
 
 These are **not AI agents**.
 
----
-
 ## Resume Parser
 
 Converts
 
+```
 LaTeX
 
 ↓
 
 Canonical Resume Model
-
----
+```
 
 ## Knowledge Builder
 
@@ -458,8 +397,6 @@ Creates
 - metadata
 - vector indexes
 
----
-
 ## Hybrid Retriever
 
 Performs
@@ -469,8 +406,6 @@ Performs
 - reranking
 
 No LLM involved.
-
----
 
 ## Guardrails Engine
 
@@ -489,8 +424,6 @@ Checks
 
 The Guardrails Engine is provider-independent and reusable across all AI workflows.
 
----
-
 ## Validation Engine
 
 Responsible for business validation after Guardrails have approved the AI output.
@@ -503,25 +436,21 @@ Checks
 - business policies
 - deterministic constraints
 
----
-
 ## Renderer
 
 Generates deterministic LaTeX.
-
----
 
 ## PDF Compiler
 
 Compiles
 
+```
 resume.tex
 
 ↓
 
 resume.pdf
-
----
+```
 
 # 12. Shared Memory
 
@@ -531,6 +460,8 @@ Example
 
 ```python
 WorkflowState
+
+workflow_id
 
 resume
 
@@ -542,20 +473,20 @@ rewrite_plan
 
 rewritten_resume
 
-guardrail_result
+guardrail_report
 
-validation_result
-
-policy_violations
-
-repair_attempts
+validation_report
 
 ats_report
+
+render_result
+
+telemetry
+
+status
 ```
 
 Every agent reads only the fields it requires.
-
----
 
 # 13. Context Window Strategy
 
@@ -564,19 +495,19 @@ Instead of sending the entire resume,
 Tailr retrieves only relevant information.
 
 ```
-Job Description
+                  Job Description
 
-↓
+                     ↓
 
-Retriever
+                  Retriever
 
-↓
+                     ↓
 
-Top 5 Resume Chunks
+              Top 10 Resume Chunks
 
-↓
+                     ↓
 
-Planner
+                  Planner
 ```
 
 Benefits
@@ -585,13 +516,9 @@ Benefits
 - lower latency
 - higher accuracy
 
----
-
 # 14. Failure Handling
 
 Every agent defines explicit failure modes.
-
----
 
 ## JD Analyzer
 
@@ -603,8 +530,6 @@ Recovery
 
 Retry extraction
 
----
-
 ## Planner
 
 Failure
@@ -615,8 +540,6 @@ Recovery
 
 Retry with schema enforcement
 
----
-
 ## Rewriter
 
 Failure
@@ -625,13 +548,13 @@ Hallucinated content
 
 Recovery
 
+```
 Validation rejection
 
 ↓
 
 Retry
-
----
+```
 
 ## ATS Advisor
 
@@ -642,8 +565,6 @@ Incomplete report
 Recovery
 
 Regenerate explanation
-
----
 
 ## Guardrails Engine
 
@@ -659,8 +580,6 @@ Reject response
 
 Retry with hardened prompt
 
----
-
 Failure
 
 Invalid schema
@@ -672,8 +591,6 @@ Attempt automatic repair
 ↓
 
 Revalidate
-
----
 
 Failure
 
@@ -687,8 +604,6 @@ Reject output
 
 Retry generation
 
----
-
 Failure
 
 PII leakage
@@ -700,8 +615,6 @@ Sanitize output
 ↓
 
 Continue validation
-
----
 
 # 15. Agent Boundaries
 
@@ -715,8 +628,6 @@ Continue validation
 | Validation Engine | Guardrail Report | Validation Report     |
 
 No agent may directly modify another agent's output.
-
----
 
 # 16. Model Selection
 
@@ -732,8 +643,6 @@ Example
 | ATS Analysis  | Gemma 3   |
 
 The architecture allows model replacement without changing workflows.
-
----
 
 # 17. Prompt Contracts
 
@@ -773,8 +682,6 @@ Every AI response must satisfy the following before acceptance:
 - No prompt injection execution
 - ATS compliant
 
----
-
 # 18. Observability
 
 Each agent emits telemetry.
@@ -795,8 +702,6 @@ Metrics
 
 These metrics are stored in Langfuse for monitoring and evaluation.
 
----
-
 # 19. Human-in-the-Loop
 
 The workflow pauses before rendering.
@@ -809,8 +714,6 @@ Users can
 - regenerate individual sections
 
 AI suggestions are never applied silently.
-
----
 
 # 20. Future Agents
 
@@ -838,8 +741,6 @@ Future workflow components may also introduce specialized Guardrails modules suc
 - Output Repair Engine
 
 These modules integrate into the Guardrails Engine without affecting existing AI agents.
-
----
 
 # 21. Summary
 

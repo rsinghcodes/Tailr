@@ -1,12 +1,7 @@
 # Product Roadmap
 
 **Project:** Tailr
-
 **Version:** 1.0
-
-**Status:** Draft
-
----
 
 # 1. Purpose
 
@@ -15,8 +10,6 @@ This roadmap defines the planned evolution of Tailr from an AI-powered resume op
 The roadmap balances engineering complexity, user value, technical debt, and scalability while maintaining a modular architecture that supports continuous delivery.
 
 Rather than focusing solely on features, each phase introduces new platform capabilities and architectural maturity.
-
----
 
 # 2. Product Vision
 
@@ -35,8 +28,6 @@ Career Intelligence Platform
 
 Each phase builds upon the previous one without requiring major architectural redesign.
 
----
-
 # 3. Roadmap Principles
 
 The roadmap follows five principles.
@@ -45,31 +36,21 @@ The roadmap follows five principles.
 
 Reusable platform components are developed before advanced AI features.
 
----
-
 ## Incremental Delivery
 
 Every release provides user-visible value.
-
----
 
 ## Reuse Existing Architecture
 
 New features leverage the Parser, RAG, Workflow Engine, and Agent Framework.
 
----
-
 ## AI Evaluation Before Expansion
 
 Every AI capability must be measurable before adding new functionality.
 
----
-
 ## Open Source Friendly
 
 Version 1 prioritizes free and open-source technologies.
-
----
 
 # 4. Phase 1 — Foundation (MVP)
 
@@ -121,8 +102,6 @@ Deliver a complete AI-powered resume optimization workflow.
 - Workflow success rate ≥98%
 - Prompt injection block rate = 100%
 
----
-
 # 5. Phase 2 — Intelligence
 
 **Goal**
@@ -167,8 +146,6 @@ Transform Tailr into an intelligent career assistant.
 - AI safety monitoring
 - Prompt firewall
 
----
-
 # 6. Phase 3 — Career Copilot
 
 **Goal**
@@ -200,8 +177,6 @@ Assist users throughout the entire job application lifecycle.
 - Adaptive hallucination thresholds
 - User-specific guardrail tuning
 
----
-
 # 7. Phase 4 — Career Intelligence Platform
 
 **Goal**
@@ -229,8 +204,6 @@ Provide a unified AI platform for career development.
 - Organization accounts
 - Team collaboration
 - Enterprise administration
-
----
 
 # 8. Phase 5 — Enterprise
 
@@ -265,8 +238,6 @@ Support organizations, universities, and recruitment platforms.
 - Policy distribution service
 - Compliance audit storage
 
----
-
 # 9. AI Evolution Roadmap
 
 | Phase   | AI Capability                                           |
@@ -276,8 +247,6 @@ Support organizations, universities, and recruitment platforms.
 | Phase 3 | Persistent career memory + Personalized Safety Policies |
 | Phase 4 | Career Intelligence Graph + Governance Analytics        |
 | Phase 5 | Organization-level AI agents + Enterprise Governance    |
-
----
 
 # 10. Infrastructure Evolution
 
@@ -311,8 +280,6 @@ Multi-Region Cloud
 
 The architecture evolves without breaking existing APIs.
 
----
-
 # 11. Data Evolution
 
 ```
@@ -336,8 +303,6 @@ Career Intelligence Graph
 ```
 
 The data model becomes progressively richer.
-
----
 
 # 12. Model Evolution
 
@@ -367,8 +332,6 @@ The data model becomes progressively richer.
 - Specialized planning models
 - Dedicated safety evaluation models
 
----
-
 # 13. Workflow Evolution
 
 ```
@@ -392,8 +355,6 @@ Self-Optimizing Workflow
 ```
 
 The workflow engine becomes increasingly autonomous.
-
----
 
 # 14. Observability Evolution
 
@@ -422,8 +383,6 @@ The workflow engine becomes increasingly autonomous.
 - Cost optimization dashboards
 - Enterprise governance dashboards
 
----
-
 # 15. Security Evolution
 
 Phase 1
@@ -451,45 +410,32 @@ Phase 4
 - Policy-based access control
 - Organization-level AI governance
 
----
-
 # 16. Testing Evolution
 
-```
-Unit Tests
+```mermaid
+flowchart LR
+    subgraph Core["Core Testing"]
+        A([Unit Tests]) --> B([Guardrail Tests])
+        B --> C([Integration Tests])
+        C --> D([Workflow Tests])
+    end
 
-↓
+subgraph AI["AI Quality Evaluation"]
+    E([AI Evaluation]) --> F([Continuous Offline Evaluation])
+    F --> G([Adversarial AI Testing])
+    G --> H([Self-Healing Regression Suite])
+end
 
-Guardrail Tests
+D --> E
 
-↓
+classDef test fill:#E8F5E9,stroke:#2E7D32,stroke-width:1px;
+classDef eval fill:#E3F2FD,stroke:#1565C0,stroke-width:1px;
 
-Integration Tests
-
-↓
-
-Workflow Tests
-
-↓
-
-AI Evaluation
-
-↓
-
-Continuous Offline Evaluation
-
-↓
-
-Adversarial AI Testing
-
-↓
-
-Self-Healing Regression Suite
+class A,B,C,D test;
+class E,F,G,H eval;
 ```
 
 Testing maturity increases with platform complexity.
-
----
 
 # 17. Technical Debt Strategy
 
@@ -509,8 +455,6 @@ Target allocation:
 - 10% AI Safety & Guardrails
 - 5% Experimentation
 
----
-
 # 18. Risks
 
 | Risk                        | Mitigation                               |
@@ -525,8 +469,6 @@ Target allocation:
 | Guardrail bypass            | Adversarial testing + policy enforcement |
 | Data leakage                | PII detection + output sanitization      |
 
----
-
 # 19. Long-Term Vision
 
 Tailr is not intended to remain a resume optimizer.
@@ -534,8 +476,6 @@ Tailr is not intended to remain a resume optimizer.
 The long-term vision is to become an AI-native Career Intelligence Platform capable of understanding a user's professional journey, identifying opportunities, recommending improvements, and assisting throughout every stage of career growth.
 
 The same architecture should support resumes, cover letters, LinkedIn profiles, portfolios, interview preparation, job tracking, and career planning through a unified knowledge model and agent ecosystem.
-
----
 
 # 20. Success Metrics
 
@@ -568,8 +508,6 @@ The same architecture should support resumes, cover letters, LinkedIn profiles, 
 - User Acceptance Rate
 - Average Optimization Quality
 
----
-
 # 21. Architecture Decisions
 
 | Decision                   | Rationale                               |
@@ -581,8 +519,6 @@ The same architecture should support resumes, cover letters, LinkedIn profiles, 
 | Evaluation-driven AI       | Enables safe iteration                  |
 | Guardrails-first AI safety | Prevents unsafe or malformed outputs    |
 | Platform-first design      | Prevents feature silos                  |
-
----
 
 # 22. Summary
 

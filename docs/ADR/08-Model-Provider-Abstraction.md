@@ -5,9 +5,6 @@
 **Date:** 2026-07-20
 
 **Authors:** Tailr Engineering
-
----
-
 # Context
 
 Tailr relies heavily on Large Language Models (LLMs) for nearly every AI capability, including:
@@ -33,9 +30,6 @@ Different tasks also benefit from different model sizes and capabilities:
 - embedding models for retrieval.
 
 The platform therefore requires a **provider-independent inference layer with intelligent model routing**.
-
----
-
 # Decision
 
 Tailr adopts an **LLM Router and Provider Abstraction Layer (LLM-RPAL)**.
@@ -45,9 +39,6 @@ All AI requests pass through a unified interface.
 The initial implementation uses **Ollama** as the default inference provider for local-first development.
 
 Future providers (OpenAI, Anthropic, Gemini, and others) can be added without changing business logic or agent implementations.
-
----
-
 # Decision Drivers
 
 The inference layer must:
@@ -62,9 +53,6 @@ The inference layer must:
 - support streaming responses,
 - provide observability and token accounting,
 - isolate provider-specific APIs.
-
----
-
 # Architecture
 
 <CodeBlock language="text" content="                AI Agent
@@ -84,9 +72,6 @@ Selected Model"/>
 Agents never call providers directly.
 
 The **LLM Router** selects the provider and model based on task requirements and routing policy.
-
----
-
 # Provider Interface
 
 <CodeBlock language="python" content="class LLMProvider(Protocol):
@@ -105,9 +90,6 @@ async def stream(
 ```
 
 All providers implement the same interface, enabling provider substitution without changing application code.
-
----
-
 # LLM Router
 
 The router is responsible for:
@@ -126,9 +108,6 @@ Example:
 task="rewrite",
 request=request
 )"/>
-
----
-
 # Default Provider
 
 The default implementation is:
@@ -145,9 +124,6 @@ Supported local models include:
 - Phi-4
 
 Model names remain configuration-driven and are not hardcoded in business logic.
-
----
-
 # Model Capability Registry
 
 Each model declares its capabilities.
@@ -155,9 +131,6 @@ Each model declares its capabilities.
 <Table columnSizing="equal" rowDivider={{"size":1,"color":"default"}}><Table.Row header><Table.Cell>Capability</Table.Cell><Table.Cell>Example</Table.Cell></Table.Row><Table.Row><Table.Cell>chat</Table.Cell><Table.Cell>Qwen3-8B</Table.Cell></Table.Row><Table.Row><Table.Cell>structured_output</Table.Cell><Table.Cell>Gemma3</Table.Cell></Table.Row><Table.Row><Table.Cell>long_context</Table.Cell><Table.Cell>Llama3-70B</Table.Cell></Table.Row><Table.Row><Table.Cell>streaming</Table.Cell><Table.Cell>Qwen3-14B</Table.Cell></Table.Row><Table.Row><Table.Cell>tool_calling</Table.Cell><Table.Cell>Future providers</Table.Cell></Table.Row></Table>
 
 The router uses this registry during model selection.
-
----
-
 # Task-Based Model Routing
 
 Different agents may use different models.
@@ -165,9 +138,6 @@ Different agents may use different models.
 <Table columnSizing="equal" rowDivider={{"size":1,"color":"default"}}><Table.Row header><Table.Cell>Agent</Table.Cell><Table.Cell>Default Model</Table.Cell></Table.Row><Table.Row><Table.Cell>JD Analyzer</Table.Cell><Table.Cell>Qwen3-4B</Table.Cell></Table.Row><Table.Row><Table.Cell>Resume Analyzer</Table.Cell><Table.Cell>Qwen3-8B</Table.Cell></Table.Row><Table.Row><Table.Cell>Planning Agent</Table.Cell><Table.Cell>Qwen3-14B</Table.Cell></Table.Row><Table.Row><Table.Cell>Rewrite Agent</Table.Cell><Table.Cell>Qwen3-14B / Cloud fallback</Table.Cell></Table.Row><Table.Row><Table.Cell>Validation Agent</Table.Cell><Table.Cell>Gemma3</Table.Cell></Table.Row><Table.Row><Table.Cell>Guardrail Repair</Table.Cell><Table.Cell>Gemma3</Table.Cell></Table.Row></Table>
 
 Routing is configuration-driven rather than hardcoded.
-
----
-
 # Structured Output Enforcement
 
 Every AI response must conform to a schema.
@@ -187,9 +157,6 @@ The provider layer:
 - validates against the schema,
 - returns typed objects,
 - raises structured errors on validation failure.
-
----
-
 # Prompt Isolation
 
 The provider layer receives:
@@ -206,9 +173,6 @@ The provider layer receives:
 Prompt construction remains outside provider implementations.
 
 This keeps providers generic and reusable.
-
----
-
 # Streaming Support
 
 The interface supports:
@@ -219,9 +183,6 @@ The interface supports:
 - cancellation propagation.
 
 Streaming enables real-time UI progress updates and future conversational features.
-
----
-
 # Embedding Provider Separation
 
 Embedding generation is handled by a separate interface.
@@ -231,9 +192,6 @@ Embedding generation is handled by a separate interface.
      ..."/>
 
 This prevents chat-model assumptions from leaking into retrieval infrastructure.
-
----
-
 # Fallback Strategy
 
 If a provider fails:
@@ -253,9 +211,6 @@ Example policy:
 <Table columnSizing="equal" rowDivider={{"size":1,"color":"default"}}><Table.Row header><Table.Cell>Stage</Table.Cell><Table.Cell>Fallback</Table.Cell></Table.Row><Table.Row><Table.Cell>Qwen3-14B</Table.Cell><Table.Cell>Qwen3-8B</Table.Cell></Table.Row><Table.Row><Table.Cell>Ollama unavailable</Table.Cell><Table.Cell>OpenAI GPT-4o-mini</Table.Cell></Table.Row><Table.Row><Table.Cell>Structured output failure</Table.Cell><Table.Cell>Gemma3 repair pass</Table.Cell></Table.Row></Table>
 
 Fallback policies are centrally managed.
-
----
-
 # Caching
 
 The abstraction layer supports:
@@ -273,9 +228,6 @@ Cache keys include:
 - generation parameters.
 
 This reduces latency and inference cost.
-
----
-
 # Guardrails Integration
 
 The provider layer does **not** make trust decisions.
@@ -290,9 +242,6 @@ All responses are forwarded to the **Guardrails Engine** for:
 - output repair.
 
 Guardrails remain independent of provider implementations.
-
----
-
 # Observability
 
 Every request records:
@@ -311,9 +260,6 @@ Every request records:
 - streaming duration.
 
 Telemetry is exported through **OpenTelemetry**.
-
----
-
 # Configuration
 
 Provider configuration is externalized.
@@ -338,9 +284,6 @@ planning: qwen3:14b
 validation: gemma3"/>
 
 No provider credentials are stored in code.
-
----
-
 # Alternatives Considered
 
 ## Option 1 — Direct OpenAI Integration
@@ -358,9 +301,6 @@ No provider credentials are stored in code.
 - Harder offline development
 
 **Decision:** Rejected
-
----
-
 ## Option 2 — Direct Ollama Integration
 
 ### Advantages
@@ -376,9 +316,6 @@ No provider credentials are stored in code.
 - No routing abstraction
 
 **Decision:** Rejected
-
----
-
 ## Option 3 — Provider Abstraction without Router
 
 ### Advantages
@@ -393,9 +330,6 @@ No provider credentials are stored in code.
 - Manual model selection everywhere
 
 **Decision:** Rejected
-
----
-
 ## Option 4 — LLM Router + Provider Abstraction Layer
 
 ### Advantages
@@ -415,9 +349,6 @@ No provider credentials are stored in code.
 - Provider compatibility testing
 
 **Decision:** Accepted
-
----
-
 # Consequences
 
 ## Positive
@@ -430,18 +361,12 @@ No provider credentials are stored in code.
 - Centralized telemetry
 - Cleaner architecture
 - Easier future cloud migration
-
----
-
 ## Negative
 
 - More infrastructure code
 - Additional configuration management
 - Need to maintain provider adapters
 - Requires compatibility testing across providers
-
----
-
 # Risks
 
 | Risk                              | Mitigation                    |
@@ -452,9 +377,6 @@ No provider credentials are stored in code.
 | Slow inference                    | Routing and caching           |
 | Structured output incompatibility | Guardrails repair stage       |
 | Cost spikes                       | Budget-aware routing policies |
-
----
-
 # Architecture Integration
 
 <CodeBlock language="text" content="FastAPI
@@ -482,9 +404,6 @@ Guardrails
 Typed AI Response"/>
 
 The router isolates the rest of the application from provider-specific APIs and routing complexity.
-
----
-
 # Future Enhancements
 
 Planned enhancements include:
@@ -500,9 +419,6 @@ Planned enhancements include:
 - prompt optimization feedback loops.
 
 The current abstraction is designed so these capabilities can be added incrementally.
-
----
-
 # Related ADRs
 
 - ADR-0001 — Canonical Resume Model
@@ -510,9 +426,6 @@ The current abstraction is designed so these capabilities can be added increment
 - ADR-0005 — LlamaIndex as the RAG and Knowledge Framework
 - ADR-0006 — Multi-Agent Architecture
 - ADR-0007 — Event-Driven Workflow Engine
-
----
-
 # References
 
 - agent-architecture.md
@@ -521,9 +434,6 @@ The current abstraction is designed so these capabilities can be added increment
 - deployment.md
 - observability.md
 - evaluation-architecture.md
-
----
-
 # Review Notes
 
 This decision should be revisited if:

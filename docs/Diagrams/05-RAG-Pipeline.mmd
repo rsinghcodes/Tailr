@@ -26,7 +26,9 @@ SparseSearch --> Merge
 
 Merge --> Rerank[Reranker]
 
-Rerank --> Context[Context Builder]
+Rerank --> InjectionScan[Guardrails Injection Scan]
+
+InjectionScan --> Context[Context Builder]
 
 Context --> Prompt[Prompt Assembly]
 

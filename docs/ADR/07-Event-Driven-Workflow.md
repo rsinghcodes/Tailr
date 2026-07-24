@@ -5,9 +5,6 @@
 **Date:** 2026-07-20
 
 **Authors:** Tailr Engineering
-
----
-
 # Context
 
 Tailr executes multiple AI agents during resume optimization.
@@ -41,9 +38,6 @@ A simple sequential implementation would tightly couple agents and make the work
 As the number of AI capabilities grows, orchestration complexity increases rapidly.
 
 The platform therefore requires a dedicated workflow engine that provides deterministic orchestration, state persistence, retries, checkpointing, and observability.
-
----
-
 # Decision
 
 Tailr adopts an **Event-Driven Workflow Engine** based on **LangGraph** with persistent workflow state stored in PostgreSQL.
@@ -64,9 +58,6 @@ The Workflow Engine is responsible for:
 Agents perform isolated units of work.
 
 The Workflow Engine decides **when**, **why**, and **under what conditions** they run.
-
----
-
 # Decision Drivers
 
 The orchestration layer must:
@@ -81,9 +72,6 @@ The orchestration layer must:
 - support human approval gates,
 - enable distributed execution in the future,
 - keep orchestration deterministic.
-
----
-
 # Workflow Architecture
 
 <CodeBlock language="text" content="                API Request
@@ -105,9 +93,6 @@ Guardrails Engine
 Validation Engine"/>
 
 The Workflow Engine is the **single coordinator** for all AI execution.
-
----
-
 # Execution Flow
 
 <CodeBlock language="text" content="Workflow Started
@@ -139,9 +124,6 @@ PDF Generated
 Workflow Completed"/>
 
 Every stage emits a structured event.
-
----
-
 # Workflow State Machine
 
 Tailr uses an explicit workflow state machine.
@@ -156,9 +138,6 @@ Validation → AwaitingApproval
 AwaitingApproval → ResumeExecution"/>
 
 State transitions are validated before persistence.
-
----
-
 # Persisted Workflow State
 
 Each workflow stores:
@@ -166,9 +145,6 @@ Each workflow stores:
 <Table columnSizing="equal" rowDivider={{"size":1,"color":"default"}}><Table.Row header><Table.Cell>Field</Table.Cell><Table.Cell>Description</Table.Cell></Table.Row><Table.Row><Table.Cell>workflow_id</Table.Cell><Table.Cell>Unique workflow identifier</Table.Cell></Table.Row><Table.Row><Table.Cell>user_id</Table.Cell><Table.Cell>Workflow owner</Table.Cell></Table.Row><Table.Row><Table.Cell>resume_version_id</Table.Cell><Table.Cell>Source resume version</Table.Cell></Table.Row><Table.Row><Table.Cell>current_state</Table.Cell><Table.Cell>Current workflow state</Table.Cell></Table.Row><Table.Row><Table.Cell>status</Table.Cell><Table.Cell>Running / Completed / Failed</Table.Cell></Table.Row><Table.Row><Table.Cell>retry_count</Table.Cell><Table.Cell>Total retry attempts</Table.Cell></Table.Row><Table.Row><Table.Cell>started_at</Table.Cell><Table.Cell>Workflow start time</Table.Cell></Table.Row><Table.Row><Table.Cell>updated_at</Table.Cell><Table.Cell>Last update time</Table.Cell></Table.Row><Table.Row><Table.Cell>completed_at</Table.Cell><Table.Cell>Completion time</Table.Cell></Table.Row><Table.Row><Table.Cell>trace_id</Table.Cell><Table.Cell>Distributed tracing correlation ID</Table.Cell></Table.Row></Table>
 
 State is persisted in **PostgreSQL** using atomic transactions.
-
----
-
 # Event Model
 
 Events are immutable and versioned.
@@ -187,9 +163,6 @@ Example:
 }"/>
 
 Events are append-only and never mutated after publication.
-
----
-
 # Typed Workflow Events
 
 LangGraph workflow events are represented as typed objects.
@@ -210,9 +183,6 @@ Typed events provide:
 - better IDE support,
 - safer refactoring,
 - deterministic contracts.
-
----
-
 # Agent Execution Contract
 
 Workflow Engine execution:
@@ -232,9 +202,6 @@ Persist Checkpoint
 Publish Next Event"/>
 
 Agents never invoke other agents directly.
-
----
-
 # Retry Strategy
 
 Retries use **exponential backoff with jitter**.
@@ -242,9 +209,6 @@ Retries use **exponential backoff with jitter**.
 <Table columnSizing="equal" rowDivider={{"size":1,"color":"default"}}><Table.Row header><Table.Cell>Failure Type</Table.Cell><Table.Cell align="end">Max Retries</Table.Cell></Table.Row><Table.Row><Table.Cell>LLM timeout</Table.Cell><Table.Cell align="end">3</Table.Cell></Table.Row><Table.Row><Table.Cell>Rate limit</Table.Cell><Table.Cell align="end">5</Table.Cell></Table.Row><Table.Row><Table.Cell>Qdrant timeout</Table.Cell><Table.Cell align="end">3</Table.Cell></Table.Row><Table.Row><Table.Cell>Network error</Table.Cell><Table.Cell align="end">5</Table.Cell></Table.Row><Table.Row><Table.Cell>Guardrail rejection</Table.Cell><Table.Cell align="end">0</Table.Cell></Table.Row><Table.Row><Table.Cell>Validation failure</Table.Cell><Table.Cell align="end">0</Table.Cell></Table.Row></Table>
 
 Retries are configurable per workflow stage.
-
----
-
 # Checkpointing
 
 A checkpoint is written after every successful stage.
@@ -258,9 +222,6 @@ Retriever Completed  ✓
 Rewrite Completed    ✗"/>
 
 On recovery, execution resumes from the **last successful checkpoint** rather than restarting the entire workflow.
-
----
-
 # Idempotency
 
 Every event includes an idempotency key.
@@ -272,9 +233,6 @@ Every event includes an idempotency key.
 }"/>
 
 Duplicate events are ignored safely.
-
----
-
 # Parallel Execution
 
 Independent stages may execute concurrently.
@@ -290,9 +248,6 @@ Resume Analyzer       JD Analyzer
              Planner"/>
 
 Parallel execution reduces total workflow latency and improves throughput.
-
----
-
 # Human Approval Gates
 
 Certain operations require explicit user approval.
@@ -306,9 +261,6 @@ Examples:
 - significant ATS-driven restructuring.
 
 The workflow transitions to **AwaitingApproval** and pauses until a decision is received.
-
----
-
 # Timeout Handling
 
 Each stage has a maximum execution time.
@@ -316,9 +268,6 @@ Each stage has a maximum execution time.
 <Table columnSizing="equal" rowDivider={{"size":1,"color":"default"}}><Table.Row header><Table.Cell>Stage</Table.Cell><Table.Cell align="end">Timeout</Table.Cell></Table.Row><Table.Row><Table.Cell>JD Analysis</Table.Cell><Table.Cell align="end">30s</Table.Cell></Table.Row><Table.Row><Table.Cell>Retrieval</Table.Cell><Table.Cell align="end">15s</Table.Cell></Table.Row><Table.Row><Table.Cell>Rewrite</Table.Cell><Table.Cell align="end">90s</Table.Cell></Table.Row><Table.Row><Table.Cell>Guardrails</Table.Cell><Table.Cell align="end">10s</Table.Cell></Table.Row><Table.Row><Table.Cell>Validation</Table.Cell><Table.Cell align="end">15s</Table.Cell></Table.Row><Table.Row><Table.Cell>PDF Rendering</Table.Cell><Table.Cell align="end">60s</Table.Cell></Table.Row></Table>
 
 Timed-out stages are marked failed and follow the retry policy.
-
----
-
 # Observability
 
 Every workflow records:
@@ -337,9 +286,6 @@ Every workflow records:
 - estimated cost.
 
 Telemetry is exported through **OpenTelemetry** and correlated across all workflow stages.
-
----
-
 # Workflow Replay
 
 A failed workflow can be replayed from any checkpoint.
@@ -351,9 +297,6 @@ Replay modes:
 - **Forward replay** — continue from the last successful checkpoint
 
 Replay is essential for debugging and regression testing.
-
----
-
 # Failure Recovery
 
 Recoverable failures include:
@@ -366,9 +309,6 @@ Recoverable failures include:
 - rate limiting.
 
 Because workflow state is persisted, completed stages are not repeated unnecessarily.
-
----
-
 # Alternatives Considered
 
 ## Option 1 — Sequential Function Calls
@@ -387,9 +327,6 @@ Because workflow state is persisted, completed stages are not repeated unnecessa
 - Poor scalability
 
 **Decision:** Rejected
-
----
-
 ## Option 2 — Agents Calling Other Agents
 
 ### Advantages
@@ -405,9 +342,6 @@ Because workflow state is persisted, completed stages are not repeated unnecessa
 - Retry logic becomes fragmented
 
 **Decision:** Rejected
-
----
-
 ## Option 3 — Event-Driven Workflow Engine
 
 ### Advantages
@@ -428,9 +362,6 @@ Because workflow state is persisted, completed stages are not repeated unnecessa
 - Requires event schema management
 
 **Decision:** Accepted
-
----
-
 # Consequences
 
 ## Positive
@@ -444,18 +375,12 @@ Because workflow state is persisted, completed stages are not repeated unnecessa
 - Better observability
 - Reusable orchestration logic
 - Easier future scaling
-
----
-
 ## Negative
 
 - Additional infrastructure complexity
 - More database writes
 - Event schema versioning overhead
 - More telemetry data to manage
-
----
-
 # Risks
 
 | Risk                      | Mitigation                   |
@@ -466,9 +391,6 @@ Because workflow state is persisted, completed stages are not repeated unnecessa
 | Long-running workflows    | Timeouts and cancellation    |
 | Schema evolution          | Versioned event contracts    |
 | Replay inconsistencies    | Immutable checkpoints        |
-
----
-
 # Architecture Integration
 
 <CodeBlock language="text" content="FastAPI
@@ -501,9 +423,6 @@ Rendering Engine
 Generated Resume"/>
 
 The Workflow Engine orchestrates execution while agents remain **stateless and deterministic**.
-
----
-
 # Future Enhancements
 
 Planned enhancements include:
@@ -519,9 +438,6 @@ Planned enhancements include:
 - human-in-the-loop review queues.
 
 The current architecture is intentionally designed so these capabilities can be added incrementally.
-
----
-
 # Related ADRs
 
 - ADR-0001 — Canonical Resume Model
@@ -529,9 +445,6 @@ The current architecture is intentionally designed so these capabilities can be 
 - ADR-0005 — LlamaIndex as the RAG and Knowledge Framework
 - ADR-0006 — Multi-Agent Architecture
 - ADR-0008 — Validation & Guardrails Engine
-
----
-
 # References
 
 - workflow-design.md
@@ -540,9 +453,6 @@ The current architecture is intentionally designed so these capabilities can be 
 - testing.md
 - deployment.md
 - guardrails-architecture.md
-
----
-
 # Review Notes
 
 This decision should be revisited if:

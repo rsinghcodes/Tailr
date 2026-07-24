@@ -6,36 +6,46 @@ Uploaded --> Parsed
 
 Parsed --> Indexed
 
-Indexed --> Planning
+Indexed --> JD_Analysis
 
-Planning --> Retrieval
+JD_Analysis --> Retrieval
 
-Retrieval --> Rewrite
+Retrieval --> Planning
 
-Rewrite --> Guardrails
+Planning --> Rewriting
+
+Rewriting --> Guardrails
 
 Guardrails --> Validation
 
-Validation --> ATS
+Validation --> ATS_Analysis
 
-ATS --> Rendering
+ATS_Analysis --> Awaiting_Approval
 
-Rendering --> PDF
+Awaiting_Approval --> Rendering
 
-PDF --> Persisted
+Rendering --> Compiling
+
+Compiling --> Persisted
 
 Persisted --> Completed
 
-Validation --> Failed
-
 Guardrails --> Failed
+
+Validation --> Failed
 
 Rendering --> Failed
 
+Compiling --> Failed
+
 Failed --> Retry
 
-Retry --> Rewrite
+Retry --> Rewriting
+
+Awaiting_Approval --> Cancelled
 
 Failed --> [*]
+
+Cancelled --> [*]
 
 Completed --> [*]

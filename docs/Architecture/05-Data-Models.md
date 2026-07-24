@@ -3,8 +3,6 @@
 **Project:** Tailr
 **Version:** 1.0
 
----
-
 # 1. Purpose
 
 This document defines the canonical data models used throughout Tailr.
@@ -21,8 +19,6 @@ The objectives are:
 - Enable modular development
 - Improve maintainability
 
----
-
 # 2. Design Principles
 
 The data model follows several engineering principles.
@@ -32,8 +28,6 @@ The data model follows several engineering principles.
 Every object has a well-defined schema.
 
 No component exchanges raw dictionaries or free-form JSON.
-
----
 
 ## Immutable Facts
 
@@ -46,8 +40,6 @@ Examples
 - degree
 - dates
 
----
-
 ## Mutable Presentation
 
 Presentation may evolve.
@@ -59,19 +51,13 @@ Examples
 - ordering
 - emphasis
 
----
-
 ## Validation First
 
 Every model validates itself before entering the workflow.
 
----
-
 ## Explicit Relationships
 
 Models reference one another through identifiers rather than nested arbitrary objects whenever possible.
-
----
 
 ## Policy Enforcement
 
@@ -82,8 +68,6 @@ Domain models define the data.
 Guardrails define what may or may not change.
 
 This separation keeps business logic independent from AI reasoning while preserving data integrity.
-
----
 
 # 3. Model Categories
 
@@ -98,8 +82,6 @@ This separation keeps business logic independent from AI reasoning while preserv
       ▼                  ▼                  ▼                 ▼
 Agent Contracts   Database Models   Vector Metadata   Policy Models
 ```
-
----
 
 # 4. Base Model
 
@@ -117,13 +99,9 @@ verified: bool
 metadata: dict[str, Any]
 ```
 
----
-
 # 5. Domain Models
 
 Domain models represent professional knowledge.
-
----
 
 ## Resume
 
@@ -149,8 +127,6 @@ achievements
 metadata
 ```
 
----
-
 ## ResumeSummary
 
 ```python
@@ -162,8 +138,6 @@ keywords
 
 word_count
 ```
-
----
 
 ## Experience
 
@@ -191,8 +165,6 @@ bullets
 achievements
 ```
 
----
-
 ## ExperienceBullet
 
 ```python
@@ -208,8 +180,6 @@ keywords
 
 priority
 ```
-
----
 
 ## Project
 
@@ -233,8 +203,6 @@ bullets
 category
 ```
 
----
-
 ## Skill
 
 ```python
@@ -250,10 +218,12 @@ years
 
 proficiency
 
+confidence
+
+source
+
 verified
 ```
-
----
 
 ## Education
 
@@ -275,8 +245,6 @@ start_date
 end_date
 ```
 
----
-
 ## Achievement
 
 ```python
@@ -293,8 +261,6 @@ category
 date
 ```
 
----
-
 ## Certification
 
 ```python
@@ -310,8 +276,6 @@ credential_id
 
 issue_date
 ```
-
----
 
 # 6. Job Description Models
 
@@ -333,12 +297,12 @@ employment_type
 description
 ```
 
----
-
 ## JobRequirements
 
 ```python
 JobRequirements
+
+title
 
 required_skills
 
@@ -353,18 +317,16 @@ keywords
 experience_level
 ```
 
----
-
 # 7. Workflow Models
 
 These models represent runtime state.
-
----
 
 ## WorkflowState
 
 ```python
 WorkflowState
+
+workflow_id
 
 request_id
 
@@ -384,6 +346,8 @@ validation_report
 
 ats_report
 
+render_result
+
 telemetry
 
 status
@@ -391,16 +355,16 @@ status
 
 Only one workflow state exists for each optimization request.
 
----
-
 ## WorkflowStatus
 
 ```python
-PENDING
+NEW
 
 PARSING
 
 INDEXING
+
+JD_ANALYSIS
 
 RETRIEVING
 
@@ -412,14 +376,20 @@ GUARDRAILS
 
 VALIDATING
 
+ATS_ANALYSIS
+
+AWAITING_APPROVAL
+
 RENDERING
+
+COMPILING
 
 COMPLETED
 
 FAILED
-```
 
----
+CANCELLED
+```
 
 # 8. Retrieval Models
 
@@ -445,8 +415,6 @@ checksum
 schema_version
 ```
 
----
-
 ## ChunkMetadata
 
 ```python
@@ -471,8 +439,6 @@ created_at
 updated_at
 ```
 
----
-
 ## RetrievalResult
 
 ```python
@@ -487,13 +453,9 @@ rerank_score
 reason
 ```
 
----
-
 # 9. Agent Contracts
 
 Agents exchange typed contracts.
-
----
 
 ## PlanningRequest
 
@@ -506,8 +468,6 @@ job_requirements
 
 retrieved_chunks
 ```
-
----
 
 ## RewritePlan
 
@@ -525,8 +485,6 @@ skill_changes
 reasoning
 ```
 
----
-
 ## RewriteRequest
 
 ```python
@@ -538,8 +496,6 @@ rewrite_plan
 
 retrieved_context
 ```
-
----
 
 ## RewriteResult
 
@@ -557,8 +513,6 @@ citations
 guardrail_status
 ```
 
----
-
 ## ATSReport
 
 ```python
@@ -566,9 +520,21 @@ ATSReport
 
 overall_score
 
+confidence
+
+keyword_score
+
+semantic_score
+
+skills_score
+
+experience_score
+
 keyword_coverage
 
 missing_keywords
+
+keyword_density
 
 strengths
 
@@ -576,8 +542,6 @@ weaknesses
 
 recommendations
 ```
-
----
 
 # 10. Validation Models
 
@@ -601,8 +565,6 @@ confidence
 processing_time
 ```
 
----
-
 ## ValidationIssue
 
 ```python
@@ -619,8 +581,6 @@ section
 recommendation
 ```
 
----
-
 # 11. Guardrail Models
 
 ## GuardrailResult
@@ -628,20 +588,16 @@ recommendation
 ```python
 GuardrailResult
 
-passed
+status
 
-repaired
+repair_applied
 
 violations
 
-validator_results
-
-processing_time
+warnings
 
 metadata
 ```
-
----
 
 ## GuardrailViolation
 
@@ -661,8 +617,6 @@ location
 suggestion
 ```
 
----
-
 ## PolicyResult
 
 ```python
@@ -676,8 +630,6 @@ reason
 
 metadata
 ```
-
----
 
 # 12. Rendering Models
 
@@ -693,8 +645,6 @@ template
 theme
 ```
 
----
-
 ## RenderResult
 
 ```python
@@ -707,8 +657,6 @@ pdf_path
 compile_logs
 ```
 
----
-
 # 13. API Models
 
 ## UploadResumeRequest
@@ -718,8 +666,6 @@ file
 
 template_name
 ```
-
----
 
 ## OptimizeResumeRequest
 
@@ -732,8 +678,6 @@ model
 
 temperature
 ```
-
----
 
 ## OptimizationResponse
 
@@ -751,8 +695,6 @@ request_id
 workflow_id
 ```
 
----
-
 ## ResumeResponse
 
 ```python
@@ -769,8 +711,6 @@ ats_report
 download_url
 ```
 
----
-
 # 14. Database Models
 
 ## ResumeEntity
@@ -785,8 +725,6 @@ version
 created_at
 ```
 
----
-
 ## ResumeVersionEntity
 
 ```python
@@ -798,8 +736,6 @@ latex_path
 
 pdf_path
 ```
-
----
 
 ## OptimizationHistoryEntity
 
@@ -815,8 +751,6 @@ ats_score
 created_at
 ```
 
----
-
 ## FeedbackEntity
 
 ```python
@@ -826,8 +760,6 @@ accepted
 
 comment
 ```
-
----
 
 ## GuardrailAuditEntity
 
@@ -845,8 +777,6 @@ processing_time
 created_at
 ```
 
----
-
 ## WorkflowEntity
 
 ```python
@@ -860,8 +790,6 @@ started_at
 
 completed_at
 ```
-
----
 
 # 15. Vector Metadata
 
@@ -880,8 +808,6 @@ Each embedded chunk stores metadata.
   "schema_version": "1.0"
 }
 ```
-
----
 
 # 16. Event Models
 
@@ -921,8 +847,6 @@ WorkflowRetried
 
 Each event carries structured payloads.
 
----
-
 # 17. Enumerations
 
 ## SkillCategory
@@ -947,8 +871,6 @@ Framework
 Tool
 ```
 
----
-
 ## Severity
 
 ```
@@ -960,8 +882,6 @@ ERROR
 
 CRITICAL
 ```
-
----
 
 ## EntityType
 
@@ -981,8 +901,6 @@ Achievement
 Certification
 ```
 
----
-
 ## ValidationStatus
 
 ```
@@ -995,8 +913,6 @@ REPAIRED
 SKIPPED
 ```
 
----
-
 ## GuardrailSeverity
 
 ```
@@ -1008,8 +924,6 @@ HIGH
 
 CRITICAL
 ```
-
----
 
 # 18. Relationships
 
@@ -1057,8 +971,6 @@ Resume
 └── Achievements
 ```
 
----
-
 # 19. Serialization
 
 All models support:
@@ -1097,8 +1009,6 @@ v3
 
 Older versions remain readable through migration logic.
 
----
-
 # 21. Future Models
 
 The model layer is designed to grow without breaking existing contracts.
@@ -1128,8 +1038,6 @@ Additional system models may include:
 - TelemetryEvent
 - RetryPolicy
 - CostMetrics
-
----
 
 # 22. Summary
 

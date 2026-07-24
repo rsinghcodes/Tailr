@@ -3,8 +3,6 @@
 **Project:** Tailr
 **Version:** 1.0
 
----
-
 # 1. Purpose
 
 The ATS Scoring Engine evaluates how effectively a resume aligns with a target job description.
@@ -12,8 +10,6 @@ The ATS Scoring Engine evaluates how effectively a resume aligns with a target j
 Rather than relying solely on keyword matching, Tailr performs a comprehensive multi-factor evaluation that combines deterministic analysis with AI-assisted semantic reasoning.
 
 The resulting score helps users understand both technical ATS compatibility and overall resume quality.
-
----
 
 # 2. Design Goals
 
@@ -30,8 +26,6 @@ The ATS Scoring Engine must:
 - Provide auditability and historical comparison
 - Explain every score
 
----
-
 # 3. Design Philosophy
 
 Tailr follows four scoring principles.
@@ -40,25 +34,17 @@ Tailr follows four scoring principles.
 
 Every point gained or lost must have a reason.
 
----
-
 ## Deterministic
 
 The same inputs produce the same score.
-
----
 
 ## Multi-Dimensional
 
 Scores represent several independent quality dimensions.
 
----
-
 ## Recommendation Driven
 
 The objective is improvement, not just scoring.
-
----
 
 # 4. High-Level Architecture
 
@@ -82,8 +68,6 @@ The objective is improvement, not just scoring.
                   ▼
       Recommendations Report
 ```
-
----
 
 # 5. ATS Guardrails
 
@@ -122,8 +106,6 @@ Total = 100%
 
 Weights are configurable.
 
----
-
 # 7. Keyword Analysis
 
 Checks:
@@ -150,8 +132,6 @@ Present
 
 PASS
 ```
-
----
 
 # 8. Semantic Analysis
 
@@ -180,8 +160,6 @@ Semantic match
 High
 
 Semantic similarity contributes to the final score.
-
----
 
 # 9. Skills Match
 
@@ -215,8 +193,6 @@ Databases
 
 DevOps
 
----
-
 # 10. Experience Alignment
 
 Checks include:
@@ -239,8 +215,6 @@ Backend + AI Engineer
 
 High alignment
 
----
-
 # 11. Project Relevance
 
 Projects are ranked by relevance.
@@ -255,8 +229,6 @@ Evaluation considers:
 
 Projects with stronger alignment receive higher scores.
 
----
-
 # 12. Resume Structure
 
 Evaluates:
@@ -270,8 +242,6 @@ Evaluates:
 
 Missing critical sections reduce the score.
 
----
-
 # 13. Formatting Analysis
 
 Checks:
@@ -284,8 +254,6 @@ Checks:
 
 Tailr evaluates structure rather than visual design.
 
----
-
 # 14. Readability Analysis
 
 Metrics include:
@@ -297,8 +265,6 @@ Metrics include:
 - Repetition
 
 The goal is concise and impactful writing.
-
----
 
 # 15. Keyword Coverage
 
@@ -328,8 +294,6 @@ Kubernetes
 
 Coverage percentage is calculated automatically.
 
----
-
 # 16. Recommendation Engine
 
 Recommendations are prioritized.
@@ -350,8 +314,6 @@ Medium Priority
 Low Priority
 
 - Reorder skills
-
----
 
 # 17. Score Calculation
 
@@ -386,8 +348,6 @@ Overall Score
 Scores range from:
 
 0–100
-
----
 
 # 18. Confidence Score
 
@@ -432,8 +392,6 @@ Low-confidence scores trigger a warning in the UI.
 
 The report is stored alongside each optimization.
 
----
-
 # 20. Visualization
 
 The frontend may display:
@@ -446,8 +404,6 @@ The frontend may display:
 - Before vs After comparison
 
 Visualizations are generated from structured data.
-
----
 
 # 21. Workflow Integration
 
@@ -467,8 +423,6 @@ User Review
 
 Only validated resumes are scored.
 
----
-
 # 22. Evaluation Metrics
 
 The scoring engine tracks:
@@ -485,8 +439,6 @@ The scoring engine tracks:
 
 Metrics support future model tuning.
 
----
-
 # 23. Limitations
 
 The ATS score is an approximation.
@@ -494,8 +446,6 @@ The ATS score is an approximation.
 Actual applicant tracking systems differ between employers.
 
 Tailr aims to optimize for broadly accepted ATS best practices rather than mimic any specific vendor.
-
----
 
 # 24. Future Enhancements
 
@@ -510,8 +460,6 @@ Planned capabilities include:
 - Cover letter scoring
 - LinkedIn profile scoring
 
----
-
 # 25. Architecture Decisions
 
 | Decision                    | Rationale                    |
@@ -525,8 +473,6 @@ Planned capabilities include:
 | Guardrails before scoring   | Prevent invalid ATS analysis |
 | Confidence scoring          | Indicate reliability         |
 | Score normalization         | Prevent inflated scores      |
-
----
 
 # 26. Summary
 

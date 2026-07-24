@@ -3,8 +3,6 @@
 **Project:** Tailr
 **Version:** 1.0
 
----
-
 # 1. Purpose
 
 The Parser is responsible for converting a user’s LaTeX resume into a structured, validated, and canonical representation used throughout Tailr.
@@ -12,8 +10,6 @@ The Parser is responsible for converting a user’s LaTeX resume into a structur
 Unlike traditional resume parsers that rely on OCR, regex, or LLMs, Tailr treats the resume as source code and parses it using compiler-inspired techniques.
 
 The parser is deterministic, reproducible, and independent of any Large Language Model.
-
----
 
 # 2. Design Goals
 
@@ -31,8 +27,6 @@ The parser must:
 
 The parser never performs rewriting or optimization.
 
----
-
 # 3. Why Not Use an LLM?
 
 Using an LLM for parsing introduces several risks:
@@ -47,8 +41,6 @@ Using an LLM for parsing introduces several risks:
 The parser should be pure software.
 
 LLMs are reserved for reasoning, not extraction.
-
----
 
 # 4. Parser Pipeline
 
@@ -79,8 +71,6 @@ LLMs are reserved for reasoning, not extraction.
                      ▼
           Knowledge Builder
 ```
-
----
 
 # 5. Stage 1 — File Validation & Guardrails
 
@@ -116,8 +106,6 @@ Failures
 
 This stage acts as the first security boundary before any parsing occurs.
 
----
-
 # 6. Stage 2 — Lexical Analysis
 
 The lexer converts raw LaTeX into tokens.
@@ -150,8 +138,6 @@ Responsibilities
 - Preserve macro boundaries
 - Preserve environment boundaries
 
----
-
 # 7. Token Types
 
 Examples
@@ -178,8 +164,6 @@ type
 source_file
 ```
 
----
-
 # 8. Stage 3 — Parsing
 
 The parser converts tokens into an Abstract Syntax Tree (AST).
@@ -199,8 +183,6 @@ Resume
 ```
 
 The parser validates document structure and attempts error recovery where possible.
-
----
 
 # 9. AST Design
 
@@ -226,8 +208,6 @@ Each node stores:
 - source location
 - template metadata
 
----
-
 # 10. Stage 4 — Semantic Analysis
 
 The semantic analyzer converts AST nodes into domain entities.
@@ -251,8 +231,6 @@ Responsibilities
 - Infer section semantics
 - Attach validation metadata
 
----
-
 # 11. Canonical Resume Model
 
 Output
@@ -272,8 +250,6 @@ Resume(
 
 This model becomes the system’s single source of truth.
 
----
-
 # 12. Validation Rules
 
 The parser validates:
@@ -285,8 +261,6 @@ The parser validates:
 - Duplicate sections
 - Empty sections
 
----
-
 ## Experience
 
 - Company exists
@@ -295,15 +269,11 @@ The parser validates:
 - At least one bullet
 - Date ranges do not overlap unexpectedly
 
----
-
 ## Projects
 
 - Title exists
 - Technologies exist
 - At least one description bullet
-
----
 
 ## Skills
 
@@ -311,15 +281,11 @@ The parser validates:
 - Duplicate skills removed
 - Skills normalized to canonical names
 
----
-
 ## Education
 
 - Institution exists
 - Degree exists
 - Graduation year valid
-
----
 
 # 13. Error Recovery
 
@@ -357,8 +323,6 @@ Continue Parsing
 
 Only critical structural failures stop parsing.
 
----
-
 # 14. Template Support
 
 Version 1 supports
@@ -374,8 +338,6 @@ Future support
 - Custom templates
 
 Each template defines its own parsing rules and macro mappings.
-
----
 
 # 15. Intermediate Representation (IR)
 
@@ -400,8 +362,6 @@ ExperienceEntry
 ```
 
 Different templates map to the same IR.
-
----
 
 # 16. Technology Normalization
 
@@ -431,8 +391,6 @@ The normalization dictionary is versioned and extensible.
 
 This improves retrieval quality and ATS scoring.
 
----
-
 # 17. Entity Resolution
 
 Equivalent entities are merged.
@@ -452,8 +410,6 @@ PostgreSQL
 ```
 
 The parser maintains canonical names and alias mappings.
-
----
 
 # 18. Source Mapping
 
@@ -478,8 +434,6 @@ Benefits
 - Traceable AI modifications
 - Auditability
 
----
-
 # 19. Knowledge Generation
 
 The parser does not generate embeddings directly.
@@ -500,8 +454,6 @@ Qdrant
 
 This keeps parsing independent of indexing and vector infrastructure.
 
----
-
 # 20. Parser Outputs
 
 The parser produces:
@@ -514,8 +466,6 @@ The parser produces:
 - Parsing Metrics
 - Security Scan Report
 - Normalization Report
-
----
 
 # 21. Performance Targets
 
@@ -539,8 +489,6 @@ Thread-safe
 
 **Yes**
 
----
-
 # 22. Testing Strategy
 
 ## Unit Tests
@@ -550,8 +498,6 @@ Thread-safe
 - Semantic Analyzer
 - Technology Normalizer
 - Entity Resolver
-
----
 
 ## Golden Tests
 
@@ -563,19 +509,13 @@ Canonical Model
 Expected JSON
 ```
 
----
-
 ## Regression Tests
 
 Ensure parser behavior never changes unexpectedly.
 
----
-
 ## Fuzz Tests
 
 Random malformed LaTeX inputs.
-
----
 
 ## Security Tests
 
@@ -584,8 +524,6 @@ Random malformed LaTeX inputs.
 - Suspicious LaTeX commands
 - Shell-escape directives
 - Path traversal attempts
-
----
 
 # 23. Extensibility
 
@@ -600,8 +538,6 @@ Future capabilities
 
 Each parser produces the same canonical model and validation report.
 
----
-
 # 24. Architecture Decisions
 
 | Decision                             | Rationale                            |
@@ -614,8 +550,6 @@ Each parser produces the same canonical model and validation report.
 | Source Mapping                       | Explainability and debugging         |
 | Validation & Guardrails stage        | Secure and validate untrusted input  |
 | Versioned normalization dictionaries | Consistent entity resolution         |
-
----
 
 # 25. Summary
 
