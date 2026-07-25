@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 import uuid
 from typing import Any
@@ -19,8 +19,8 @@ class SkillCategory(str, Enum):
 
 class BaseDomainModel(BaseModel):
     id: uuid.UUID = Field(default_factory=uuid.uuid4)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     version: int = 1
 
 
@@ -69,6 +69,8 @@ class Skill(BaseModel):
     category: SkillCategory | str | None = None
     years: float | None = None
     proficiency: str | None = None
+    confidence: float | None = None
+    source: str | None = None
     verified: bool = False
 
 

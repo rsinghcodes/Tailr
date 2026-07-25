@@ -1,4 +1,3 @@
-from typing import Any
 from agents.jd_analyzer.schemas import JDAnalysisOutput
 from providers.llm.base import LLMProvider
 

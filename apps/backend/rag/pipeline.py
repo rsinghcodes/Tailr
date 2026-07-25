@@ -53,7 +53,7 @@ class RAGPipeline:
         collection_name: str,
         query: str,
         requirements_text: str,
-        limit: int = 5,
+        limit: int = 10,
         rerank_threshold: float = 2.0,
         model: Optional[str] = None,
     ) -> str:

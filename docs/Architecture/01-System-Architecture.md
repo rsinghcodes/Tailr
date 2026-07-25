@@ -684,9 +684,8 @@ Ollama
 | Vector DB     | Qdrant            |
 | Database      | PostgreSQL        |
 | Cache         | Redis             |
-| Embeddings    | BAAI BGE Small    |
-| Reranker      | BAAI BGE Reranker |
-| LLM           | Ollama + Qwen3    |
+| Embeddings    | nomic-embed-text  |
+| LLM / Chat    | Ollama + qwen3:8b |
 | Observability | Langfuse          |
 | Evaluation    | Ragas             |
 | PDF           | latexmk           |

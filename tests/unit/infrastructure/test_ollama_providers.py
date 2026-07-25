@@ -30,7 +30,7 @@ async def test_ollama_provider_generate_text():
         
         # Verify request structure
         called_args = mock_post.call_args[1]
-        assert called_args["json"]["model"] == "qwen2.5:7b-instruct"
+        assert called_args["json"]["model"] == "qwen3:8b"
         assert called_args["json"]["messages"] == [{"role": "user", "content": "test prompt"}]
     
     await provider.close()

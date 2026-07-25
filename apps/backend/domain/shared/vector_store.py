@@ -58,3 +58,8 @@ class VectorStore(ABC):
     async def delete_collection(self, collection_name: str) -> None:
         """Delete a collection from the vector database."""
         pass
+
+    @abstractmethod
+    async def health_check(self) -> bool:
+        """Pings the vector database to verify connectivity."""
+        pass

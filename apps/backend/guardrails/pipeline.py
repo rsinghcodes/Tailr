@@ -23,6 +23,7 @@ class GuardrailsEngine:
     PROFILES: dict[str, list[BaseValidator]] = {
         "rewrite_strict": [
             JSONValidator(),
+            SchemaValidator(),
             PromptInjectionValidator(),
             HallucinationValidator(),
             ResumeValidator(),
@@ -32,6 +33,7 @@ class GuardrailsEngine:
         ],
         "analysis_standard": [
             JSONValidator(),
+            SchemaValidator(),
             PromptInjectionValidator(),
             PIIValidator(),
         ],
@@ -74,6 +76,7 @@ class GuardrailsEngine:
                 # Fail Closed on first critical rejection
                 return GuardrailResult(
                     status=GuardrailResultStatus.REJECTED,
+                    repair_applied=is_repaired,
                     repaired=is_repaired,
                     violations=all_violations,
                     warnings=all_warnings,
@@ -93,6 +96,7 @@ class GuardrailsEngine:
 
         return GuardrailResult(
             status=final_status,
+            repair_applied=is_repaired,
             repaired=is_repaired,
             violations=[],
             warnings=all_warnings,

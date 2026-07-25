@@ -258,9 +258,8 @@ Container recreation does not lose data.
 
 Ollama hosts
 
-- Qwen
-- Llama
-- Gemma
+- `qwen3:8b` (Chat/Reasoning)
+- `nomic-embed-text` (Embeddings)
 
 Example
 

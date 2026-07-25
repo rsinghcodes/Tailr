@@ -631,16 +631,12 @@ No agent may directly modify another agent's output.
 
 # 16. Model Selection
 
-Different reasoning tasks may use different models.
+Tailr uses a standardized 2-model architecture across all reasoning and retrieval tasks:
 
-Example
-
-| Task          | Model     |
-| ------------- | --------- |
-| JD Extraction | Qwen3 8B  |
-| Planning      | Qwen3 14B |
-| Rewriting     | Llama 3.1 |
-| ATS Analysis  | Gemma 3   |
+| Purpose | Model | Assigned Tasks |
+| --- | --- | --- |
+| Chat / Reasoning | `qwen3:8b` | JD Extraction, Planning, Rewriting, ATS Analysis, Critic, Validation |
+| Embeddings | `nomic-embed-text` | Knowledge Chunking, Vector Storage, Semantic Search |
 
 The architecture allows model replacement without changing workflows.
 

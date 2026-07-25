@@ -1,4 +1,3 @@
-import re
 from typing import Any
 from validators.base import BusinessValidator, ValidationViolation, ValidationSeverity
 

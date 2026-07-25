@@ -14,12 +14,12 @@ logger = logging.getLogger(__name__)
 class OllamaProvider(LLMProvider):
     """Concrete LLMProvider adapter that connects to local or containerized Ollama services."""
 
-    def __init__(self, base_url: Optional[str] = None, default_model: str = "qwen2.5:7b-instruct"):
+    def __init__(self, base_url: Optional[str] = None, default_model: str = "qwen3:8b"):
         """Initializes the Ollama provider.
 
         Args:
             base_url: Optional base URL of the Ollama server. Falls back to settings.OLLAMA_URL.
-            default_model: The default model to use for generation (default: qwen2.5:7b-instruct).
+            default_model: The default model to use for generation (default: qwen3:8b).
         """
         self.base_url = base_url or settings.OLLAMA_URL
         self.default_model = default_model

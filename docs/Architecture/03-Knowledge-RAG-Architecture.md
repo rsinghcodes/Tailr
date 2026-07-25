@@ -349,7 +349,7 @@ Qdrant
 Embedding Model
 
 ```
-BAAI/bge-small-en-v1.5
+nomic-embed-text
 ```
 
 Reasons
@@ -446,7 +446,7 @@ Initial retrieval returns the top 30 candidates.
 These are reranked using
 
 ```
-BAAI/bge-reranker-base
+qwen3:8b
 ```
 
 Final

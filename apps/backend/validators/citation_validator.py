@@ -1,5 +1,5 @@
 from typing import Any
-from validators.base import BusinessValidator, ValidationViolation, ValidationSeverity
+from validators.base import BusinessValidator, ValidationViolation
 
 
 class CitationValidator(BusinessValidator):
