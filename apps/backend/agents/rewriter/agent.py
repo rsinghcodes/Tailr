@@ -1,6 +1,5 @@
 import json
 from typing import Any, Optional
-from pydantic import BaseModel, Field
 from domain.resume.models import Resume
 from domain.shared.llm_provider import LLMProvider
 from prompts.registry import PromptRegistry

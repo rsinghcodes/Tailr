@@ -12,6 +12,7 @@ class JobDescription(BaseModel):
 
 
 class JobRequirements(BaseModel):
+    title: str | None = None
     required_skills: list[str] = Field(default_factory=list)
     preferred_skills: list[str] = Field(default_factory=list)
     responsibilities: list[str] = Field(default_factory=list)

@@ -1,4 +1,3 @@
-from typing import Any
 from validators.base import ValidationReport, ValidationViolation
 
 

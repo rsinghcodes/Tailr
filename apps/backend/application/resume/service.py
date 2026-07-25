@@ -5,18 +5,21 @@ from domain.resume.repository import ResumeRepository
 from parsers.tokenizer.lexer import LaTeXLexer
 from parsers.latex.parser import LaTeXParser
 from parsers.canonical.analyzer import LaTeXSemanticAnalyzer
+from infrastructure.redis.cache import RedisCacheService
 
 
 class ResumeService:
     """Application service to manage resume parsing, creation, updating, versioning, listing, and deletion."""
 
-    def __init__(self, repository: ResumeRepository):
+    def __init__(self, repository: ResumeRepository, cache_service: Optional[RedisCacheService] = None):
         """Initializes the resume service.
 
         Args:
             repository: The resume repository port.
+            cache_service: Optional Redis cache service adapter.
         """
         self.repository = repository
+        self.cache_service = cache_service or RedisCacheService()
 
     async def upload_resume(
         self,
@@ -57,10 +60,15 @@ class ResumeService:
             title=title,
             resume_container_id=resume_container_id,
         )
+
+        # Cache parsed domain resume entity in Redis
+        cache_key = f"resume:version:{resume.id}"
+        await self.cache_service.set_model(cache_key, resume, ttl_seconds=3600)
+
         return resume
 
     async def get_resume_by_version(self, version_id: uuid.UUID) -> Optional[Resume]:
-        """Retrieves a specific resume version.
+        """Retrieves a specific resume version, utilizing Redis caching.
 
         Args:
             version_id: The unique ID of the resume version.
@@ -68,7 +76,15 @@ class ResumeService:
         Returns:
             The domain Resume entity if found, else None.
         """
-        return await self.repository.get_by_version_id(version_id)
+        cache_key = f"resume:version:{version_id}"
+        cached_resume = await self.cache_service.get_model(cache_key, Resume)
+        if cached_resume:
+            return cached_resume
+
+        resume = await self.repository.get_by_version_id(version_id)
+        if resume:
+            await self.cache_service.set_model(cache_key, resume, ttl_seconds=3600)
+        return resume
 
     async def list_resumes(self) -> list[dict]:
         """Lists all parent resume containers.
@@ -111,12 +127,12 @@ class ResumeService:
         ]
 
     async def delete_resume_container(self, resume_id: uuid.UUID) -> bool:
-        """Deletes a parent resume container and all its versions.
+        """Deletes a parent resume container and all its associated version records.
 
         Args:
-            resume_id: The unique ID of the resume container.
+            resume_id: The unique ID of the resume container to delete.
 
         Returns:
-            True if deletion was successful, else False.
+            True if deleted successfully, False if not found.
         """
         return await self.repository.delete(resume_id)

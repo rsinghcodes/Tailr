@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Any
-import time
 from pydantic import BaseModel, Field
 
 
@@ -36,6 +35,7 @@ class GuardrailContext(BaseModel):
 
 class GuardrailResult(BaseModel):
     status: GuardrailResultStatus
+    repair_applied: bool = False
     repaired: bool = False
     violations: list[GuardrailViolation] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)

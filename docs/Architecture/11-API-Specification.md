@@ -297,7 +297,7 @@ Request
 {
   "resume_id": "...",
   "job_description_id": "...",
-  "model": "qwen3"
+  "model": "qwen3:8b"
 }
 ```
 

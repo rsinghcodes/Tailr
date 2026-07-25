@@ -1,5 +1,4 @@
 import logging
-from typing import Any
 from workflows.state import WorkflowState, WorkflowStatus
 from guardrails.pipeline import GuardrailsEngine
 from guardrails.base import GuardrailContext, GuardrailResultStatus

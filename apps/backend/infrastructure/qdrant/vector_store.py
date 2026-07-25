@@ -136,3 +136,11 @@ class QdrantVectorStore(VectorStore):
         exists = await self.client.collection_exists(collection_name)
         if exists:
             await self.client.delete_collection(collection_name=collection_name)
+
+    async def health_check(self) -> bool:
+        """Pings Qdrant to verify vector database connectivity."""
+        try:
+            await self.client.get_collections()
+            return True
+        except Exception:
+            return False

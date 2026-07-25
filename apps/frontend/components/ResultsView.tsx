@@ -98,7 +98,7 @@ export function ResultsView() {
           {/* ATS Compatibility Badge */}
           <div className="p-4 rounded-md bg-zinc-900 border border-zinc-800 space-y-1">
             <div className="flex items-center gap-2 text-xs font-semibold text-zinc-200 uppercase font-mono">
-              <Target className="w-4 h-4 text-zinc-400" /> ATS Score: {ats_report?.score || 92} / 100
+              <Target className="w-4 h-4 text-zinc-400" /> ATS Score: {ats_report?.overall_score || 92} / 100
             </div>
             <p className="text-xs text-zinc-400">
               Keyword Coverage: {Math.round((ats_report?.keyword_coverage || 0.88) * 100)}%. Fully compliant syntax.

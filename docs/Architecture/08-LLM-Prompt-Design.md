@@ -393,16 +393,12 @@ Configuration changes should not require code changes.
 
 # 13. Model Selection
 
-Different prompts may use different models.
+Tailr uses a streamlined 2-model architecture:
 
-| Prompt      | Recommended Model |
-| ----------- | ----------------- |
-| JD Analyzer | Qwen3 8B          |
-| Planner     | Qwen3 14B         |
-| Rewriter    | Llama 3.1         |
-| ATS Advisor | Gemma             |
-| Critic      | Qwen3 14B         |
-| Validator   | Qwen3 8B          |
+| Purpose | Model | Description |
+| --- | --- | --- |
+| Chat / Reasoning / Agents | `qwen3:8b` | Shared by JD Analyzer, Planner, Rewriter, ATS Advisor, Critic, and Validator |
+| Vector Embeddings | `nomic-embed-text` | Used for document chunking, indexing, and semantic search |
 
 The workflow remains model-agnostic through the provider abstraction.
 
