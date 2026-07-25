@@ -2,12 +2,6 @@
 description: AI Engineering Workflow
 ---
 
-> Project: Tailr
-> Version: 1.0
-> Status: Production
-
----
-
 # Purpose
 
 This document defines the mandatory workflow every AI coding agent must follow.
@@ -24,8 +18,6 @@ The workflow exists to ensure:
 No code should be written without following this workflow.
 
 No AI-generated content should ever reach a user, a repository, or the rendering pipeline without passing through the Guardrails Engine.
-
----
 
 # Core Philosophy
 
@@ -44,8 +36,6 @@ Review fifth.
 Document last.
 
 If the work touches AI-generated content: never trust it first. Guardrail it first.
-
----
 
 # Global Workflow
 
@@ -115,8 +105,6 @@ Produce Summary
 
 Never skip a step.
 
----
-
 # STEP 1 — Understand the Request
 
 Before writing code, determine:
@@ -136,8 +124,6 @@ STOP
 Request clarification.
 
 Never guess.
-
----
 
 # STEP 2 — Read Context
 
@@ -167,8 +153,6 @@ Do not rely on memory.
 
 Repository documentation always wins.
 
----
-
 # STEP 3 — Determine Impact
 
 Identify:
@@ -193,8 +177,6 @@ Guardrail validators or profiles affected
 
 Whether a new AI-output-consuming code path is being introduced, and where in that path the Guardrails Engine will be invoked
 
----
-
 # STEP 4 — Architecture Validation
 
 Before coding verify:
@@ -218,8 +200,6 @@ If yes to any violation, or no to the Guardrails questions:
 Stop.
 
 Redesign.
-
----
 
 # STEP 5 — Create an Implementation Plan
 
@@ -246,8 +226,6 @@ Rollback strategy
 For AI-related work: which guardrail profile applies, which validators are relevant, and how the `approved` / `repaired` / `rejected` outcomes are each handled downstream
 
 Implementation should never begin without a design.
-
----
 
 # STEP 6 — Incremental Development
 
@@ -289,8 +267,6 @@ Documentation
 
 Guardrails integration is not an afterthought bolted on at the end — it is implemented alongside the Infrastructure layer that produces the AI output it protects, before Application code is written to consume that output.
 
----
-
 # STEP 7 — Coding Rules
 
 While coding:
@@ -310,8 +286,6 @@ Avoid duplication.
 Do not prematurely optimize.
 
 Never write a bespoke validation shortcut "just for this feature" instead of using the Guardrails Engine — extend the Guardrails Engine with a new validator if existing coverage is insufficient.
-
----
 
 # STEP 8 — Logging
 
@@ -349,8 +323,6 @@ PII
 
 Full resume or job description content
 
----
-
 # STEP 9 — Error Handling
 
 Every failure must:
@@ -364,8 +336,6 @@ Include enough diagnostic information.
 Never expose stack traces to API users.
 
 A Guardrails rejection must raise a typed `GuardrailRejectionError` carrying violation codes and the affected section. It is translated into a structured, explainable error at the API or workflow boundary — never caught and discarded, and never allowed to fall through as a default "approved."
-
----
 
 # STEP 10 — Validation
 
@@ -391,8 +361,6 @@ LLM responses are validated in two distinct, sequential stages:
 2. **Business Validators** — is this output correct according to business rules?
 
 Stage 1 always runs before stage 2. Skipping stage 1 "because stage 2 will catch it" is not acceptable — the two stages check different things.
-
----
 
 # STEP 11 — Testing
 
@@ -420,8 +388,6 @@ At least one adversarial test (known prompt-injection pattern, known hallucinati
 
 Coverage should increase over time.
 
----
-
 # STEP 12 — Static Analysis
 
 Before completion run:
@@ -444,8 +410,6 @@ If the change touches guardrail validators, prompts, or AI-output-consuming code
 
 No code should be considered complete otherwise.
 
----
-
 # STEP 13 — Documentation
 
 Update documentation whenever:
@@ -465,8 +429,6 @@ Agent behavior changes
 Workflow changes
 
 Guardrail validators, profiles, or thresholds change
-
----
 
 # STEP 14 — Code Review
 
@@ -493,8 +455,6 @@ Logging
 Testing
 
 Guardrails coverage and correctness (see Code Review Checklist, Step 10a)
-
----
 
 # STEP 15 — Production Checklist
 
@@ -526,8 +486,6 @@ Before considering a feature complete:
 
 ✓ `approved`, `repaired`, and `rejected` outcomes all explicitly handled
 
----
-
 # Refactoring Rules
 
 Refactor only when:
@@ -545,8 +503,6 @@ Test coverage remains.
 Never refactor for personal preference.
 
 Refactoring a guardrail validator additionally requires re-running its adversarial test suite and confirming detection rates have not regressed before the refactor is considered complete.
-
----
 
 # Database Changes
 
@@ -568,8 +524,6 @@ Ensure repositories persisting AI-generated content still reject ungated (non-`a
 
 Never manually edit production migrations unless necessary.
 
----
-
 # API Changes
 
 Every API change requires:
@@ -587,8 +541,6 @@ Tests
 Version compatibility
 
 Guardrail rejection error shape documented, if the endpoint can produce one
-
----
 
 # AI Features
 
@@ -612,8 +564,6 @@ Handle provider failures.
 
 Never trust model output — "never trust" means invoking Guardrails, not merely writing a comment saying output should be checked.
 
----
-
 # RAG Features
 
 Always implement:
@@ -633,8 +583,6 @@ Citation support
 Source attribution
 
 Prompt-injection scanning of retrieved context before it is interpolated into a prompt
-
----
 
 # Security Review
 
@@ -662,8 +610,6 @@ PII leakage in AI output — delegated to the Guardrails PII/Secret Scanner
 
 Unsafe LaTeX in AI output — delegated to the Guardrails LaTeX Safety Validator
 
----
-
 # Performance Review
 
 Review:
@@ -684,8 +630,6 @@ Caching opportunities
 
 Guardrail validator concurrency (independent validators should run in parallel, not sequentially, where there is no data dependency)
 
----
-
 # Final Deliverable
 
 Every completed task should include:
@@ -705,9 +649,6 @@ Future considerations
 Known limitations
 
 ```
-
----
-
 # AI Decision Matrix
 
 When multiple approaches exist:
@@ -727,9 +668,6 @@ When multiple approaches exist:
 A design that is simpler or faster but removes, weakens, or bypasses a Guardrails check is not an acceptable trade-off under any ranking above. Guardrails coverage is a hard constraint, not a factor to be traded off against.
 
 Never choose a shortcut that creates technical debt.
-
----
-
 # Failure Policy
 
 If implementation cannot satisfy:
@@ -753,9 +691,6 @@ Explain why.
 Do not fabricate a solution.
 
 Do not ship an AI feature with a "temporarily disabled" or "TODO: add guardrails later" guardrail check. If Guardrails coverage cannot be completed, the feature is not done — stop and explain why, per this policy.
-
----
-
 # Success Criteria
 
 A successful implementation is:

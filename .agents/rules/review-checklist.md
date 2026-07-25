@@ -1,8 +1,5 @@
-# Code Review Checklist
-
-> Project: Tailr
-> Version: 1.0
-
+---
+trigger: always_on
 ---
 
 # Purpose
@@ -18,8 +15,6 @@ an AI-safety review. A change that is architecturally clean but bypasses
 Guardrails is not reviewable as "approved with suggestions" — it is a
 blocking issue.
 
----
-
 # Step 1 — Understand the Change
 
 Review:
@@ -29,8 +24,6 @@ Review:
 - Is the change necessary?
 - Does it solve the requested problem?
 - Does it produce, transform, or persist AI-generated content? (If yes, Step 10a applies.)
-
----
 
 # Step 2 — Architecture
 
@@ -50,8 +43,6 @@ Verify:
 
 □ Guardrails runs before Validators, never after or in parallel as an optional step
 
----
-
 # Step 3 — Readability
 
 Review:
@@ -70,8 +61,6 @@ Review:
 
 □ No unnecessary abstraction
 
----
-
 # Step 4 — Complexity
 
 Review:
@@ -88,8 +77,6 @@ Review:
 
 □ Each guardrail validator checks exactly one thing (no validator mixing safety and business logic)
 
----
-
 # Step 5 — Typing
 
 Verify:
@@ -103,8 +90,6 @@ Verify:
 □ No Any unless justified
 
 □ Guardrail outcomes typed as `GuardrailResult`, never a raw dict or bare boolean
-
----
 
 # Step 6 — Error Handling
 
@@ -124,8 +109,6 @@ Review:
 
 □ No `except` block that catches a guardrail rejection and continues as if it were approved
 
----
-
 # Step 7 — Logging
 
 Review:
@@ -143,8 +126,6 @@ Review:
 □ Guardrail runs log profile, status, violation codes, and repair actions
 
 □ Full resume/JD content not logged at INFO level or above
-
----
 
 # Step 8 — Database
 
@@ -164,8 +145,6 @@ If applicable:
 
 □ `guardrail_events` written for auditability where relevant
 
----
-
 # Step 9 — API
 
 Review:
@@ -181,8 +160,6 @@ Review:
 □ Error responses standardized
 
 □ Guardrail rejections surfaced as structured, explainable API errors — never a raw 500 or stack trace
-
----
 
 # Step 10 — AI
 
@@ -201,8 +178,6 @@ Review:
 □ Provider abstraction used
 
 □ Raw provider output passed through Guardrails before any other component touches it
-
----
 
 # Step 10a — Guardrails
 
@@ -228,8 +203,6 @@ Review:
 
 □ Guardrails Engine not mocked in tests intended to verify end-to-end AI-safety behavior
 
----
-
 # Step 11 — RAG
 
 Review:
@@ -245,8 +218,6 @@ Review:
 □ Sources preserved
 
 □ Retrieved context scanned by the Guardrails prompt-injection detector before being interpolated into a prompt
-
----
 
 # Step 12 — Security
 
@@ -268,8 +239,6 @@ Review:
 
 □ Unsafe LaTeX commands in AI-generated text blocked by the Guardrails LaTeX Safety Validator before rendering
 
----
-
 # Step 13 — Performance
 
 Review:
@@ -288,8 +257,6 @@ Review:
 
 □ Independent guardrail validators run concurrently where there is no data dependency between them
 
----
-
 # Step 14 — Testing
 
 Review:
@@ -306,8 +273,6 @@ Review:
 
 □ Guardrail approved / repaired / rejected paths all covered, not just the happy path
 
----
-
 # Step 15 — Documentation
 
 Review:
@@ -321,8 +286,6 @@ Review:
 □ Engineering docs updated
 
 □ Guardrails Architecture reference updated if a validator or profile changed
-
----
 
 # Step 16 — Production Readiness
 
@@ -342,8 +305,6 @@ If any answer is NO,
 
 the change requires another review.
 
----
-
 # Review Verdict
 
 Use exactly one outcome:
@@ -352,15 +313,11 @@ Use exactly one outcome:
 
 All quality gates passed.
 
----
-
 ## APPROVED WITH SUGGESTIONS
 
 No blocking issues.
 
 Minor improvements recommended.
-
----
 
 ## CHANGES REQUESTED
 
@@ -372,8 +329,6 @@ blocking issue. It can never be filed as a "suggestion" — it must be
 CHANGES REQUESTED.
 
 Must be fixed before merge.
-
----
 
 # Final Principle
 

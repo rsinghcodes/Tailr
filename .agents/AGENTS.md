@@ -7,8 +7,6 @@
 > Status: Production
 > Last Updated: 2026-07-12
 
----
-
 # Purpose
 
 This repository contains the source code for **Tailr**, an AI-powered resume tailoring platform.
@@ -18,8 +16,6 @@ This file defines how AI coding agents must behave while working on this reposit
 Every AI assistant MUST read this file before making changes.
 
 This file has higher priority than generic coding knowledge.
-
----
 
 # Mission
 
@@ -33,8 +29,6 @@ Do not sacrifice architecture for simplicity.
 
 Every change should be deployable.
 
----
-
 # Product Vision
 
 Tailr enables job seekers to create ATS-optimized resumes by combining:
@@ -46,8 +40,6 @@ Tailr enables job seekers to create ATS-optimized resumes by combining:
 - ATS Validation
 - Resume Rewriting
 - Resume Scoring
-
----
 
 # High-Level Architecture
 
@@ -63,8 +55,6 @@ Tailr follows:
 Dependencies always point inward.
 
 Infrastructure never contains business logic.
-
----
 
 # Tech Stack
 
@@ -118,8 +108,6 @@ React Hook Form
 
 Zod
 
----
-
 # Primary Design Principles
 
 1. Simplicity over cleverness.
@@ -141,8 +129,6 @@ Zod
 9. Every public API must be typed.
 
 10. Never introduce technical debt intentionally.
-
----
 
 # Project Structure
 
@@ -182,8 +168,6 @@ docs/
 
 .agents/
 
----
-
 # Layer Responsibilities
 
 ## app/
@@ -199,8 +183,6 @@ Contains:
 - app factory
 
 No business logic.
-
----
 
 ## api/
 
@@ -226,8 +208,6 @@ Forbidden:
 
 - business rules
 
----
-
 ## application/
 
 Coordinates business use cases.
@@ -242,8 +222,6 @@ Can call:
 
 Cannot access FastAPI directly.
 
----
-
 ## domain/
 
 Contains:
@@ -257,8 +235,6 @@ Contains:
 - business rules
 
 Must not import infrastructure.
-
----
 
 ## infrastructure/
 
@@ -280,8 +256,6 @@ Contains:
 
 Everything here is replaceable.
 
----
-
 ## shared/
 
 Reusable components.
@@ -302,8 +276,6 @@ Types
 
 Pagination
 
----
-
 ## telemetry/
 
 Logging
@@ -319,8 +291,6 @@ Correlation IDs
 OpenTelemetry
 
 No business logic.
-
----
 
 # Dependency Rule
 
@@ -370,8 +340,6 @@ Repositories
 
 Routers
 
----
-
 # AI Provider Rules
 
 Never call an LLM directly.
@@ -394,8 +362,6 @@ OpenAIProvider
 
 HFProvider
 
----
-
 # Vector Database Rules
 
 Never import Qdrant directly.
@@ -412,7 +378,19 @@ FAISS
 
 Chroma
 
----
+Canonical Qdrant collections:
+
+- resume_chunks
+- job_descriptions
+- skills
+- projects
+- experience
+- career_guides
+- resume_versions
+- guardrail_rules
+- ats_rules
+- prompt_patterns
+- feedback
 
 # Repository Rules
 
@@ -428,8 +406,6 @@ Contain business logic
 
 Repositories should be replaceable.
 
----
-
 # Prompt Rules
 
 Prompt templates belong only in:
@@ -439,8 +415,6 @@ prompts/
 Never inline prompts inside Python code.
 
 Prompt versions must be tracked.
-
----
 
 # Agent Rules
 
@@ -458,9 +432,24 @@ Never depends directly on another agent implementation.
 
 Communication happens through interfaces.
 
----
+Core AI Agents (Phase 1):
 
----
+- JD Analyzer
+- Planning Agent
+- Rewrite Agent
+- ATS Advisor
+
+(Critic and Optimizer agents are planned Phase 2 additions.)
+
+Deterministic Software Components (Not AI Agents):
+
+- Resume Parser
+- Knowledge Builder
+- Hybrid Retriever
+- Guardrails Engine
+- Validation Engine (Business Validation)
+- Renderer
+- PDF Compiler
 
 # Guardrails Rules
 
@@ -470,16 +459,17 @@ The Guardrails layer is a mandatory trust boundary.
 
 ## Mandatory Validators
 
-Every AI output must be checked by:
+Every AI output must be checked by the Guardrails Pipeline in canonical order:
 
-- Schema Validator
 - JSON Validator
+- Schema Validator
+- Prompt Injection Detector
 - Hallucination Detector
 - Resume Integrity Validator
-- Prompt Injection Detector
 - PII / Secret Scanner
 - ATS Validator
 - LaTeX Safety Validator
+- Repair Engine
 
 ## Hallucination Policy
 
@@ -525,12 +515,10 @@ Every guardrail decision must be logged with:
 - workflow_id
 - agent_name
 - validator_name
-- status
-- violation_code
+- status (approved / repaired / rejected)
+- violations (JSONB)
 - repair_applied
 - execution_time_ms
-
----
 
 # Workflow Rules
 
@@ -539,8 +527,6 @@ Workflow orchestration belongs only inside:
 workflows/
 
 Individual agents never orchestrate other agents.
-
----
 
 # Error Handling
 
@@ -559,8 +545,6 @@ Guardrail violations must raise typed exceptions such as:
 - ATSValidationError
 
 Guardrail failures are considered business failures, not infrastructure failures.
-
----
 
 # Logging Rules
 
@@ -581,8 +565,6 @@ Duration
 Module
 
 Operation
-
----
 
 # Security Rules
 
@@ -614,8 +596,6 @@ LaTeX rendering must occur in a sandboxed environment.
 
 Validation logs must be immutable and auditable.
 
----
-
 # Performance Rules
 
 Avoid N+1 queries.
@@ -629,8 +609,6 @@ Connection pooling enabled.
 Cache frequently used prompts.
 
 Stream LLM output when appropriate.
-
----
 
 # Testing Rules
 
@@ -654,8 +632,6 @@ Guardrail tests must include:
 
 No feature is complete without tests.
 
----
-
 # Documentation Rules
 
 Every public class requires documentation.
@@ -665,8 +641,6 @@ Every exported function requires type hints.
 Architecture decisions require an ADR.
 
 Large features require engineering documentation.
-
----
 
 # Code Quality Rules
 
@@ -685,8 +659,6 @@ Cyclomatic complexity:
 Avoid deep nesting.
 
 Prefer early returns.
-
----
 
 # Code Generation Rules
 
@@ -709,8 +681,6 @@ AI assistants MUST:
 - Never persist unvalidated AI output.
 - Never remove existing architecture without justification.
 
----
-
 # Definition of Done
 
 A task is complete only if:
@@ -731,8 +701,6 @@ A task is complete only if:
 - [ ] No TODO placeholders remain
 - [ ] No unvalidated AI output is persisted or rendered
 
----
-
 # When Unsure
 
 Do not guess.
@@ -742,8 +710,6 @@ Ask for clarification.
 Or stop and explain the architectural conflict.
 
 Incorrect production code is worse than incomplete code.
-
----
 
 # Guardrails Enforcement
 
@@ -767,8 +733,9 @@ The correct behavior is to:
 
 When implementing new AI features, agents must consult:
 
-- ADR 11-Validation-Guardrails-Engine.md
-- 17-Guardrails-Architecture.md
-- ADR 10-Evaluation-Driven-Development.md
+- docs/ADR/11-Validation-Guardrails-Engine.md
+- docs/Architecture/09-Guardrails-Architecture.md
+- docs/Architecture/10-Validation-Engine.md
+- docs/ADR/10-Evaluation-Driven-Development.md
 
 before generating code.

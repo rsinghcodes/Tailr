@@ -1,8 +1,5 @@
-# Definition of Done (DoD)
-
-> Project: Tailr
-> Version: 1.0
-
+---
+trigger: always_on
 ---
 
 # Purpose
@@ -15,8 +12,6 @@ If every requirement is not satisfied, the task is NOT DONE.
 A task that touches AI-generated content is not done merely because it works.
 It is not done until that content has been proven to pass through the
 Guardrails Engine before it is persisted, validated, or rendered.
-
----
 
 # General Requirements
 
@@ -42,8 +37,6 @@ The implementation:
 
 ✓ Contains no AI-output-consuming code path that skips the Guardrails Engine
 
----
-
 # Architecture
 
 The implementation:
@@ -65,8 +58,6 @@ The implementation:
 ✓ Keeps Guardrails as its own port/adapter — never inlined into a router, repository, or provider
 
 ✓ Places Guardrails before Validators in every workflow that produces AI content (never after, never in parallel as an optional check)
-
----
 
 # Code Quality
 
@@ -90,8 +81,6 @@ The code:
 
 ✓ Represents guardrail outcomes with a typed `GuardrailResult`, never a raw dict or boolean
 
----
-
 # Python Standards
 
 ✓ Python 3.13 compatible
@@ -110,8 +99,6 @@ The code:
 
 ✓ Google style docstrings
 
----
-
 # Error Handling
 
 ✓ Uses typed exceptions
@@ -127,8 +114,6 @@ The code:
 ✓ Raises a typed `GuardrailRejectionError` (with violation codes) on rejection — never a generic exception, never a silent fallback to "approved"
 
 ✓ Never catches a guardrail rejection and proceeds with the unapproved content
-
----
 
 # Logging
 
@@ -147,8 +132,6 @@ The code:
 ✓ Every guardrail execution logs its profile, status (approved/repaired/rejected), violation codes, and repair actions
 
 ✓ Full resume content and job description text are never logged at INFO level or above
-
----
 
 # Database
 
@@ -170,8 +153,6 @@ If database changes exist:
 
 ✓ `guardrail_events` records are written for every guardrail execution relevant to the change
 
----
-
 # API
 
 If API changes exist:
@@ -189,8 +170,6 @@ If API changes exist:
 ✓ Error responses documented
 
 ✓ Guardrail rejection responses are structured and explainable (violation codes, affected section) — never a raw 500 or stack trace
-
----
 
 # AI Features
 
@@ -220,8 +199,6 @@ If AI changes exist:
 
 ✓ Repair actions (if any) are logged and surfaced to the caller, not applied silently and invisibly
 
----
-
 # RAG Features
 
 If RAG changes exist:
@@ -239,8 +216,6 @@ If RAG changes exist:
 ✓ Duplicate chunks removed
 
 ✓ Retrieved context is scanned by the Guardrails prompt-injection detector before being interpolated into a prompt
-
----
 
 # Guardrails
 
@@ -264,8 +239,6 @@ If the change touches guardrail validators, profiles, or any AI-output-consuming
 
 ✓ Guardrails Engine is not mocked in tests meant to verify end-to-end AI-safety behavior
 
----
-
 # Security
 
 ✓ Inputs validated
@@ -277,8 +250,6 @@ If the change touches guardrail validators, profiles, or any AI-output-consuming
 ✓ No unsafe deserialization
 ✓ PII/secret scanning of AI output is delegated to the Guardrails PII/Secret Scanner, not reimplemented ad hoc
 ✓ Unsafe LaTeX commands in AI-generated text are blocked by the Guardrails LaTeX Safety Validator before reaching the rendering engine
-
----
 
 # Performance
 
@@ -295,8 +266,6 @@ If the change touches guardrail validators, profiles, or any AI-output-consuming
 ✓ Large payloads streamed when appropriate
 
 ✓ Independent guardrail validators run concurrently where they have no data dependency on each other
-
----
 
 # Testing
 
@@ -316,8 +285,6 @@ Minimum:
 
 Tests must pass.
 
----
-
 # Static Analysis
 
 The following commands succeed:
@@ -332,8 +299,6 @@ pytest
 
 No warnings ignored.
 
----
-
 # Documentation
 
 ✓ Public APIs documented
@@ -347,8 +312,6 @@ No warnings ignored.
 ✓ Engineering docs updated
 
 ✓ Guardrail profile changes or new validators documented in the Guardrails Architecture reference
-
----
 
 # Deployment
 
@@ -365,8 +328,6 @@ If deployment changes exist:
 ✓ Backward compatibility checked
 
 ✓ Guardrail configuration (enabled validators, profiles, thresholds) is environment-driven, not hardcoded per deployment
-
----
 
 # Final Verification
 
@@ -387,8 +348,6 @@ If this change produces or consumes AI output, have I verified what happens on `
 If any answer is NO,
 
 the implementation is NOT DONE.
-
----
 
 # Completion Checklist
 
