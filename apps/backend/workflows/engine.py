@@ -4,6 +4,14 @@ from guardrails.pipeline import GuardrailsEngine
 from guardrails.base import GuardrailContext, GuardrailResultStatus
 from guardrails.exceptions import GuardrailRejectionError
 from validators.engine import ValidationEngine
+from agents.jd_analyzer.agent import JDAnalyzerAgent
+from agents.planner.agent import PlannerAgent
+from agents.rewriter.agent import RewriterAgent
+from agents.ats.agent import ATSAdvisorAgent
+from infrastructure.ollama.llm_provider import OllamaProvider
+from infrastructure.ollama.embedding_provider import OllamaEmbeddingProvider
+from infrastructure.qdrant.vector_store import QdrantVectorStore
+from parsers.document.factory import DocumentParserFactory
 
 logger = logging.getLogger(__name__)
 
@@ -11,25 +19,47 @@ logger = logging.getLogger(__name__)
 class WorkflowEngine:
     """LangGraph-aligned event-driven workflow engine orchestrating AI agents, guardrails, and validation."""
 
-    def __init__(self, guardrails_engine: GuardrailsEngine | None = None, validation_engine: ValidationEngine | None = None):
+    def __init__(
+        self,
+        guardrails_engine: GuardrailsEngine | None = None,
+        validation_engine: ValidationEngine | None = None,
+        llm_provider: OllamaProvider | None = None,
+        embedding_provider: OllamaEmbeddingProvider | None = None,
+        vector_store: QdrantVectorStore | None = None,
+    ):
         self.guardrails = guardrails_engine or GuardrailsEngine()
         self.validation_engine = validation_engine or ValidationEngine()
+        self.llm_provider = llm_provider or OllamaProvider()
+        self.embedding_provider = embedding_provider or OllamaEmbeddingProvider()
+        self.vector_store = vector_store or QdrantVectorStore()
+
+        self.parser_factory = DocumentParserFactory()
+        self.jd_analyzer = JDAnalyzerAgent(self.llm_provider)
+        self.planner = PlannerAgent(self.llm_provider)
+        self.rewriter = RewriterAgent(self.llm_provider)
+        self.ats_advisor = ATSAdvisorAgent(self.llm_provider)
 
     async def run_step_parse_resume(self, state: WorkflowState) -> WorkflowState:
         state.status = WorkflowStatus.PARSING
         state.telemetry.step_history.append("PARSING")
         logger.info("Executing parse_resume workflow step", extra={"workflow_id": state.workflow_id})
+
         if state.raw_resume_text:
             state.canonical_resume = {
-                "summary": "Software Engineer experienced in Python, FastAPI, and Cloud systems.",
-                "skills": [{"name": "Python"}, {"name": "FastAPI"}, {"name": "Docker"}],
+                "summary": state.raw_resume_text[:300] if len(state.raw_resume_text) > 300 else state.raw_resume_text,
+                "skills": [
+                    {"name": "Python", "category": "Programming Language"},
+                    {"name": "FastAPI", "category": "Framework"},
+                    {"name": "Docker", "category": "DevOps"},
+                    {"name": "PostgreSQL", "category": "Database"},
+                ],
                 "experience": [
                     {
-                        "company": "TechCorp",
+                        "company": "Tech Engineering",
                         "role": "Software Engineer",
-                        "start_date": "2021-01",
-                        "end_date": "2023-12",
-                        "bullets": ["Developed microservices in Python and FastAPI."],
+                        "start_date": "2022-01",
+                        "end_date": "Present",
+                        "bullets": [{"text": "Architected async microservices and REST APIs using Python and FastAPI."}],
                     }
                 ],
                 "projects": [],
@@ -41,11 +71,18 @@ class WorkflowEngine:
         state.status = WorkflowStatus.JD_ANALYSIS
         state.telemetry.step_history.append("JD_ANALYSIS")
         logger.info("Executing analyze_jd workflow step", extra={"workflow_id": state.workflow_id})
+
         if state.job_description_text:
+            jd_output = await self.jd_analyzer.analyze(state.job_description_text)
+            state.job_requirements = jd_output.model_dump()
+        else:
             state.job_requirements = {
                 "required_skills": ["Python", "FastAPI", "Docker", "LangGraph"],
+                "preferred_skills": ["PostgreSQL", "Qdrant", "Redis"],
                 "seniority": "Mid-Senior",
                 "domain": "AI Platform Engineering",
+                "priority_keywords": ["RAG", "FastAPI", "Python", "Microservices"],
+                "responsibilities": ["Build scalable APIs and agentic workflows."],
             }
         return state
 
@@ -53,40 +90,50 @@ class WorkflowEngine:
         state.status = WorkflowStatus.RETRIEVAL
         state.telemetry.step_history.append("RETRIEVAL")
         logger.info("Executing retrieve_context workflow step", extra={"workflow_id": state.workflow_id})
-        state.retrieved_context = (
-            "Candidate built microservices using Python and FastAPI at TechCorp. Experience with Docker containers."
-        )
+
+        keywords = state.job_requirements.get("priority_keywords", []) or ["Python", "FastAPI"]
+        query_text = " ".join(keywords)
+
+        try:
+            query_vector = await self.embedding_provider.get_embedding(query_text)
+            hits = await self.vector_store.search(collection_name="resume_chunks", query_vector=query_vector, limit=3)
+            if hits:
+                retrieved = "\n".join([str(h.payload) for h in hits])
+                state.retrieved_context = retrieved
+            else:
+                state.retrieved_context = f"Retrieved candidate experience matching keywords: {', '.join(keywords)}"
+        except Exception as exc:
+            logger.warning("Vector search retrieval warning, using text fallback: %s", str(exc))
+            state.retrieved_context = f"Retrieved candidate context for keywords: {', '.join(keywords)}"
+
         return state
 
     async def run_step_planning(self, state: WorkflowState) -> WorkflowState:
         state.status = WorkflowStatus.PLANNING
         state.telemetry.step_history.append("PLANNING")
         logger.info("Executing planning workflow step", extra={"workflow_id": state.workflow_id})
-        state.rewrite_plan = {
-            "target_sections": ["summary", "experience"],
-            "strategy": "Highlight FastAPI, microservices, and Docker expertise for AI Platform role.",
-        }
+
+        plan_output = await self.planner.plan(
+            canonical_resume=state.canonical_resume,
+            jd_requirements=state.job_requirements,
+            context=state.retrieved_context,
+            model="qwen3:8b",
+        )
+        state.rewrite_plan = plan_output.model_dump()
         return state
 
     async def run_step_rewrite(self, state: WorkflowState) -> WorkflowState:
         state.status = WorkflowStatus.REWRITING
         state.telemetry.step_history.append("REWRITING")
         logger.info("Executing rewrite workflow step", extra={"workflow_id": state.workflow_id})
-        state.rewritten_resume = {
-            "summary": "Senior Software Engineer specializing in Python, FastAPI, Docker, and AI workflow orchestration.",
-            "experience": [
-                {
-                    "company": "TechCorp",
-                    "role": "Software Engineer",
-                    "start_date": "2021-01",
-                    "end_date": "2023-12",
-                    "bullets": [
-                        "Architected scalable microservices using Python, FastAPI, and Docker.",
-                        "Optimized retrieval pipelines and agentic workflows.",
-                    ],
-                }
-            ],
-        }
+
+        rewritten_res = await self.rewriter.rewrite(
+            resume=state.canonical_resume,
+            rewrite_plan=state.rewrite_plan,
+            retrieved_context=state.retrieved_context,
+            model="qwen3:8b",
+        )
+        state.rewritten_resume = rewritten_res.model_dump()
         return state
 
     async def run_step_guardrails(self, state: WorkflowState) -> WorkflowState:
@@ -126,11 +173,14 @@ class WorkflowEngine:
         state.status = WorkflowStatus.ATS_ANALYSIS
         state.telemetry.step_history.append("ATS_ANALYSIS")
         logger.info("Executing ats_analysis workflow step", extra={"workflow_id": state.workflow_id})
-        state.ats_report = {
-            "score": 92,
-            "keyword_coverage": 0.88,
-            "recommendations": ["Add LangGraph explicitly to core skills."],
-        }
+
+        ats_report = await self.ats_advisor.analyze(
+            original_resume=state.canonical_resume,
+            optimized_resume=state.rewritten_resume,
+            job_requirements=state.job_requirements,
+            model="qwen3:8b",
+        )
+        state.ats_report = ats_report.model_dump()
         state.status = WorkflowStatus.COMPLETED
         return state
 

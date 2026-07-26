@@ -1,7 +1,7 @@
 "use client";
 
-import { useUIStore, TabType } from "@/lib/store";
-import { LayoutDashboard, Cpu, FileText, Briefcase, ShieldCheck, History } from "lucide-react";
+import { useUIStore, TabType } from "../lib/store";
+import { LayoutDashboard, Cpu, FileText, Briefcase, History, ShieldCheck } from "lucide-react";
 
 export function Navbar() {
   const { activeTab, setActiveTab } = useUIStore();

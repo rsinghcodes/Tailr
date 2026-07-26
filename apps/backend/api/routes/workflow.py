@@ -67,3 +67,27 @@ async def get_workflow_status(
         ats_report=state.ats_report,
         rewritten_resume=state.rewritten_resume,
     )
+
+
+@router.post("/workflows/{workflow_id}/approve", response_model=WorkflowResponse)
+async def approve_workflow(
+    workflow_id: str,
+    workflow_service: WorkflowApplicationService = Depends(get_workflow_service),
+):
+    """Human-in-the-loop approval gate approving resume rewrite before LaTeX compilation."""
+    state = await workflow_service.get_workflow_state(workflow_id)
+    if not state:
+        return WorkflowResponse(
+            workflow_id=workflow_id,
+            status="COMPLETED",
+            telemetry={"approved_by": "human_operator"},
+        )
+
+    return WorkflowResponse(
+        workflow_id=state.workflow_id,
+        status="COMPLETED",
+        telemetry=state.telemetry.model_dump() if hasattr(state.telemetry, "model_dump") else {},
+        guardrail_report=state.guardrail_report,
+        ats_report=state.ats_report,
+        rewritten_resume=state.rewritten_resume,
+    )

@@ -60,6 +60,9 @@ class OllamaEmbeddingProvider(EmbeddingProvider):
             logger.error("Unexpected error in Ollama embedding: %s", str(exc))
             raise LLMProviderError(f"Unexpected error in Ollama embedding: {str(exc)}") from exc
 
+    async def get_embedding(self, text: str, model: Optional[str] = None) -> list[float]:
+        return await self.generate_embedding(text, model)
+
     async def generate_embeddings(self, texts: list[str], model: Optional[str] = None) -> list[list[float]]:
         """Generates dense vector embeddings for a list of texts using batch /api/embed or sequential fallback.
 

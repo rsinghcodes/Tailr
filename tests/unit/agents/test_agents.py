@@ -68,7 +68,7 @@ async def test_rewriter_agent(mock_registry):
 async def test_ats_advisor_agent(mock_registry):
     mock_llm = MagicMock(spec=LLMProvider)
     expected_report = ATSReport(
-        score=95,
+        overall_score=95,
         strengths=["Python keyword added"],
         weaknesses=[],
         recommendations=[]
@@ -83,6 +83,6 @@ async def test_ats_advisor_agent(mock_registry):
     report = await agent.analyze(orig_resume, opt_resume, reqs)
 
     assert report == expected_report
-    assert report.score == 95
+    assert report.overall_score == 95
     assert len(report.strengths) == 1
     mock_llm.generate.assert_called_once()

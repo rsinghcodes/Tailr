@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ShieldCheck, Target, Zap, Server, Activity } from "lucide-react";
-import { getAnalyticsDashboard, checkHealth, SystemHealthResponse } from "@/lib/api";
+import { ShieldCheck, Target, Zap, Server } from "lucide-react";
+import { getAnalyticsDashboard, checkHealth } from "../lib/api";
 
 export function HeroStats() {
   const [statsData, setStatsData] = useState<{
@@ -46,7 +46,7 @@ export function HeroStats() {
           }));
         }
       } catch {
-        // Fallback to default metrics
+        // Fallback
       }
     }
     loadData();

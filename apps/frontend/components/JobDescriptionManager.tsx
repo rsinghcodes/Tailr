@@ -1,172 +1,135 @@
 "use client";
 
 import { useState } from "react";
-import { useUIStore } from "@/lib/store";
-import { createJobDescription, JobDescriptionData } from "@/lib/api";
-import { Briefcase, Plus, CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
+import { useUIStore } from "../lib/store";
+import { Briefcase, Plus, CheckCircle2, AlertCircle, Cpu } from "lucide-react";
+import { createJobDescription, JobDescriptionData } from "../lib/api";
 
 export function JobDescriptionManager() {
-  const { savedJds, setSavedJds, setJobDescriptionText, setWizardStep, setActiveTab } = useUIStore();
   const [title, setTitle] = useState("");
   const [company, setCompany] = useState("");
   const [description, setDescription] = useState("");
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [activeJd, setActiveJd] = useState<JobDescriptionData | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<JobDescriptionData | null>(null);
 
-  const handleCreate = async () => {
-    if (!title || !description) return;
+  const { setSelectedJD, setWizardStep, setActiveTab } = useUIStore();
 
-    setIsAnalyzing(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title || !company || !description) return;
+
+    setIsSubmitting(true);
+    setError(null);
+    setSuccess(null);
+
     try {
-      const jdData = await createJobDescription({
-        title,
-        company: company || "Unknown Company",
-        description,
-      });
-
-      setActiveJd(jdData);
-      setSavedJds([jdData, ...savedJds]);
-      setIsAnalyzing(false);
+      const jd = await createJobDescription({ title, company, description });
+      setSuccess(jd);
+      setSelectedJD(jd.id, `${jd.title} (${jd.company})`);
       setTitle("");
       setCompany("");
       setDescription("");
-    } catch {
-      setIsAnalyzing(false);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to parse job description");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* Create / Analyze JD Form */}
-      <div className="min-panel p-6 space-y-4">
+      {/* Create Target Job Description Form */}
+      <form onSubmit={handleSubmit} className="min-panel p-6 space-y-4">
+        <div className="space-y-1 border-b border-zinc-800 pb-3">
+          <h3 className="text-base font-semibold text-zinc-100 flex items-center gap-2">
+            <Briefcase className="w-5 h-5 text-zinc-400" /> Target Job Description & AI Requirements Extractor
+          </h3>
+          <p className="text-xs text-zinc-400">
+            Paste target role details. The JD Analyzer agent (qwen3:8b) will parse required skills, seniority, and priority keywords.
+          </p>
+        </div>
+
+        {error && (
+          <div className="p-3 rounded bg-rose-950/50 border border-rose-800 text-rose-300 text-xs flex items-center gap-2 font-mono">
+            <AlertCircle className="w-4 h-4 shrink-0" /> {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="p-4 rounded bg-emerald-950/50 border border-emerald-800 text-emerald-300 space-y-2 font-mono">
+            <div className="flex items-center justify-between text-xs font-bold">
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" /> JD Parsed Successfully!</span>
+              <span>ID: {success.id}</span>
+            </div>
+            {success.parsed_requirements?.required_skills && (
+              <div className="text-[11px] text-zinc-300">
+                Extracted Skills: {success.parsed_requirements.required_skills.join(", ")}
+              </div>
+            )}
+            <div className="pt-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setWizardStep(3);
+                  setActiveTab("wizard");
+                }}
+                className="min-button min-button-primary text-xs"
+              >
+                <Cpu className="w-3.5 h-3.5" /> Continue to Tailoring Pipeline
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-medium text-zinc-400 mb-1">Job Title *</label>
+            <input
+              type="text"
+              required
+              placeholder="e.g. Senior Software Engineer - AI Platform"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-600"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-zinc-400 mb-1">Company Name *</label>
+            <input
+              type="text"
+              required
+              placeholder="e.g. Tailr AI Systems"
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+              className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-600"
+            />
+          </div>
+        </div>
+
         <div>
-          <h2 className="text-lg font-semibold text-zinc-100">Analyze New Job Description</h2>
-          <p className="text-xs text-zinc-400">Parse and extract structured skills, keywords, and responsibilities via AI.</p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <input
-            type="text"
-            placeholder="Job Title (e.g. Senior AI Engineer)"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="min-input"
-          />
-          <input
-            type="text"
-            placeholder="Company Name (optional)"
-            value={company}
-            onChange={(e) => setCompany(e.target.value)}
-            className="min-input"
+          <label className="block text-xs font-medium text-zinc-400 mb-1">Full Job Description Text *</label>
+          <textarea
+            required
+            rows={6}
+            placeholder="Paste full job requirements, responsibilities, and qualifications..."
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="w-full bg-zinc-900 border border-zinc-800 rounded p-3 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-600 font-mono leading-relaxed"
           />
         </div>
 
-        <textarea
-          rows={6}
-          placeholder="Paste complete job description text here..."
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="min-input w-full font-mono text-xs"
-        />
-
-        <div className="flex justify-end">
+        <div className="flex justify-end pt-2">
           <button
-            onClick={handleCreate}
-            disabled={isAnalyzing || !title || !description}
+            type="submit"
+            disabled={isSubmitting || !title || !company || !description}
             className="min-button min-button-primary"
           >
-            {isAnalyzing ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" /> Analyzing Requirements...
-              </>
-            ) : (
-              <>
-                <Plus className="w-4 h-4" /> Analyze Job Description
-              </>
-            )}
+            <Plus className="w-4 h-4" /> {isSubmitting ? "Analyzing JD with AI..." : "Parse & Save Target JD"}
           </button>
         </div>
-      </div>
-
-      {/* Extracted Analysis Details */}
-      {activeJd && (
-        <div className="min-panel p-6 space-y-4">
-          <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-            <div>
-              <h3 className="text-base font-semibold text-zinc-100">{activeJd.title}</h3>
-              <p className="text-xs text-zinc-400">{activeJd.company}</p>
-            </div>
-            <button
-              onClick={() => {
-                setJobDescriptionText(activeJd.description);
-                setWizardStep(3);
-                setActiveTab("wizard");
-              }}
-              className="min-button min-button-primary text-xs"
-            >
-              Use in Tailoring Wizard <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {activeJd.parsed_requirements && (
-            <div className="space-y-3 font-mono text-xs">
-              <div>
-                <span className="text-zinc-500 font-semibold uppercase">Required Skills:</span>
-                <div className="flex flex-wrap gap-1.5 mt-1.5">
-                  {activeJd.parsed_requirements.required_skills?.map((skill, sIdx) => (
-                    <span key={sIdx} className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 border border-zinc-700">
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {activeJd.parsed_requirements.responsibilities && (
-                <div>
-                  <span className="text-zinc-500 font-semibold uppercase">Core Responsibilities:</span>
-                  <ul className="mt-1 space-y-1 text-zinc-300">
-                    {activeJd.parsed_requirements.responsibilities.map((r, rIdx) => (
-                      <li key={rIdx} className="flex items-center gap-2">
-                        <CheckCircle2 className="w-3 h-3 text-zinc-400" />
-                        <span>{r}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Saved JDs List */}
-      {savedJds.length > 0 && (
-        <div className="min-panel p-6 space-y-4">
-          <h3 className="text-base font-semibold text-zinc-100 flex items-center gap-2">
-            <Briefcase className="w-4 h-4 text-zinc-400" /> Stored Job Descriptions
-          </h3>
-          <div className="space-y-2">
-            {savedJds.map((jd) => (
-              <div key={jd.id} className="min-card p-4 flex items-center justify-between">
-                <div>
-                  <div className="font-medium text-sm text-zinc-200">{jd.title}</div>
-                  <div className="text-xs text-zinc-500">{jd.company}</div>
-                </div>
-                <button
-                  onClick={() => {
-                    setJobDescriptionText(jd.description);
-                    setWizardStep(3);
-                    setActiveTab("wizard");
-                  }}
-                  className="min-button min-button-secondary text-xs"
-                >
-                  Select <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      </form>
     </div>
   );
 }

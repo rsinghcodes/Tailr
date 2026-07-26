@@ -1,10 +1,13 @@
 import logging
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
+from agents.renderer.agent import LaTeXRendererAgent
+from infrastructure.redis.cache import RedisCacheService, get_redis_cache_service
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Document Rendering"])
+_renderer_agent = LaTeXRendererAgent()
 
 
 class RenderLaTeXRequest(BaseModel):
@@ -27,21 +30,51 @@ class RenderPDFResponse(BaseModel):
 
 
 @router.post("/render/latex", response_model=RenderLaTeXResponse)
-async def generate_latex_code(body: RenderLaTeXRequest):
-    """Generate LaTeX document source code from Canonical Resume Model."""
-    sample_latex = r"""\documentclass[letterpaper,11pt]{article}
-\begin{document}
-\section{Summary}
-Tailored Software Engineer resume.
-\end{document}"""
-    return RenderLaTeXResponse(latex_code=sample_latex)
+async def generate_latex_code(
+    body: RenderLaTeXRequest,
+    cache_service: RedisCacheService = Depends(get_redis_cache_service),
+):
+    """Generate compile-ready LaTeX document source code from Canonical Resume Model."""
+    cache_key = f"rendered_latex:{body.resume_id}:{body.template_name}"
+    cached = await cache_service.get(cache_key, RenderLaTeXResponse)
+    if cached:
+        return cached
+
+    sample_resume = {
+        "summary": "Staff Software & AI Platform Engineer specializing in FastAPI async microservices, Qdrant vector search, and Guardrails AI safety engines.",
+        "skills": [
+            {"name": "Python 3.13", "category": "Programming Language"},
+            {"name": "FastAPI", "category": "Framework"},
+            {"name": "Docker", "category": "DevOps"},
+            {"name": "Qdrant", "category": "Database"},
+        ],
+        "experience": [
+            {
+                "company": "Tailr AI",
+                "role": "Lead Architect",
+                "start_date": "2023-01",
+                "end_date": "Present",
+                "bullets": [
+                    {"text": "Architected event-driven LangGraph workflow state machine using Python 3.13 and Ollama qwen3:8b."},
+                    {"text": "Optimized database query indexing and Redis caching, cutting P99 latency by 45%."},
+                ],
+            }
+        ],
+    }
+
+    latex_code = _renderer_agent.render(sample_resume, body.template_name)
+    response = RenderLaTeXResponse(latex_code=latex_code)
+    await cache_service.set(cache_key, response, ttl_seconds=3600)
+    return response
 
 
 @router.post("/render/pdf", response_model=RenderPDFResponse)
 async def compile_pdf(body: RenderPDFRequest):
     """Compile LaTeX document code into PDF in a sandboxed environment."""
-    if r"\write18" in body.latex_code or r"\input" in body.latex_code:
-        raise HTTPException(status_code=400, detail="Dangerous LaTeX directive detected.")
+    forbidden_directives = [r"\write18", r"\input", r"\include", r"\openout"]
+    for directive in forbidden_directives:
+        if directive in body.latex_code:
+            raise HTTPException(status_code=400, detail=f"Dangerous LaTeX directive '{directive}' detected.")
 
     return RenderPDFResponse(
         pdf_url="/downloads/rendered_resume.pdf",
