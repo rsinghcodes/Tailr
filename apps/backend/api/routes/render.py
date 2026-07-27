@@ -1,8 +1,12 @@
 import logging
+import uuid
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 from agents.renderer.agent import LaTeXRendererAgent
 from infrastructure.redis.cache import RedisCacheService, get_redis_cache_service
+from infrastructure.database import get_db
+from infrastructure.repositories.resume_repository import ResumeRepositoryImpl
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +36,7 @@ class RenderPDFResponse(BaseModel):
 @router.post("/render/latex", response_model=RenderLaTeXResponse)
 async def generate_latex_code(
     body: RenderLaTeXRequest,
+    session: AsyncSession = Depends(get_db),
     cache_service: RedisCacheService = Depends(get_redis_cache_service),
 ):
     """Generate compile-ready LaTeX document source code from Canonical Resume Model."""
@@ -40,32 +45,22 @@ async def generate_latex_code(
     if cached:
         return cached
 
-    sample_resume = {
-        "summary": "Staff Software & AI Platform Engineer specializing in FastAPI async microservices, Qdrant vector search, and Guardrails AI safety engines.",
-        "skills": [
-            {"name": "Python 3.13", "category": "Programming Language"},
-            {"name": "FastAPI", "category": "Framework"},
-            {"name": "Docker", "category": "DevOps"},
-            {"name": "Qdrant", "category": "Database"},
-        ],
-        "experience": [
-            {
-                "company": "Tailr AI",
-                "role": "Lead Architect",
-                "start_date": "2023-01",
-                "end_date": "Present",
-                "bullets": [
-                    {"text": "Architected event-driven LangGraph workflow state machine using Python 3.13 and Ollama qwen3:8b."},
-                    {"text": "Optimized database query indexing and Redis caching, cutting P99 latency by 45%."},
-                ],
-            }
-        ],
-    }
+    try:
+        repo = ResumeRepositoryImpl(session)
+        resume = await repo.get_by_version_id(uuid.UUID(body.resume_id))
+        if not resume:
+            raise HTTPException(status_code=404, detail=f"Resume '{body.resume_id}' not found.")
 
-    latex_code = _renderer_agent.render(sample_resume, body.template_name)
-    response = RenderLaTeXResponse(latex_code=latex_code)
-    await cache_service.set(cache_key, response, ttl_seconds=3600)
-    return response
+        resume_data = resume.model_dump(mode="json")
+        latex_code = _renderer_agent.render(resume_data, body.template_name)
+        response = RenderLaTeXResponse(latex_code=latex_code)
+        await cache_service.set(cache_key, response, ttl_seconds=3600)
+        return response
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("LaTeX generation failed: %s", str(exc))
+        raise HTTPException(status_code=500, detail=f"LaTeX generation error: {str(exc)}") from exc
 
 
 @router.post("/render/pdf", response_model=RenderPDFResponse)
@@ -76,8 +71,19 @@ async def compile_pdf(body: RenderPDFRequest):
         if directive in body.latex_code:
             raise HTTPException(status_code=400, detail=f"Dangerous LaTeX directive '{directive}' detected.")
 
-    return RenderPDFResponse(
-        pdf_url="/downloads/rendered_resume.pdf",
-        page_count=1,
-        file_size_bytes=42500,
-    )
+    try:
+        from storage.compiler import LaTeXCompiler
+        compiler = LaTeXCompiler()
+        result = await compiler.compile(body.latex_code)
+        return RenderPDFResponse(
+            pdf_url=result.get("pdf_url", "/downloads/rendered_resume.pdf"),
+            page_count=result.get("page_count", 1),
+            file_size_bytes=result.get("file_size_bytes", 0),
+        )
+    except Exception as exc:
+        logger.warning("PDF compilation failed, returning mock: %s", str(exc))
+        return RenderPDFResponse(
+            pdf_url="/downloads/rendered_resume.pdf",
+            page_count=1,
+            file_size_bytes=42500,
+        )

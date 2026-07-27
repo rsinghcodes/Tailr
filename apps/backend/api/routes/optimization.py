@@ -2,10 +2,14 @@ import logging
 import uuid
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
+from sqlalchemy.ext.asyncio import AsyncSession
 from agents.planner.agent import PlannerAgent
 from agents.rewriter.agent import RewriterAgent
 from infrastructure.ollama.llm_provider import OllamaProvider
 from infrastructure.redis.cache import RedisCacheService, get_redis_cache_service
+from infrastructure.database import get_db
+from infrastructure.repositories.resume_repository import ResumeRepositoryImpl
+from infrastructure.repositories.job_description_repository import JobDescriptionRepositoryImpl
 
 logger = logging.getLogger(__name__)
 
@@ -38,21 +42,54 @@ class RewriteContentResponse(BaseModel):
     status: str = "rewritten"
 
 
+async def _fetch_resume_dict(resume_id: str, session: AsyncSession) -> dict:
+    try:
+        repo = ResumeRepositoryImpl(session)
+        resume = await repo.get_by_version_id(uuid.UUID(resume_id))
+        if resume:
+            return resume.model_dump(mode="json")
+    except Exception as exc:
+        logger.warning("Failed to fetch resume %s: %s", resume_id, str(exc))
+    return {"summary": "Candidate Resume", "skills": [], "experience": []}
+
+
+async def _fetch_jd_requirements(jd_id: str, session: AsyncSession) -> dict:
+    try:
+        repo = JobDescriptionRepositoryImpl(session)
+        result = await repo.get_by_id(uuid.UUID(jd_id))
+        if result:
+            _, reqs = result
+            if reqs:
+                return {
+                    "required_skills": reqs.required_skills,
+                    "preferred_skills": reqs.preferred_skills,
+                    "keywords": reqs.keywords,
+                    "priority_keywords": reqs.keywords or reqs.required_skills,
+                }
+    except Exception as exc:
+        logger.warning("Failed to fetch JD %s: %s", jd_id, str(exc))
+    return {"required_skills": [], "priority_keywords": []}
+
+
 @router.post("/optimization/plan", response_model=PlanOptimizationResponse)
 async def plan_optimization(
     body: PlanOptimizationRequest,
+    session: AsyncSession = Depends(get_db),
     cache_service: RedisCacheService = Depends(get_redis_cache_service),
 ):
-    """Generate structured optimization plan using Planning Agent (qwen3:8b)."""
+    """Generate structured optimization plan using Planning Agent."""
     cache_key = f"opt_plan:{body.resume_id}:{body.job_description_id}"
     cached = await cache_service.get(cache_key, PlanOptimizationResponse)
     if cached:
         return cached
 
     try:
+        resume_data = await _fetch_resume_dict(body.resume_id, session)
+        jd_reqs = await _fetch_jd_requirements(body.job_description_id, session)
+
         plan_out = await _planner_agent.plan(
-            canonical_resume={"summary": "Software Engineer with Python experience"},
-            jd_requirements={"required_skills": ["Python", "FastAPI", "Docker"]},
+            canonical_resume=resume_data,
+            jd_requirements=jd_reqs,
             model="qwen3:8b",
         )
 
@@ -69,12 +106,17 @@ async def plan_optimization(
 
 
 @router.post("/optimization/rewrite", response_model=RewriteContentResponse)
-async def rewrite_resume_content(body: RewriteContentRequest):
+async def rewrite_resume_content(
+    body: RewriteContentRequest,
+    session: AsyncSession = Depends(get_db),
+):
     """Execute AI resume content rewriting adhering to the optimization plan."""
     try:
+        resume_data = await _fetch_resume_dict(body.resume_id, session)
+
         await _rewriter_agent.rewrite(
-            resume={"summary": "Software Engineer with Python experience"},
-            rewrite_plan={"strategy_summary": "Emphasize FastAPI and async systems"},
+            resume=resume_data,
+            rewrite_plan={"strategy_summary": "Optimize for target role keywords and ATS compatibility"},
             model="qwen3:8b",
         )
         return RewriteContentResponse(

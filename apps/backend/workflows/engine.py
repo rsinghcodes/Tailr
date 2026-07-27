@@ -12,6 +12,7 @@ from infrastructure.ollama.llm_provider import OllamaProvider
 from infrastructure.ollama.embedding_provider import OllamaEmbeddingProvider
 from infrastructure.qdrant.vector_store import QdrantVectorStore
 from parsers.document.factory import DocumentParserFactory
+from config.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +30,8 @@ class WorkflowEngine:
     ):
         self.guardrails = guardrails_engine or GuardrailsEngine()
         self.validation_engine = validation_engine or ValidationEngine()
-        self.llm_provider = llm_provider or OllamaProvider()
-        self.embedding_provider = embedding_provider or OllamaEmbeddingProvider()
+        self.llm_provider = llm_provider or OllamaProvider(base_url=settings.OLLAMA_URL)
+        self.embedding_provider = embedding_provider or OllamaEmbeddingProvider(base_url=settings.OLLAMA_URL)
         self.vector_store = vector_store or QdrantVectorStore()
 
         self.parser_factory = DocumentParserFactory()
@@ -45,26 +46,27 @@ class WorkflowEngine:
         logger.info("Executing parse_resume workflow step", extra={"workflow_id": state.workflow_id})
 
         if state.raw_resume_text:
-            state.canonical_resume = {
-                "summary": state.raw_resume_text[:300] if len(state.raw_resume_text) > 300 else state.raw_resume_text,
-                "skills": [
-                    {"name": "Python", "category": "Programming Language"},
-                    {"name": "FastAPI", "category": "Framework"},
-                    {"name": "Docker", "category": "DevOps"},
-                    {"name": "PostgreSQL", "category": "Database"},
-                ],
-                "experience": [
-                    {
-                        "company": "Tech Engineering",
-                        "role": "Software Engineer",
-                        "start_date": "2022-01",
-                        "end_date": "Present",
-                        "bullets": [{"text": "Architected async microservices and REST APIs using Python and FastAPI."}],
-                    }
-                ],
-                "projects": [],
-                "education": [],
-            }
+            try:
+                from parsers.tokenizer.lexer import LaTeXLexer
+                from parsers.latex.parser import LaTeXParser
+                from parsers.canonical.analyzer import LaTeXSemanticAnalyzer
+
+                lexer = LaTeXLexer(state.raw_resume_text)
+                tokens = lexer.tokenize()
+                parser = LaTeXParser(tokens)
+                doc = parser.parse()
+                analyzer = LaTeXSemanticAnalyzer()
+                resume = analyzer.analyze(doc)
+                state.canonical_resume = resume.model_dump(mode="json")
+            except Exception as exc:
+                logger.warning("LaTeX parser failed, using text extraction fallback: %s", str(exc))
+                state.canonical_resume = {
+                    "summary": state.raw_resume_text[:500],
+                    "skills": [],
+                    "experience": [],
+                    "projects": [],
+                    "education": [],
+                }
         return state
 
     async def run_step_jd_analysis(self, state: WorkflowState) -> WorkflowState:
@@ -133,7 +135,18 @@ class WorkflowEngine:
             retrieved_context=state.retrieved_context,
             model="qwen3:8b",
         )
-        state.rewritten_resume = rewritten_res.model_dump()
+        rewritten_dict = rewritten_res.model_dump()
+
+        # Flatten ExperienceBullet objects to simple strings for frontend
+        if "experience" in rewritten_dict:
+            for exp in rewritten_dict["experience"]:
+                if "bullets" in exp:
+                    exp["bullets"] = [
+                        b["text"] if isinstance(b, dict) and "text" in b else str(b)
+                        for b in exp["bullets"]
+                    ]
+
+        state.rewritten_resume = rewritten_dict
         return state
 
     async def run_step_guardrails(self, state: WorkflowState) -> WorkflowState:

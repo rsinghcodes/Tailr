@@ -2,10 +2,14 @@ import logging
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import func, select
 from infrastructure.database import get_db
 from infrastructure.repositories.workflow_repository import WorkflowRepositoryImpl
 from infrastructure.repositories.resume_repository import ResumeRepositoryImpl
 from infrastructure.redis.cache import RedisCacheService, get_redis_cache_service
+from infrastructure.database.workflow_models import WorkflowRunModel
+from infrastructure.database.resume_models import ResumeModel
+from infrastructure.database.guardrail_models import GuardrailEventModel
 
 logger = logging.getLogger(__name__)
 
@@ -28,8 +32,8 @@ class HistoryResponse(BaseModel):
 
 class AnalyticsDashboardResponse(BaseModel):
     total_optimizations: int = 0
-    average_ats_improvement: float = 24.5
-    guardrail_pass_rate: float = 0.985
+    average_ats_improvement: float = 0.0
+    guardrail_pass_rate: float = 1.0
     total_resumes: int = 0
 
 
@@ -46,33 +50,46 @@ async def get_optimization_history(
 
     items = []
     try:
-        wf_repo = WorkflowRepositoryImpl(session)
-        runs = await wf_repo.get_by_user("default_user")
+        stmt = (
+            select(WorkflowRunModel)
+            .order_by(WorkflowRunModel.created_at.desc())
+            .limit(50)
+        )
+        result = await session.execute(stmt)
+        runs = result.scalars().all()
+
         for r in runs:
+            # Try to get resume title
+            resume_title = "Master Resume"
+            if r.resume_id:
+                try:
+                    res_stmt = select(ResumeModel.title).where(ResumeModel.id == r.resume_id)
+                    res_result = await session.execute(res_stmt)
+                    title_row = res_result.scalar_one_or_none()
+                    if title_row:
+                        resume_title = title_row
+                except Exception:
+                    pass
+
+            # Extract ATS score from state_data
+            ats_score = 0.0
+            if r.state_data and isinstance(r.state_data, dict):
+                ats_data = r.state_data.get("ats_report")
+                if isinstance(ats_data, dict):
+                    ats_score = ats_data.get("overall_score", 0.0)
+
             items.append(
                 WorkflowHistoryItem(
                     workflow_id=str(r.id),
-                    resume_title="Master Resume",
-                    job_title="Target Job Position",
-                    status=r.current_state.value if hasattr(r.current_state, "value") else str(r.current_state),
-                    ats_score=88.5,
-                    created_at=r.created_at.isoformat() if r.created_at else "2026-07-25T10:00:00Z",
+                    resume_title=resume_title,
+                    job_title="Target Position",
+                    status=r.status or "UNKNOWN",
+                    ats_score=ats_score,
+                    created_at=r.created_at.isoformat() if r.created_at else "",
                 )
             )
     except Exception as exc:
-        logger.warning("DB workflow history query error, fallback list: %s", str(exc))
-
-    if not items:
-        items = [
-            WorkflowHistoryItem(
-                workflow_id="wf-101",
-                resume_title="Master Software Engineer",
-                job_title="Senior AI Platform Engineer",
-                status="COMPLETED",
-                ats_score=88.5,
-                created_at="2026-07-25T10:00:00Z",
-            )
-        ]
+        logger.warning("DB workflow history query error: %s", str(exc))
 
     response = HistoryResponse(workflows=items, total=len(items))
     await cache_service.set(cache_key, response, ttl_seconds=60)
@@ -90,23 +107,59 @@ async def get_analytics_dashboard(
     if cached:
         return cached
 
-    total_optimizations = 1
-    total_resumes = 1
+    total_optimizations = 0
+    total_resumes = 0
+    avg_ats = 0.0
+    guardrail_pass_rate = 1.0
 
     try:
-        wf_repo = WorkflowRepositoryImpl(session)
-        res_repo = ResumeRepositoryImpl(session)
-        runs = await wf_repo.get_by_user("default_user")
-        resumes = await res_repo.list_by_user()
-        total_optimizations = max(len(runs), 1)
-        total_resumes = max(len(resumes), 1)
+        # Count workflows
+        wf_count_stmt = select(func.count(WorkflowRunModel.id))
+        wf_result = await session.execute(wf_count_stmt)
+        total_optimizations = wf_result.scalar() or 0
+
+        # Count resumes
+        res_count_stmt = select(func.count(ResumeModel.id))
+        res_result = await session.execute(res_count_stmt)
+        total_resumes = res_result.scalar() or 0
+
+        # Calculate average ATS score from completed workflows
+        if total_optimizations > 0:
+            ats_stmt = select(WorkflowRunModel.state_data).where(
+                WorkflowRunModel.status == "COMPLETED"
+            )
+            ats_result = await session.execute(ats_stmt)
+            state_rows = ats_result.scalars().all()
+
+            scores = []
+            for sd in state_rows:
+                if isinstance(sd, dict) and sd.get("ats_report"):
+                    score = sd["ats_report"].get("overall_score", 0)
+                    if score > 0:
+                        scores.append(score)
+            if scores:
+                avg_ats = round(sum(scores) / len(scores), 1)
+
+        # Calculate guardrail pass rate
+        guardrail_count_stmt = select(func.count(GuardrailEventModel.id))
+        guardrail_result = await session.execute(guardrail_count_stmt)
+        total_events = guardrail_result.scalar() or 0
+
+        if total_events > 0:
+            rejected_stmt = select(func.count(GuardrailEventModel.id)).where(
+                GuardrailEventModel.severity == "critical"
+            )
+            rejected_result = await session.execute(rejected_stmt)
+            rejected_count = rejected_result.scalar() or 0
+            guardrail_pass_rate = round(1.0 - (rejected_count / total_events), 3)
+
     except Exception as exc:
         logger.warning("Analytics DB query fallback: %s", str(exc))
 
     response = AnalyticsDashboardResponse(
         total_optimizations=total_optimizations,
-        average_ats_improvement=24.5,
-        guardrail_pass_rate=0.985,
+        average_ats_improvement=avg_ats,
+        guardrail_pass_rate=guardrail_pass_rate,
         total_resumes=total_resumes,
     )
     await cache_service.set(cache_key, response, ttl_seconds=60)

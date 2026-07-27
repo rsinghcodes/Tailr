@@ -1,35 +1,37 @@
 @import "tailwindcss";
 
-@layer base {
-  body {
-    @apply bg-zinc-950 text-zinc-100 antialiased font-sans selection:bg-zinc-800 selection:text-zinc-100;
-  }
+@theme {
+  --color-sidebar: #0f172a;
+  --color-sidebar-hover: #1e293b;
+  --color-sidebar-active: #334155;
+  --color-accent: #0ea5e9;
+  --color-accent-hover: #0284c7;
+  --color-surface: #1e293b;
+  --color-surface-hover: #334155;
+  --color-muted: #94a3b8;
+  --color-success: #22c55e;
+  --color-warning: #eab308;
+  --color-danger: #ef4444;
 }
 
-.min-panel {
-  @apply bg-zinc-900/60 border border-zinc-800/80 rounded-lg backdrop-blur-xs transition-all;
+body {
+  background: #020617;
+  color: #e2e8f0;
 }
 
-.min-card {
-  @apply bg-zinc-900/40 border border-zinc-800/60 rounded-md p-4 transition-all hover:border-zinc-700/80;
+::-webkit-scrollbar {
+  width: 6px;
 }
 
-.min-button {
-  @apply inline-flex items-center justify-center gap-2 px-3.5 py-1.5 rounded text-xs font-medium transition-all focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer;
+::-webkit-scrollbar-track {
+  background: #0f172a;
 }
 
-.min-button-primary {
-  @apply bg-zinc-100 text-zinc-950 hover:bg-white font-semibold shadow-xs;
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
 }
 
-.min-button-secondary {
-  @apply bg-zinc-900 text-zinc-300 border border-zinc-800 hover:bg-zinc-800 hover:text-zinc-100;
-}
-
-.diff-added {
-  @apply bg-emerald-950/40 border-l-2 border-l-emerald-500 text-emerald-300;
-}
-
-.diff-removed {
-  @apply bg-rose-950/40 border-l-2 border-l-rose-500 text-rose-300 line-through opacity-75;
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
 }

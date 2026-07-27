@@ -12,6 +12,8 @@ router = APIRouter(tags=["Workflows"])
 
 
 class WorkflowStartRequest(BaseModel):
+    resume_id: str | None = None
+    job_description_id: str | None = None
     raw_resume_text: str | None = None
     job_description_text: str | None = None
 
@@ -35,6 +37,8 @@ async def start_workflow(
         final_state = await workflow_service.start_workflow(
             raw_resume_text=request.raw_resume_text,
             job_description_text=request.job_description_text,
+            resume_id=request.resume_id,
+            job_description_id=request.job_description_id,
         )
         return WorkflowResponse(
             workflow_id=final_state.workflow_id,
@@ -77,12 +81,9 @@ async def approve_workflow(
     """Human-in-the-loop approval gate approving resume rewrite before LaTeX compilation."""
     state = await workflow_service.get_workflow_state(workflow_id)
     if not state:
-        return WorkflowResponse(
-            workflow_id=workflow_id,
-            status="COMPLETED",
-            telemetry={"approved_by": "human_operator"},
-        )
+        raise HTTPException(status_code=404, detail=f"Workflow '{workflow_id}' not found.")
 
+    state.status = "COMPLETED"
     return WorkflowResponse(
         workflow_id=state.workflow_id,
         status="COMPLETED",

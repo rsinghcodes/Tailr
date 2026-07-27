@@ -73,8 +73,15 @@ async def get_guardrail_repository(session: AsyncSession = Depends(get_db)) -> G
 async def get_workflow_service(
     workflow_repo: WorkflowRepositoryImpl = Depends(get_workflow_repository),
     guardrail_repo: GuardrailRepositoryImpl = Depends(get_guardrail_repository),
+    resume_repo: ResumeRepositoryImpl = Depends(get_resume_repository),
+    jd_repo: JobDescriptionRepositoryImpl = Depends(get_job_description_repository),
 ) -> WorkflowApplicationService:
-    return WorkflowApplicationService(workflow_repo=workflow_repo, guardrail_repo=guardrail_repo)
+    return WorkflowApplicationService(
+        workflow_repo=workflow_repo,
+        guardrail_repo=guardrail_repo,
+        resume_repo=resume_repo,
+        jd_repo=jd_repo,
+    )
 
 
 async def get_guardrail_service(

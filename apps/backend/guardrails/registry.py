@@ -18,4 +18,5 @@ class GuardrailRegistry:
 
     @classmethod
     def create_engine(cls, profile_name: str = "rewrite_strict") -> GuardrailsEngine:
-        return GuardrailsEngine()
+        validators = GuardrailsEngine.PROFILES.get(profile_name, GuardrailsEngine.PROFILES["rewrite_strict"])
+        return GuardrailsEngine(validators=validators)

@@ -1,6 +1,6 @@
 from typing import Any
 from agents.resume_analyzer.schemas import ResumeAnalysisOutput
-from providers.llm.base import LLMProvider
+from domain.shared.llm_provider import LLMProvider
 
 
 class ResumeAnalyzerAgent:

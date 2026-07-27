@@ -31,6 +31,7 @@ class GuardrailRepositoryImpl:
         )
         self.session.add(db_event)
         await self.session.flush()
+        await self.session.commit()
         return db_event
 
     async def list_by_workflow(self, workflow_id: str, limit: int = 50) -> Sequence[GuardrailEventModel]:
