@@ -7,7 +7,6 @@ from api.routes.job_description import router as job_description_router
 from api.routes.workflow import router as workflow_router
 from api.routes.guardrails import router as guardrails_router
 from api.routes.ats import router as ats_router
-from api.routes.render import router as render_router
 from api.routes.optimization import router as optimization_router
 from api.routes.knowledge import router as knowledge_router
 from api.routes.history import router as history_router
@@ -31,7 +30,7 @@ def create_app() -> FastAPI:
     # Register CORS middleware
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=settings.CORS_ORIGINS,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -49,7 +48,6 @@ def create_app() -> FastAPI:
     app.include_router(workflow_router, prefix=settings.API_PREFIX)
     app.include_router(guardrails_router, prefix=settings.API_PREFIX)
     app.include_router(ats_router, prefix=settings.API_PREFIX)
-    app.include_router(render_router, prefix=settings.API_PREFIX)
     app.include_router(optimization_router, prefix=settings.API_PREFIX)
     app.include_router(knowledge_router, prefix=settings.API_PREFIX)
     app.include_router(history_router, prefix=settings.API_PREFIX)

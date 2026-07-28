@@ -4,7 +4,7 @@ import { QueryProvider } from "@/lib/query-provider";
 
 export const metadata: Metadata = {
   title: "Tailr — AI-Powered Resume Intelligence Platform",
-  description: "Optimize your resume for every job description using Multi-Agent AI, RAG, and LLMs while enforcing mandatory AI safety and LaTeX formatting.",
+  description: "Optimize your resume for every job description using Multi-Agent AI, RAG, and LLMs while enforcing mandatory AI safety and formatting guardrails.",
 };
 
 export default function RootLayout({

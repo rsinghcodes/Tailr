@@ -11,17 +11,23 @@ from infrastructure.repositories.job_description_repository import JobDescriptio
 from application.job_description.service import JobDescriptionService
 from application.job_description.analyzer import JobDescriptionAnalyzer
 from domain.shared.llm_provider import LLMProvider
-from infrastructure.ollama.llm_provider import OllamaProvider
+from infrastructure.langchain.llm_provider import GeminiProvider
 from prompts.registry import PromptRegistry
 
 from infrastructure.repositories.workflow_repository import WorkflowRepositoryImpl
 from infrastructure.repositories.guardrail_repository import GuardrailRepositoryImpl
 from application.workflow.service import WorkflowApplicationService
 from application.guardrails.service import GuardrailApplicationService
+from infrastructure.llamaindex.client import get_llama_client
+from infrastructure.llamaindex.parser import LlamaDocParser
+from infrastructure.llamaindex.extractors import LlamaExtractor
+from infrastructure.llamaindex.vector_store import LlamaIndexService
 
-# Registry and Provider DI Singletons
 _prompt_registry = PromptRegistry()
-_llm_provider = OllamaProvider()
+_llm_provider = GeminiProvider()
+
+
+_llama_client = get_llama_client()
 
 
 def get_prompt_registry() -> PromptRegistry:
@@ -30,6 +36,18 @@ def get_prompt_registry() -> PromptRegistry:
 
 def get_llm_provider() -> LLMProvider:
     return _llm_provider
+
+
+def get_llama_parser() -> LlamaDocParser:
+    return LlamaDocParser(client=_llama_client)
+
+
+def get_llama_extractor() -> LlamaExtractor:
+    return LlamaExtractor(client=_llama_client)
+
+
+def get_llama_index_service() -> LlamaIndexService:
+    return LlamaIndexService(client=_llama_client)
 
 
 async def get_resume_repository(session: AsyncSession = Depends(get_db)) -> ResumeRepository:

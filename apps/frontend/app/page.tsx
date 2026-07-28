@@ -33,7 +33,7 @@ export default function Home() {
                     Build one master resume. Tailor it infinitely.
                   </h1>
                   <p className="text-sm text-zinc-400 leading-relaxed">
-                    Tailr optimizes LaTeX resumes for specific job descriptions using Multi-Agent AI. Grounded in truth, validated by deterministic guardrails, and structured for maximum ATS performance.
+                    Tailr optimizes resumes for specific job descriptions using Multi-Agent AI. Grounded in truth, validated by deterministic guardrails, and structured for maximum ATS performance.
                   </p>
                 </div>
 
@@ -81,10 +81,10 @@ export default function Home() {
 
                 <div className="min-card p-5 space-y-2">
                   <div className="flex items-center gap-2 text-sm font-semibold text-zinc-200">
-                    <ShieldCheck className="w-4 h-4 text-zinc-400" /> LaTeX Compiler
+                    <ShieldCheck className="w-4 h-4 text-zinc-400" /> LLM-Powered Rewriting
                   </div>
                   <p className="text-xs text-zinc-400 leading-relaxed">
-                    Raw LaTeX is rendered deterministically without direct LLM LaTeX code editing, ensuring compilation safety.
+                    Gemini 2.5 Flash rewrites resume content targeting specific job descriptions while preserving factual accuracy.
                   </p>
                 </div>
               </div>

@@ -23,15 +23,14 @@ class ResumeRepositoryImpl(ResumeRepository):
     async def save(
         self,
         resume: Resume,
-        raw_latex: Optional[str] = None,
+        raw_text: Optional[str] = None,
         title: Optional[str] = None,
         resume_container_id: Optional[uuid.UUID] = None,
-    ) -> Resume:
+    ) -> tuple[Resume, uuid.UUID]:
         container_id = resume_container_id
         db_resume = None
 
         if not container_id:
-            # Create a new parent Resume container
             db_resume = ResumeModel(
                 title=title or f"Resume - {datetime.utcnow().strftime('%Y-%m-%d')}",
                 current_version=1,
@@ -41,7 +40,6 @@ class ResumeRepositoryImpl(ResumeRepository):
             await self.session.flush()
             container_id = db_resume.id
         else:
-            # Check if parent container exists, and increment version
             stmt_resume = select(ResumeModel).where(ResumeModel.id == container_id)
             result_resume = await self.session.execute(stmt_resume)
             db_resume = result_resume.scalar_one_or_none()
@@ -51,25 +49,21 @@ class ResumeRepositoryImpl(ResumeRepository):
 
         current_ver = db_resume.current_version if db_resume else 1
 
-        # Check if the version already exists in database
         stmt_version = select(ResumeVersionModel).where(ResumeVersionModel.id == resume.id)
         result_version = await self.session.execute(stmt_version)
         db_version = result_version.scalar_one_or_none()
 
         if db_version:
-            # Update version record
             db_version.canonical_json = resume.model_dump(mode="json")
-            if raw_latex:
-                db_version.latex_path = raw_latex
+            if raw_text:
+                db_version.raw_text = raw_text
             db_version.updated_at = datetime.utcnow()
         else:
-            # Save new version record
             db_version = ResumeVersionModel(
                 id=resume.id,
                 resume_id=container_id,
                 version=current_ver,
-                latex_path=raw_latex,
-                pdf_path=None,
+                raw_text=raw_text,
                 canonical_json=resume.model_dump(mode="json"),
                 created_at=resume.created_at,
                 updated_at=resume.updated_at
@@ -77,16 +71,15 @@ class ResumeRepositoryImpl(ResumeRepository):
             self.session.add(db_version)
 
         await self.session.commit()
-        return resume
+        return resume, container_id
 
     async def delete(self, resume_id: uuid.UUID) -> bool:
-        # Search parent container
         stmt = select(ResumeModel).where(ResumeModel.id == resume_id)
         result = await self.session.execute(stmt)
         db_resume = result.scalar_one_or_none()
         if not db_resume:
             return False
-        
+
         await self.session.delete(db_resume)
         await self.session.commit()
         return True
@@ -101,7 +94,6 @@ class ResumeRepositoryImpl(ResumeRepository):
             ResumeModel.updated_at
         ).order_by(ResumeModel.updated_at.desc())
         result = await self.session.execute(stmt)
-        # Convert list of Rows to list of tuples
         return [
             (row.id, row.title, row.current_version, row.status, row.created_at, row.updated_at)
             for row in result.all()
@@ -109,17 +101,16 @@ class ResumeRepositoryImpl(ResumeRepository):
 
     async def get_versions_by_resume_id(
         self, resume_id: uuid.UUID
-    ) -> list[tuple[uuid.UUID, int, Optional[str], datetime, datetime]]:
+    ) -> list[tuple[uuid.UUID, int, datetime, datetime]]:
         stmt = select(
             ResumeVersionModel.id,
             ResumeVersionModel.version,
-            ResumeVersionModel.latex_path,
             ResumeVersionModel.created_at,
             ResumeVersionModel.updated_at
         ).where(ResumeVersionModel.resume_id == resume_id).order_by(ResumeVersionModel.version.desc())
         result = await self.session.execute(stmt)
         return [
-            (row.id, row.version, row.latex_path, row.created_at, row.updated_at)
+            (row.id, row.version, row.created_at, row.updated_at)
             for row in result.all()
         ]
 
@@ -130,4 +121,3 @@ class ResumeRepositoryImpl(ResumeRepository):
         resume.created_at = db_version.created_at
         resume.updated_at = db_version.updated_at
         return resume
-

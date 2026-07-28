@@ -1,9 +1,12 @@
 import logging
+import os
+import tempfile
 import uuid
 from typing import Optional
 from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile
+from fastapi.responses import StreamingResponse
 
-from api.dependencies.services import get_resume_service
+from api.dependencies.services import get_resume_service, get_llama_parser, get_llama_extractor
 from api.routes.resume_schemas import (
     ResumeDetailsResponse,
     ResumeListResponse,
@@ -13,10 +16,14 @@ from api.routes.resume_schemas import (
     ResumeVersionsResponse,
 )
 from application.resume.service import ResumeService
+from infrastructure.llamaindex.parser import LlamaDocParser
+from infrastructure.llamaindex.extractors import LlamaExtractor
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Resumes"])
+
+ALLOWED_EXTENSIONS = {".pdf", ".docx", ".txt", ".tex"}
 
 
 @router.post("/resumes", response_model=ResumeUploadResponse, status_code=201)
@@ -25,35 +32,145 @@ async def upload_resume(
     title: Optional[str] = Form(None),
     resume_container_id: Optional[uuid.UUID] = Form(None),
     service: ResumeService = Depends(get_resume_service),
+    parser: LlamaDocParser = Depends(get_llama_parser),
+    extractor: LlamaExtractor = Depends(get_llama_extractor),
 ):
-    """Upload and parse a LaTeX resume into a canonical representation."""
-    if not file.filename or not file.filename.endswith((".tex", ".txt")):
+    """Upload a resume file (PDF, DOCX, TXT). Parses and extracts structured data via LlamaCloud."""
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Filename is required.")
+
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
             status_code=400,
-            detail="Only LaTeX (.tex) or text (.txt) files are supported.",
+            detail=f"Unsupported file type '{ext}'. Allowed: {', '.join(ALLOWED_EXTENSIONS)}",
         )
 
     try:
         content_bytes = await file.read()
-        raw_latex = content_bytes.decode("utf-8")
-    except UnicodeDecodeError as exc:
-        raise HTTPException(
-            status_code=400, detail="Invalid file encoding. File must be UTF-8 encoded."
-        ) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Failed to read file: {exc}") from exc
+
+    raw_text = ""
+    if ext in (".pdf", ".docx"):
+        tmp_path = None
+        try:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
+                tmp.write(content_bytes)
+                tmp_path = tmp.name
+            parsed = await parser.parse_file(tmp_path)
+            raw_text = parsed[0]["text"] if parsed else content_bytes.decode("utf-8", errors="replace")
+        finally:
+            if tmp_path and os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+    else:
+        raw_text = content_bytes.decode("utf-8")
+
+    if not raw_text.strip():
+        raise HTTPException(status_code=422, detail="Parsed content is empty.")
+
+    extracted = await extractor.extract_resume(raw_text)
 
     try:
-        resume = await service.upload_resume(
-            raw_latex=raw_latex,
+        resume, container_id = await service.upload_resume(
+            raw_text=raw_text,
+            extracted=extracted,
             filename=file.filename,
             title=title,
             resume_container_id=resume_container_id,
         )
-        return ResumeUploadResponse(resume_id=resume.id, status="uploaded")
+        return ResumeUploadResponse(resume_id=container_id, status="uploaded")
     except Exception as exc:
-        logger.error("Failed to parse and upload resume: %s", str(exc))
+        logger.error("Failed to upload resume: %s", str(exc))
         raise HTTPException(
-            status_code=422, detail=f"Resume parsing failed: {str(exc)}"
+            status_code=422, detail=f"Resume upload failed: {str(exc)}"
         ) from exc
+
+
+@router.get("/resumes/{resume_id}/download")
+async def download_resume_pdf(
+    resume_id: uuid.UUID,
+    service: ResumeService = Depends(get_resume_service),
+):
+    """Download a resume as PDF."""
+    versions = await service.get_resume_versions(resume_id)
+    if not versions:
+        raise HTTPException(status_code=404, detail="Resume not found.")
+
+    latest_version_id = versions[0]["version_id"]
+    resume = await service.get_resume_by_version(latest_version_id)
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume version not found.")
+
+    pdf_bytes = _generate_pdf(resume)
+
+    return StreamingResponse(
+        iter([pdf_bytes]),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="resume_{resume_id}.pdf"'},
+    )
+
+
+def _generate_pdf(resume) -> bytes:
+    from fpdf import FPDF
+
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.cell(0, 10, "Resume", ln=True, align="C")
+    pdf.ln(4)
+
+    if resume.summary:
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.cell(0, 8, "Summary", ln=True)
+        pdf.set_font("Helvetica", "", 10)
+        pdf.multi_cell(0, 6, resume.summary)
+        pdf.ln(4)
+
+    if resume.skills:
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.cell(0, 8, "Skills", ln=True)
+        pdf.set_font("Helvetica", "", 10)
+        skills_text = ", ".join(s.name for s in resume.skills if s.name)
+        pdf.multi_cell(0, 6, skills_text)
+        pdf.ln(4)
+
+    if resume.experience:
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.cell(0, 8, "Experience", ln=True)
+        pdf.set_font("Helvetica", "", 10)
+        for exp in resume.experience:
+            pdf.set_font("Helvetica", "B", 10)
+            pdf.cell(0, 6, f"{exp.role} at {exp.company}", ln=True)
+            pdf.set_font("Helvetica", "I", 9)
+            pdf.cell(0, 5, f"{exp.start_date} - {exp.end_date or 'Present'}", ln=True)
+            pdf.set_font("Helvetica", "", 10)
+            for bullet in exp.bullets:
+                pdf.multi_cell(0, 6, f"  - {bullet.text}")
+            pdf.ln(2)
+
+    if resume.projects:
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.cell(0, 8, "Projects", ln=True)
+        pdf.set_font("Helvetica", "", 10)
+        for proj in resume.projects:
+            pdf.set_font("Helvetica", "B", 10)
+            pdf.cell(0, 6, proj.title, ln=True)
+            if proj.description:
+                pdf.set_font("Helvetica", "", 10)
+                pdf.multi_cell(0, 6, proj.description)
+            pdf.ln(1)
+
+    if resume.education:
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.cell(0, 8, "Education", ln=True)
+        pdf.set_font("Helvetica", "", 10)
+        for edu in resume.education:
+            pdf.cell(0, 6, f"{edu.degree} - {edu.institution}", ln=True)
+
+    return bytes(pdf.output())
 
 
 @router.get("/resumes", response_model=ResumeListResponse)

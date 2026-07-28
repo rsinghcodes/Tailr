@@ -65,7 +65,7 @@ Instead of editing LaTeX directly, Tailr converts the resume into a structured k
 - 📚 OpenAPI documentation
 - 🔭 OpenTelemetry observability
 - 📊 Langfuse tracing
-- 🏠 Local-first AI (Ollama) — cloud LLMs optional
+- 🏠 Cloud AI (Google Gemini 2.5 Flash) — fast, structured output
 
 ---
 
@@ -206,7 +206,7 @@ LaTeX Renderer → latexmk → PDF
 
 - **LlamaIndex** — RAG, indexing, retrieval, embedding, context assembly
 - **LangGraph** — Workflow orchestration, multi-agent coordination, state machines
-- Ollama (local inference)
+- Google Gemini 2.5 Flash (LLM + Embeddings)
 - Qwen3 (default model)
 - HuggingFace Embeddings (BAAI/bge-small-en-v1.5)
 
@@ -364,7 +364,7 @@ docker compose up -d
 This starts:
 
 - Redis
-- Ollama
+- Google Gemini
 
 > **Note:** PostgreSQL and Qdrant are configured separately. See the deployment docs for full setup.
 
@@ -444,7 +444,7 @@ This project is licensed under the MIT License.
 
 <div align="center">
 
-**Built using FastAPI, Next.js, LlamaIndex, LangGraph, Qdrant, Ollama, and modern AI engineering practices.**
+**Built using FastAPI, Next.js, LlamaIndex, LangGraph, Qdrant, Google Gemini, and modern AI engineering practices.**
 
 ⭐ Star this repository if you find it useful!
 

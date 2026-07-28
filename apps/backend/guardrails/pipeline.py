@@ -14,7 +14,6 @@ from guardrails.validators.hallucination_validator import HallucinationValidator
 from guardrails.validators.resume_validator import ResumeValidator
 from guardrails.validators.pii_validator import PIIValidator
 from guardrails.validators.ats_validator import ATSValidator
-from guardrails.validators.latex_safety_validator import LatexSafetyValidator
 
 
 class GuardrailsEngine:
@@ -29,7 +28,6 @@ class GuardrailsEngine:
             ResumeValidator(),
             PIIValidator(),
             ATSValidator(),
-            LatexSafetyValidator(),
         ],
         "analysis_standard": [
             JSONValidator(),
@@ -45,7 +43,6 @@ class GuardrailsEngine:
             ResumeValidator(),
             PIIValidator(),
             ATSValidator(),
-            LatexSafetyValidator(),
         ],
     }
 

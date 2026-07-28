@@ -50,7 +50,7 @@ export function ResumeManager() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold text-zinc-100">Upload Master Resume</h2>
-            <p className="text-xs text-zinc-400">Upload LaTeX (.tex) or text (.txt) files to parse into the canonical resume model.</p>
+            <p className="text-xs text-zinc-400">Upload PDF, DOCX, or TXT files. Parsed via LlamaCloud and stored in the canonical model.</p>
           </div>
         </div>
 
@@ -79,7 +79,7 @@ export function ResumeManager() {
           </div>
         ) : savedResumes.length === 0 ? (
           <div className="p-8 text-center text-xs text-zinc-500">
-            No master resumes stored yet. Upload a .tex file above or paste content in the wizard.
+            No master resumes stored yet. Upload a PDF, DOCX, or TXT file above or paste content in the wizard.
           </div>
         ) : (
           <div className="space-y-3">
@@ -106,7 +106,7 @@ export function ResumeManager() {
                   </button>
                   <button
                     onClick={() => {
-                      setMasterResumeText(`% Selected Master Resume: ${resume.title}\n\\documentclass{article}\n\\begin{document}\n\\section{Experience}\nExperience loaded from stored resume ${resume.id}.\n\\end{document}`);
+                      setMasterResumeText(`[Resume: ${resume.title} — v${resume.current_version}]`);
                       setWizardStep(2);
                       setActiveTab("wizard");
                     }}

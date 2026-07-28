@@ -4,10 +4,10 @@ import { Cpu } from "lucide-react";
 
 export function ModelArchitectureBadge() {
   const agents = [
-    { name: "JD Extraction", model: "Qwen 3 (8B)" },
-    { name: "Planner", model: "Qwen 3 (14B)" },
-    { name: "Rewriter", model: "Llama 3.1 (8B)" },
-    { name: "ATS Advisor", model: "Gemma 3 (9B)" },
+    { name: "JD Extraction", model: "Gemini 2.5 Flash" },
+    { name: "Planner", model: "Gemini 2.5 Flash" },
+    { name: "Rewriter", model: "Gemini 2.5 Flash" },
+    { name: "ATS Advisor", model: "Gemini 2.5 Flash" },
   ];
 
   return (

@@ -38,6 +38,7 @@ coverage.xml
 venv
 ENV
 env
+*.pdf
 
 # --- Node/Frontend ---
 node_modules/

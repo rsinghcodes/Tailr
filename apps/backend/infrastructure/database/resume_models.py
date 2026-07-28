@@ -32,7 +32,7 @@ class ResumeVersionModel(BaseEntity):
         nullable=False,
     )
     version: Mapped[int] = mapped_column(Integer, nullable=False)
-    latex_path: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    raw_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     pdf_path: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     canonical_json: Mapped[dict] = mapped_column(JSONB, nullable=False)
 
