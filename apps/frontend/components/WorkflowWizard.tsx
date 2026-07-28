@@ -10,10 +10,11 @@ import { Cpu, ArrowRight, CheckCircle2, AlertCircle, Loader2, FileText, Briefcas
 export function WorkflowWizard() {
   const {
     wizardStep, setWizardStep,
-    masterResumeText, setMasterResumeText,
-    jobDescriptionText, setJobDescriptionText,
-    setWorkflowResponse, setActiveTab,
+    selectedResumeId, setSelectedResumeId,
+    selectedJdId, setSelectedJdId,
     savedResumes,
+    savedJds,
+    setWorkflowResponse, setActiveTab,
     streamSteps, setStreamSteps,
     isStreaming, setIsStreaming,
     setStreamWorkflowId,
@@ -28,10 +29,10 @@ export function WorkflowWizard() {
     setStreamSteps(streamSteps.map((s) => ({ ...s, status: "pending" as const })));
 
     try {
-      const requestBody = {
-        raw_resume_text: masterResumeText || undefined,
-        job_description_text: jobDescriptionText || undefined,
-      };
+      const requestBody: { resume_id?: string; job_description_id?: string } = {};
+      if (selectedResumeId) requestBody.resume_id = selectedResumeId;
+      if (selectedJdId) requestBody.job_description_id = selectedJdId;
+
       abortRef.current = new AbortController();
 
       for await (const event of streamWorkflow(requestBody)) {
@@ -93,27 +94,31 @@ export function WorkflowWizard() {
         </div>
       </div>
 
-      {/* Step Content */}
+      {/* Step 1: Resume Selection */}
       {wizardStep === 1 && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <label className="text-sm font-semibold text-zinc-200 flex items-center gap-2">
               <FileText className="w-4 h-4 text-zinc-400" /> Step 1: Master Resume
             </label>
-            <span className="text-xs text-zinc-500 font-mono">Canonical Source of Truth</span>
+            <span className="text-xs text-zinc-500 font-mono">Select a stored resume</span>
           </div>
 
           <ResumeUploader />
 
           {savedResumes.length > 0 && (
-            <div className="p-3 bg-zinc-900/60 border border-zinc-800 rounded-md space-y-2">
-              <div className="text-xs text-zinc-400 font-medium">Or select from stored resumes:</div>
+            <div className="space-y-2">
+              <div className="text-xs text-zinc-400 font-medium">Select from stored resumes:</div>
               <div className="flex flex-wrap gap-2">
                 {savedResumes.map((r) => (
                   <button
                     key={r.id}
-                    onClick={() => setMasterResumeText(`[Resume: ${r.title} — v${r.current_version}]`)}
-                    className="px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 border border-zinc-700 font-mono"
+                    onClick={() => setSelectedResumeId(r.id)}
+                    className={`px-2.5 py-1 rounded text-xs font-mono border transition-all ${
+                      selectedResumeId === r.id
+                        ? "bg-zinc-200 text-zinc-950 border-zinc-400"
+                        : "bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border-zinc-700"
+                    }`}
                   >
                     {r.title} (v{r.current_version})
                   </button>
@@ -122,48 +127,64 @@ export function WorkflowWizard() {
             </div>
           )}
 
-          <textarea
-            value={masterResumeText}
-            onChange={(e) => setMasterResumeText(e.target.value)}
-            rows={7}
-            className="min-input w-full font-mono text-xs"
-            placeholder="Paste your resume text..."
-          />
-
           <div className="flex justify-end">
-            <button onClick={() => setWizardStep(2)} className="min-button min-button-primary">
+            <button
+              onClick={() => setWizardStep(2)}
+              disabled={!selectedResumeId}
+              className="min-button min-button-primary disabled:opacity-50"
+            >
               Next: Job Description <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </div>
       )}
 
+      {/* Step 2: JD Selection */}
       {wizardStep === 2 && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <label className="text-sm font-semibold text-zinc-200 flex items-center gap-2">
               <Briefcase className="w-4 h-4 text-zinc-400" /> Step 2: Target Job Description
             </label>
-            <span className="text-xs text-zinc-500 font-mono">Target Role Requirements</span>
+            <span className="text-xs text-zinc-500 font-mono">Select a stored job description</span>
           </div>
 
-          <textarea
-            value={jobDescriptionText}
-            onChange={(e) => setJobDescriptionText(e.target.value)}
-            rows={9}
-            className="min-input w-full font-mono text-xs"
-            placeholder="Paste the target job description text..."
-          />
+          {savedJds.length > 0 ? (
+            <div className="space-y-2">
+              <div className="text-xs text-zinc-400 font-medium">Select from analyzed job descriptions:</div>
+              {savedJds.map((jd) => (
+                <button
+                  key={jd.id}
+                  onClick={() => setSelectedJdId(jd.id)}
+                  className={`w-full text-left px-3 py-2 rounded text-xs font-mono border transition-all ${
+                    selectedJdId === jd.id
+                      ? "bg-zinc-200 text-zinc-950 border-zinc-400"
+                      : "bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border-zinc-700"
+                  }`}
+                >
+                  <span className="font-semibold">{jd.title}</span>
+                  {jd.company && <span className="text-zinc-400 ml-2">{jd.company}</span>}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-zinc-500">No job descriptions available. Upload one in the Job Descriptions tab first.</p>
+          )}
 
           <div className="flex justify-between">
             <button onClick={() => setWizardStep(1)} className="min-button min-button-secondary">Back</button>
-            <button onClick={() => setWizardStep(3)} className="min-button min-button-primary">
+            <button
+              onClick={() => setWizardStep(3)}
+              disabled={!selectedJdId}
+              className="min-button min-button-primary disabled:opacity-50"
+            >
               Next: Review & Execute <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </div>
       )}
 
+      {/* Step 3: Execute */}
       {wizardStep === 3 && (
         <div className="space-y-6">
           <ModelArchitectureBadge />
@@ -222,7 +243,7 @@ export function WorkflowWizard() {
             <button onClick={() => setWizardStep(2)} disabled={isStreaming} className="min-button min-button-secondary disabled:opacity-50">
               Back
             </button>
-            <button onClick={handleStartOptimization} disabled={isStreaming} className="min-button min-button-primary disabled:opacity-50">
+            <button onClick={handleStartOptimization} disabled={isStreaming || !selectedResumeId || !selectedJdId} className="min-button min-button-primary disabled:opacity-50">
               {isStreaming ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /> Running Pipeline...</>
               ) : (

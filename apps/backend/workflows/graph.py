@@ -2,8 +2,6 @@ import logging
 from langgraph.graph import StateGraph, START, END
 from workflows.state import WorkflowState
 from workflows.nodes import (
-    parse_resume_node,
-    parse_jd_node,
     retrieve_context_node,
     plan_node,
     rewrite_node,
@@ -19,8 +17,6 @@ logger = logging.getLogger(__name__)
 def build_workflow_graph() -> StateGraph:
     graph = StateGraph(WorkflowState)
 
-    graph.add_node("parse_resume", parse_resume_node)
-    graph.add_node("parse_jd", parse_jd_node)
     graph.add_node("retrieve_context", retrieve_context_node)
     graph.add_node("plan", plan_node)
     graph.add_node("rewrite", rewrite_node)
@@ -29,9 +25,7 @@ def build_workflow_graph() -> StateGraph:
     graph.add_node("ats_analysis", ats_node)
     graph.add_node("render", render_node)
 
-    graph.add_edge(START, "parse_resume")
-    graph.add_edge("parse_resume", "parse_jd")
-    graph.add_edge("parse_jd", "retrieve_context")
+    graph.add_edge(START, "retrieve_context")
     graph.add_edge("retrieve_context", "plan")
     graph.add_edge("plan", "rewrite")
     graph.add_edge("rewrite", "guardrails")

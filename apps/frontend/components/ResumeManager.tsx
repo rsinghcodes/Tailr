@@ -7,7 +7,7 @@ import { ResumeUploader } from "./ResumeUploader";
 import { FileText, Trash2, History, RefreshCw, ArrowRight, Loader2 } from "lucide-react";
 
 export function ResumeManager() {
-  const { savedResumes, setSavedResumes, setMasterResumeText, setWizardStep, setActiveTab } = useUIStore();
+  const { savedResumes, setSavedResumes, setSelectedResumeId, setWizardStep, setActiveTab } = useUIStore();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedVersions, setSelectedVersions] = useState<{ resumeId: string; items: ResumeVersionItem[] } | null>(null);
 
@@ -106,7 +106,7 @@ export function ResumeManager() {
                   </button>
                   <button
                     onClick={() => {
-                      setMasterResumeText(`[Resume: ${resume.title} — v${resume.current_version}]`);
+                      setSelectedResumeId(resume.id);
                       setWizardStep(2);
                       setActiveTab("wizard");
                     }}

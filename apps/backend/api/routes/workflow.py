@@ -17,8 +17,6 @@ router = APIRouter(tags=["Workflows"])
 
 
 class WorkflowStartRequest(BaseModel):
-    raw_resume_text: str | None = None
-    job_description_text: str | None = None
     resume_id: str | None = None
     job_description_id: str | None = None
 
@@ -32,27 +30,74 @@ class WorkflowResponse(BaseModel):
     rewritten_resume: dict[str, Any] | None = None
 
 
-async def _resolve_texts(
+async def _resolve_workflow_data(
     request: WorkflowStartRequest,
     resume_service: ResumeService,
     jd_service: JobDescriptionService,
-) -> tuple[str | None, str | None]:
-    raw_resume_text = request.raw_resume_text
-    job_description_text = request.job_description_text
+) -> tuple[str | None, str | None, dict[str, Any] | None, dict[str, Any] | None]:
+    raw_resume_text = None
+    job_description_text = None
+    canonical_resume = None
+    job_requirements = None
 
-    if not raw_resume_text and request.resume_id:
+    if request.resume_id:
         versions = await resume_service.get_resume_versions(uuid.UUID(request.resume_id))
         if versions:
             resume = await resume_service.get_resume_by_version(versions[0]["version_id"])
             if resume:
                 raw_resume_text = resume.summary or ""
+                canonical_resume = {
+                    "summary": resume.summary,
+                    "skills": [
+                        {"name": s.name, "category": s.category.value if s.category else None}
+                        for s in (resume.skills or [])
+                    ],
+                    "experience": [
+                        {
+                            "company": e.company,
+                            "role": e.role,
+                            "start_date": e.start_date,
+                            "end_date": e.end_date,
+                            "bullets": [{"text": b.text} for b in (e.bullets or [])],
+                        }
+                        for e in (resume.experience or [])
+                    ],
+                    "projects": [
+                        {
+                            "title": p.title,
+                            "description": p.description,
+                            "technologies": p.technologies or [],
+                        }
+                        for p in (resume.projects or [])
+                    ],
+                    "education": [
+                        {
+                            "institution": e.institution,
+                            "degree": e.degree,
+                            "start_date": e.start_date,
+                            "end_date": e.end_date,
+                        }
+                        for e in (resume.education or [])
+                    ],
+                }
 
-    if not job_description_text and request.job_description_id:
-        jd = await jd_service.get_by_id(uuid.UUID(request.job_description_id))
-        if jd:
+    if request.job_description_id:
+        jd_result = await jd_service.get_job_description(uuid.UUID(request.job_description_id))
+        if jd_result:
+            jd, reqs = jd_result
             job_description_text = jd.description or ""
+            if reqs:
+                job_requirements = {
+                    "title": reqs.title,
+                    "required_skills": reqs.required_skills,
+                    "preferred_skills": reqs.preferred_skills,
+                    "responsibilities": reqs.responsibilities,
+                    "soft_skills": reqs.soft_skills,
+                    "keywords": reqs.keywords,
+                    "experience_level": reqs.experience_level,
+                }
 
-    return raw_resume_text, job_description_text
+    return raw_resume_text, job_description_text, canonical_resume, job_requirements
 
 
 @router.post("/workflows/stream")
@@ -70,13 +115,17 @@ async def stream_workflow(
       - step_complete   {step, step_index, total_steps, label, output}
       - workflow_complete {workflow_id}
     """
-    raw_resume_text, job_description_text = await _resolve_texts(request, resume_service, jd_service)
+    raw_resume_text, job_description_text, canonical_resume, job_requirements = await _resolve_workflow_data(
+        request, resume_service, jd_service
+    )
 
     async def event_generator():
         try:
             async for event in workflow_service.start_workflow_stream(
                 raw_resume_text=raw_resume_text,
                 job_description_text=job_description_text,
+                canonical_resume=canonical_resume,
+                job_requirements=job_requirements,
             ):
                 yield f"event: {event['event']}\ndata: {json.dumps(event['data'])}\n\n"
         except Exception as exc:
@@ -105,11 +154,15 @@ async def start_workflow(
 ):
     """Start an event-driven resume optimization workflow."""
     try:
-        raw_resume_text, job_description_text = await _resolve_texts(request, resume_service, jd_service)
+        raw_resume_text, job_description_text, canonical_resume, job_requirements = await _resolve_workflow_data(
+            request, resume_service, jd_service
+        )
 
         final_state = await workflow_service.start_workflow(
             raw_resume_text=raw_resume_text,
             job_description_text=job_description_text,
+            canonical_resume=canonical_resume,
+            job_requirements=job_requirements,
         )
 
         return WorkflowResponse(

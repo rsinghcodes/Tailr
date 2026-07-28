@@ -117,7 +117,7 @@ async def rewrite_resume_content(
             retrieved_context="(no additional context available)",
         )
 
-        rewritten = await llm.generate(
+        _rewritten = await llm.generate(
             prompt=user_prompt,
             system_prompt=system_prompt,
         )

@@ -11,8 +11,6 @@ from config.settings import settings
 logger = logging.getLogger(__name__)
 
 STEP_LABELS: dict[str, dict[str, str]] = {
-    "parse_resume": {"label": "Resume Parsing", "description": "Extracting structured data from resume"},
-    "parse_jd": {"label": "Job Description Analysis", "description": "Analyzing job requirements"},
     "retrieve_context": {"label": "Context Retrieval", "description": "Searching knowledge base for relevant context"},
     "plan": {"label": "Rewrite Planning", "description": "Generating optimization strategy"},
     "rewrite": {"label": "Resume Rewriting", "description": "Applying optimizations to resume content"},
@@ -39,8 +37,10 @@ class WorkflowApplicationService:
         raw_resume_text: str | None = None,
         job_description_text: str | None = None,
         user_id: str = "default_user",
+        canonical_resume: dict[str, Any] | None = None,
+        job_requirements: dict[str, Any] | None = None,
     ) -> WorkflowState:
-        return {
+        state: WorkflowState = {
             "request_id": str(uuid.uuid4()),
             "workflow_id": str(uuid.uuid4()),
             "user_id": user_id,
@@ -50,7 +50,6 @@ class WorkflowApplicationService:
                 "current_step": "NEW",
                 "step_history": [],
                 "model_versions": {
-                    "jd_analyzer": settings.GEMINI_MODEL,
                     "planner": settings.GEMINI_MODEL,
                     "rewriter": settings.GEMINI_MODEL,
                     "ats_advisor": settings.GEMINI_MODEL,
@@ -58,15 +57,26 @@ class WorkflowApplicationService:
             },
             "errors": [],
         }
+        if canonical_resume:
+            state["canonical_resume"] = canonical_resume
+        if job_requirements:
+            state["job_requirements"] = job_requirements
+        return state
 
     async def start_workflow(
         self,
         raw_resume_text: str | None = None,
         job_description_text: str | None = None,
         user_id: str = "default_user",
+        canonical_resume: dict[str, Any] | None = None,
+        job_requirements: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         graph = get_compiled_graph()
-        initial_state = self._build_initial_state(raw_resume_text, job_description_text, user_id)
+        initial_state = self._build_initial_state(
+            raw_resume_text, job_description_text, user_id,
+            canonical_resume=canonical_resume,
+            job_requirements=job_requirements,
+        )
 
         logger.info("Starting LangGraph workflow", extra={"workflow_id": initial_state["workflow_id"], "user_id": user_id})
 
@@ -91,9 +101,15 @@ class WorkflowApplicationService:
         raw_resume_text: str | None = None,
         job_description_text: str | None = None,
         user_id: str = "default_user",
+        canonical_resume: dict[str, Any] | None = None,
+        job_requirements: dict[str, Any] | None = None,
     ) -> AsyncGenerator[dict[str, Any], None]:
         graph = get_compiled_graph()
-        initial_state = self._build_initial_state(raw_resume_text, job_description_text, user_id)
+        initial_state = self._build_initial_state(
+            raw_resume_text, job_description_text, user_id,
+            canonical_resume=canonical_resume,
+            job_requirements=job_requirements,
+        )
         workflow_id = initial_state["workflow_id"]
 
         logger.info("Starting streamed LangGraph workflow", extra={"workflow_id": workflow_id})
@@ -138,9 +154,6 @@ class WorkflowApplicationService:
                         "output": safe_output,
                     },
                 }
-
-        final_state = self._build_initial_state(raw_resume_text, job_description_text, user_id)
-        final_state["workflow_id"] = workflow_id
 
         yield {
             "event": "workflow_complete",

@@ -19,6 +19,8 @@ class PIIValidator(BaseValidator):
         (r"(?:sk-[a-zA-Z0-9]{32,})", "OpenAI API Key"),
         (r"(?:AKIA[0-9A-Z]{16})", "AWS Access Key ID"),
         (r"(?i)password\s*=\s*['\"][^'\"]+['\"]", "Exposed Password"),
+        (r"\b\d{3}-\d{2}-\d{4}\b", "Social Security Number"),
+        (r"\b(?:\d[ -]*?){13,19}\b", "Credit Card Number"),
     ]
 
     async def validate(self, content: Any, context: GuardrailContext) -> GuardrailResult:

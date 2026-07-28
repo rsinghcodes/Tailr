@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     LLAMA_CLOUD_API_KEY: str = ""
     LLAMA_CLOUD_PIPELINE_NAME: str = "tailr-resumes"
 
+    QDRANT_URL: str = ""
+    QDRANT_API_KEY: str = ""
+    QDRANT_COLLECTION: str = "tailr-documents"
+
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]
 
     LOG_LEVEL: str = "INFO"

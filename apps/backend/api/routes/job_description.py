@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import tempfile
@@ -128,6 +129,10 @@ async def upload_job_description(
             employment_type=employment_type,
             extracted_requirements=extracted,
         )
+
+        from infrastructure.llamaindex.vector_store import VectorStoreService
+        vector_store = VectorStoreService()
+        asyncio.ensure_future(vector_store.index_document(raw_text, file.filename))
 
         response_data = JobDescriptionResponseData(
             id=jd.id,

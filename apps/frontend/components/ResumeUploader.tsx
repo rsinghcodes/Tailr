@@ -12,7 +12,6 @@ interface ResumeUploaderProps {
 const ALLOWED_EXTENSIONS = [".pdf", ".docx", ".txt"];
 
 export function ResumeUploader({ onSuccess }: ResumeUploaderProps) {
-  const { setMasterResumeText } = useUIStore();
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -32,11 +31,6 @@ export function ResumeUploader({ onSuccess }: ResumeUploaderProps) {
 
     try {
       const title = selectedFile.name.replace(/\.[^/.]+$/, "");
-
-      if (ext === ".txt") {
-        const text = await selectedFile.text();
-        setMasterResumeText(text);
-      }
 
       await uploadResumeFile(selectedFile, title);
 

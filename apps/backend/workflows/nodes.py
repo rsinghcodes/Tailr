@@ -2,16 +2,11 @@ import json
 import logging
 from typing import Any
 from workflows.state import WorkflowState
-from config.settings import settings
 from domain.shared.llm_provider import LLMProvider
-from prompts.registry import PromptRegistry
-from domain.resume.models import Resume, Skill, Experience, ExperienceBullet
-from domain.job_description.models import JobRequirements
 
 logger = logging.getLogger(__name__)
 
 _llm: LLMProvider | None = None
-_registry: PromptRegistry | None = None
 
 
 def _get_llm() -> LLMProvider:
@@ -20,13 +15,6 @@ def _get_llm() -> LLMProvider:
         from infrastructure.langchain.llm_provider import GeminiProvider
         _llm = GeminiProvider()
     return _llm
-
-
-def _get_registry() -> PromptRegistry:
-    global _registry
-    if _registry is None:
-        _registry = PromptRegistry()
-    return _registry
 
 
 def _record_step(state: WorkflowState, step: str) -> None:
@@ -43,117 +31,14 @@ def _safe_json(obj: Any) -> str:
         return str(obj)
 
 
-async def parse_resume_node(state: WorkflowState) -> dict[str, Any]:
-    _record_step(state, "PARSING")
-    logger.info("Parsing resume with LLM")
-
-    raw_text = state.get("raw_resume_text", "")
-    if not raw_text:
-        return {"canonical_resume": None, "errors": state.get("errors", []) + ["No resume text provided"]}
-
-    llm = _get_llm()
-    registry = _get_registry()
-
-    try:
-        system_prompt = (
-            "You are a resume parser. Extract structured data from the resume text. "
-            "Return valid JSON with: summary, skills (list of {name, category}), "
-            "experience (list of {company, role, start_date, end_date, bullets: [{text}]}), "
-            "projects (list of {title, description, technologies}). "
-            "Do NOT invent any information. Only extract what is present in the text."
-        )
-
-        result = await llm.generate(
-            prompt=f"Parse this resume into structured JSON:\n\n{raw_text}",
-            system_prompt=system_prompt,
-        )
-
-        parsed = json.loads(result) if isinstance(result, str) else result
-
-        canonical_resume = {
-            "summary": parsed.get("summary", raw_text[:500]),
-            "skills": parsed.get("skills", []),
-            "experience": parsed.get("experience", []),
-            "projects": parsed.get("projects", []),
-            "education": parsed.get("education", []),
-        }
-
-        return {"canonical_resume": canonical_resume}
-
-    except Exception as exc:
-        logger.warning("LLM resume parsing failed, using basic extraction: %s", str(exc))
-        return {
-            "canonical_resume": {
-                "summary": raw_text[:500] if len(raw_text) > 500 else raw_text,
-                "skills": [],
-                "experience": [],
-                "projects": [],
-                "education": [],
-            }
-        }
-
-
-async def parse_jd_node(state: WorkflowState) -> dict[str, Any]:
-    _record_step(state, "JD_ANALYSIS")
-    logger.info("Analyzing job description with LLM")
-
-    jd_text = state.get("job_description_text", "")
-    if not jd_text:
-        return {"job_requirements": None}
-
-    llm = _get_llm()
-
-    try:
-        system_prompt = (
-            "You are a job description analyzer. Extract structured requirements from the JD text. "
-            "Return valid JSON with: title, required_skills (list of strings), "
-            "preferred_skills (list of strings), responsibilities (list of strings), "
-            "keywords (list of strings), experience_level (string). "
-            "Do NOT invent any information."
-        )
-
-        result = await llm.generate(
-            prompt=f"Analyze this job description and extract requirements:\n\n{jd_text}",
-            system_prompt=system_prompt,
-        )
-
-        parsed = json.loads(result) if isinstance(result, str) else result
-
-        job_requirements = {
-            "title": parsed.get("title", ""),
-            "required_skills": parsed.get("required_skills", []),
-            "preferred_skills": parsed.get("preferred_skills", []),
-            "responsibilities": parsed.get("responsibilities", []),
-            "keywords": parsed.get("keywords", []),
-            "experience_level": parsed.get("experience_level", ""),
-        }
-
-        return {"job_requirements": job_requirements}
-
-    except Exception as exc:
-        logger.warning("LLM JD analysis failed, using minimal extraction: %s", str(exc))
-        return {
-            "job_requirements": {
-                "title": "",
-                "required_skills": [],
-                "preferred_skills": [],
-                "responsibilities": [],
-                "keywords": [],
-                "experience_level": "",
-            }
-        }
-
-
 async def retrieve_context_node(state: WorkflowState) -> dict[str, Any]:
     _record_step(state, "RETRIEVAL")
     logger.info("Retrieving context from vector store")
 
     try:
-        from infrastructure.llamaindex.client import get_llama_client
-        from infrastructure.llamaindex.vector_store import LlamaIndexService
+        from infrastructure.llamaindex.vector_store import VectorStoreService
 
-        client = get_llama_client()
-        vector_store = LlamaIndexService(client=client)
+        vector_store = VectorStoreService()
 
         resume_text = state.get("raw_resume_text", "")
         jd_text = state.get("job_description_text", "")
@@ -277,7 +162,10 @@ async def guardrails_node(state: WorkflowState) -> dict[str, Any]:
         engine = GuardrailsEngine()
         rewritten = state.get("rewritten_resume") or {}
         content = _safe_json(rewritten)
-        context = GuardrailContext()
+        context = GuardrailContext(
+            canonical_resume=state.get("canonical_resume"),
+            job_description=state.get("job_requirements"),
+        )
 
         result = await engine.execute(content, context)
 
@@ -290,7 +178,19 @@ async def guardrails_node(state: WorkflowState) -> dict[str, Any]:
             "metadata": result.metadata,
         }
 
-        return {"guardrail_report": guardrail_report}
+        result_data: dict[str, Any] = {"guardrail_report": guardrail_report}
+        if result.repaired_content:
+            try:
+                repaired = (
+                    json.loads(result.repaired_content)
+                    if isinstance(result.repaired_content, str)
+                    else result.repaired_content
+                )
+                result_data["rewritten_resume"] = repaired
+            except (json.JSONDecodeError, TypeError):
+                pass
+
+        return result_data
 
     except Exception as exc:
         logger.warning("Guardrails execution failed: %s", str(exc))

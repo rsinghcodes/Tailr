@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import tempfile
@@ -79,6 +80,11 @@ async def upload_resume(
             title=title,
             resume_container_id=resume_container_id,
         )
+
+        from infrastructure.llamaindex.vector_store import VectorStoreService
+        vector_store = VectorStoreService()
+        asyncio.ensure_future(vector_store.index_document(raw_text, file.filename))
+
         return ResumeUploadResponse(resume_id=container_id, status="uploaded")
     except Exception as exc:
         logger.error("Failed to upload resume: %s", str(exc))

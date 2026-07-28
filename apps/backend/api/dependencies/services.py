@@ -21,7 +21,7 @@ from application.guardrails.service import GuardrailApplicationService
 from infrastructure.llamaindex.client import get_llama_client
 from infrastructure.llamaindex.parser import LlamaDocParser
 from infrastructure.llamaindex.extractors import LlamaExtractor
-from infrastructure.llamaindex.vector_store import LlamaIndexService
+from infrastructure.llamaindex.vector_store import VectorStoreService
 
 _prompt_registry = PromptRegistry()
 _llm_provider = GeminiProvider()
@@ -46,8 +46,8 @@ def get_llama_extractor() -> LlamaExtractor:
     return LlamaExtractor(client=_llama_client)
 
 
-def get_llama_index_service() -> LlamaIndexService:
-    return LlamaIndexService(client=_llama_client)
+def get_vector_store_service() -> VectorStoreService:
+    return VectorStoreService()
 
 
 async def get_resume_repository(session: AsyncSession = Depends(get_db)) -> ResumeRepository:

@@ -2,9 +2,8 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from api.dependencies.services import get_llama_index_service
-from infrastructure.llamaindex.vector_store import LlamaIndexService
-from config.settings import settings
+from api.dependencies.services import get_vector_store_service
+from infrastructure.llamaindex.vector_store import VectorStoreService
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +13,6 @@ router = APIRouter(tags=["Knowledge Base & Search"])
 class IndexKnowledgeRequest(BaseModel):
     resume_id: str
     content: str
-    collection_name: str = settings.LLAMA_CLOUD_PIPELINE_NAME
 
 
 class IndexKnowledgeResponse(BaseModel):
@@ -24,7 +22,6 @@ class IndexKnowledgeResponse(BaseModel):
 
 class SearchKnowledgeRequest(BaseModel):
     query: str
-    collection_name: str = settings.LLAMA_CLOUD_PIPELINE_NAME
     limit: int = 10
 
 
@@ -42,9 +39,8 @@ class SearchKnowledgeResponse(BaseModel):
 @router.post("/knowledge/index", response_model=IndexKnowledgeResponse)
 async def index_resume_knowledge(
     body: IndexKnowledgeRequest,
-    vector_store: LlamaIndexService = Depends(get_llama_index_service),
+    vector_store: VectorStoreService = Depends(get_vector_store_service),
 ):
-    """Decompose and index resume content into LlamaCloud vector collection."""
     try:
         context = await vector_store.query_context(body.content, top_k=1)
         indexed = 1 if context and context != "No relevant context found." else 0
@@ -57,9 +53,8 @@ async def index_resume_knowledge(
 @router.post("/knowledge/search", response_model=SearchKnowledgeResponse)
 async def search_knowledge_base(
     body: SearchKnowledgeRequest,
-    vector_store: LlamaIndexService = Depends(get_llama_index_service),
+    vector_store: VectorStoreService = Depends(get_vector_store_service),
 ):
-    """Perform hybrid search over indexed knowledge chunks via LlamaCloud."""
     try:
         context_text = await vector_store.query_context(body.query, top_k=body.limit)
         if not context_text or context_text == "No relevant context found.":

@@ -1,50 +1,111 @@
 import logging
+import uuid
 from typing import Optional
-from llama_cloud import AsyncLlamaCloud
+
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from qdrant_client import AsyncQdrantClient
+from qdrant_client.models import Distance, PointStruct, VectorParams
+
 from config.settings import settings
 
 logger = logging.getLogger(__name__)
 
-PIPELINE_NAME = settings.LLAMA_CLOUD_PIPELINE_NAME
+EMBEDDING_MODEL = "models/embedding-001"
+EMBEDDING_DIM = 768
+CHUNK_SIZE = 500
+CHUNK_OVERLAP = 100
 
 
-class LlamaIndexService:
-    """Vector store operations via LlamaCloud Pipelines API."""
+class VectorStoreService:
+    def __init__(
+        self,
+        url: Optional[str] = None,
+        api_key: Optional[str] = None,
+        collection: Optional[str] = None,
+    ):
+        self._url = url or settings.QDRANT_URL
+        self._api_key = api_key or settings.QDRANT_API_KEY
+        self._collection = collection or settings.QDRANT_COLLECTION
+        self._client: AsyncQdrantClient | None = None
+        self._embeddings = GoogleGenerativeAIEmbeddings(
+            model=EMBEDDING_MODEL,
+            google_api_key=settings.GEMINI_API_KEY,
+        )
+        self._text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=CHUNK_SIZE,
+            chunk_overlap=CHUNK_OVERLAP,
+        )
+        self._collection_initialized = False
 
-    def __init__(self, client: Optional[AsyncLlamaCloud] = None):
-        self._client = client or AsyncLlamaCloud(api_key=settings.LLAMA_CLOUD_API_KEY)
-        self._pipeline_id: str | None = None
+    async def _ensure_client(self) -> AsyncQdrantClient:
+        if self._client is None:
+            self._client = AsyncQdrantClient(url=self._url, api_key=self._api_key)
+        return self._client
 
-    async def _get_pipeline_id(self) -> str:
-        if self._pipeline_id is None:
-            pipelines = self._client.pipelines
-            resp = await pipelines.list(pipeline_name=PIPELINE_NAME)
-            items = getattr(resp, "pipelines", resp) if hasattr(resp, "pipelines") else resp
-            for p in items:
-                if getattr(p, "name", None) == PIPELINE_NAME:
-                    self._pipeline_id = str(p.id)
-                    break
-            if self._pipeline_id is None:
-                raise RuntimeError(f"LlamaCloud pipeline '{PIPELINE_NAME}' not found")
-        return self._pipeline_id
+    async def _ensure_collection(self) -> None:
+        if self._collection_initialized:
+            return
+        client = await self._ensure_client()
+        collections = await client.get_collections()
+        names = {c.name for c in collections.collections}
+        if self._collection not in names:
+            await client.create_collection(
+                collection_name=self._collection,
+                vectors_config=VectorParams(size=EMBEDDING_DIM, distance=Distance.COSINE),
+            )
+            logger.info("Created Qdrant collection '%s'", self._collection)
+        self._collection_initialized = True
+
+    async def index_document(self, text: str, filename: str = "document.txt") -> bool:
+        try:
+            await self._ensure_collection()
+            client = await self._ensure_client()
+
+            chunks = self._text_splitter.split_text(text)
+            if not chunks:
+                logger.warning("No chunks produced for '%s'", filename)
+                return False
+
+            embeddings = await self._embeddings.aembed_documents(chunks)
+
+            points = [
+                PointStruct(
+                    id=str(uuid.uuid4()),
+                    vector=emb,
+                    payload={"filename": filename, "chunk_index": i, "text": chunk},
+                )
+                for i, (chunk, emb) in enumerate(zip(chunks, embeddings))
+            ]
+
+            await client.upsert(collection_name=self._collection, points=points)
+            logger.info("Indexed %d chunks from '%s' to Qdrant '%s'", len(chunks), filename, self._collection)
+            return True
+        except Exception as exc:
+            logger.error("Failed to index document '%s': %s", filename, str(exc))
+            return False
 
     async def query_context(self, query: str, top_k: int = 5) -> str:
         try:
-            pipeline_id = await self._get_pipeline_id()
-            result = await self._client.pipelines.retrieve(
-                pipeline_id=pipeline_id,
-                query=query,
-                dense_similarity_top_k=top_k,
+            await self._ensure_collection()
+            client = await self._ensure_client()
+
+            query_vector = await self._embeddings.aembed_query(query)
+
+            results = await client.search(
+                collection_name=self._collection,
+                query_vector=query_vector,
+                limit=top_k,
             )
-            nodes = getattr(result, "nodes", result) if hasattr(result, "nodes") else []
-            if not nodes:
+
+            if not results:
                 return "No relevant context found."
+
             parts = []
-            for node in nodes:
-                score = getattr(node, "score", 0) or 0
-                text = getattr(node, "text", "") or getattr(node, "node", {}).get("text", "")
-                parts.append(f"[score: {score:.2f}] {text}")
+            for r in results:
+                text = r.payload.get("text", "") if r.payload else ""
+                parts.append(f"[score: {r.score:.2f}] {text}")
             return "\n\n".join(parts)
         except Exception as exc:
-            logger.error("LlamaCloud retrieval failed: %s", str(exc))
+            logger.error("Qdrant retrieval failed: %s", str(exc))
             return "No relevant context found."

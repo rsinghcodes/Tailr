@@ -191,8 +191,6 @@ export async function getJobDescription(id: string): Promise<JobDescriptionData>
 // ─── Workflows ───────────────────────────
 
 export async function triggerWorkflow(requestBody: {
-  raw_resume_text?: string;
-  job_description_text?: string;
   resume_id?: string;
   job_description_id?: string;
 }): Promise<WorkflowResponse> {
@@ -203,8 +201,6 @@ export async function triggerWorkflow(requestBody: {
 }
 
 export async function* streamWorkflow(requestBody: {
-  raw_resume_text?: string;
-  job_description_text?: string;
   resume_id?: string;
   job_description_id?: string;
 }): AsyncGenerator<WorkflowStreamEvent> {

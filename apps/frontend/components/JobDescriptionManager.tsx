@@ -12,7 +12,7 @@ import {
 import { Briefcase, Plus, CheckCircle2, ArrowRight, Loader2, Trash2, Upload } from "lucide-react";
 
 export function JobDescriptionManager() {
-  const { savedJds, setSavedJds, setJobDescriptionText, setWizardStep, setActiveTab } = useUIStore();
+  const { savedJds, setSavedJds, setSelectedJdId, setWizardStep, setActiveTab } = useUIStore();
   const [title, setTitle] = useState("");
   const [company, setCompany] = useState("");
   const [description, setDescription] = useState("");
@@ -129,8 +129,8 @@ export function JobDescriptionManager() {
             </div>
             <button
               onClick={() => {
-                setJobDescriptionText(activeJd.description);
-                setWizardStep(3);
+                setSelectedJdId(activeJd.id);
+                setWizardStep(2);
                 setActiveTab("wizard");
               }}
               className="min-button min-button-primary text-xs"
@@ -190,8 +190,8 @@ export function JobDescriptionManager() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => {
-                      setJobDescriptionText(jd.description);
-                      setWizardStep(3);
+                      setSelectedJdId(jd.id);
+                      setWizardStep(2);
                       setActiveTab("wizard");
                     }}
                     className="min-button min-button-secondary text-xs"

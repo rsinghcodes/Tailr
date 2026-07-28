@@ -19,11 +19,10 @@ interface UIState {
   wizardStep: number;
   setWizardStep: (step: number) => void;
 
-  masterResumeText: string;
-  setMasterResumeText: (text: string) => void;
-
-  jobDescriptionText: string;
-  setJobDescriptionText: (text: string) => void;
+  selectedResumeId: string | null;
+  setSelectedResumeId: (id: string | null) => void;
+  selectedJdId: string | null;
+  setSelectedJdId: (id: string | null) => void;
 
   activeWorkflowResponse: WorkflowResponse | null;
   setWorkflowResponse: (response: WorkflowResponse) => void;
@@ -43,8 +42,6 @@ interface UIState {
 }
 
 const STEPS_MAP: { step: string; label: string; description: string }[] = [
-  { step: "parse_resume", label: "Resume Parsing", description: "Extracting structured data from resume" },
-  { step: "parse_jd", label: "Job Description Analysis", description: "Analyzing job requirements" },
   { step: "retrieve_context", label: "Context Retrieval", description: "Searching knowledge base for relevant context" },
   { step: "plan", label: "Rewrite Planning", description: "Generating optimization strategy" },
   { step: "rewrite", label: "Resume Rewriting", description: "Applying optimizations to resume content" },
@@ -61,11 +58,10 @@ export const useUIStore = create<UIState>((set) => ({
   wizardStep: 1,
   setWizardStep: (step) => set({ wizardStep: step }),
 
-  masterResumeText: "",
-  setMasterResumeText: (text) => set({ masterResumeText: text }),
-
-  jobDescriptionText: "",
-  setJobDescriptionText: (text) => set({ jobDescriptionText: text }),
+  selectedResumeId: null,
+  setSelectedResumeId: (id) => set({ selectedResumeId: id }),
+  selectedJdId: null,
+  setSelectedJdId: (id) => set({ selectedJdId: id }),
 
   activeWorkflowResponse: null,
   setWorkflowResponse: (response) => set({ activeWorkflowResponse: response }),
@@ -76,7 +72,7 @@ export const useUIStore = create<UIState>((set) => ({
   savedJds: [],
   setSavedJds: (jds) => set({ savedJds: jds }),
 
-  streamSteps: STEPS_MAP.map((s) => ({ ...s, step_index: 0, total_steps: 9, status: "pending" as const })),
+  streamSteps: STEPS_MAP.map((s, i) => ({ ...s, step_index: i, total_steps: STEPS_MAP.length, status: "pending" as const })),
   setStreamSteps: (steps) => set((state) => ({
     streamSteps: typeof steps === "function" ? steps(state.streamSteps) : steps,
   })),

@@ -1,5 +1,4 @@
 import logging
-from uuid import UUID
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from sqlalchemy import select, func, text
@@ -107,7 +106,7 @@ async def get_analytics_dashboard(
 
     repaired_events = await session.execute(
         select(func.count(GuardrailEventModel.id)).where(
-            GuardrailEventModel.repaired == True
+            GuardrailEventModel.repaired
         )
     )
     total_repaired = repaired_events.scalar() or 0
