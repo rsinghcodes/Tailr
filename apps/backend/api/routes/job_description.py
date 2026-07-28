@@ -5,15 +5,21 @@ import uuid
 from typing import Optional
 from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile
 
-from api.dependencies.services import get_job_description_service, get_llama_parser, get_llama_extractor
+from api.dependencies.services import (
+    get_job_description_service,
+    get_llama_extractor,
+    get_llama_parser,
+)
 from api.routes.job_description_schemas import (
     JobDescriptionCreateRequest,
+    JobDescriptionListResponse,
+    JobDescriptionListItem,
     JobDescriptionResponse,
     JobDescriptionResponseData,
 )
 from application.job_description.service import JobDescriptionService
-from infrastructure.llamaindex.parser import LlamaDocParser
 from infrastructure.llamaindex.extractors import LlamaExtractor
+from infrastructure.llamaindex.parser import LlamaDocParser
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +76,7 @@ async def upload_job_description(
     parser: LlamaDocParser = Depends(get_llama_parser),
     extractor: LlamaExtractor = Depends(get_llama_extractor),
 ):
-    """Upload a job description file (PDF, DOCX, TXT). Parses and extracts structured data via LlamaCloud."""
+    """Upload a job description file (PDF, DOCX, TXT). Parses via LlamaParse, extracts structured data via LlamaExtract, then analyzes via LLM."""
     if not file.filename:
         raise HTTPException(status_code=400, detail="Filename is required.")
 
@@ -104,10 +110,14 @@ async def upload_job_description(
     if not raw_text.strip():
         raise HTTPException(status_code=422, detail="Parsed content is empty.")
 
-    extracted = await extractor.extract_job_requirements(raw_text)
+    jd_title = title or os.path.splitext(file.filename)[0]
+    jd_company = company
 
-    jd_title = title or extracted.title or os.path.splitext(file.filename)[0]
-    jd_company = company or extracted.company
+    extracted = await extractor.extract_job_requirements(raw_text)
+    if not jd_title and extracted.title:
+        jd_title = extracted.title
+    if not jd_company and extracted.company:
+        jd_company = extracted.company
 
     try:
         jd, reqs = await service.create_job_description(
@@ -116,6 +126,7 @@ async def upload_job_description(
             company=jd_company,
             location=location,
             employment_type=employment_type,
+            extracted_requirements=extracted,
         )
 
         response_data = JobDescriptionResponseData(
@@ -133,6 +144,16 @@ async def upload_job_description(
         raise HTTPException(
             status_code=422, detail=f"Job description upload failed: {str(exc)}"
         ) from exc
+
+
+@router.get("/job-descriptions", response_model=JobDescriptionListResponse)
+async def list_job_descriptions(
+    service: JobDescriptionService = Depends(get_job_description_service),
+):
+    """List all job descriptions."""
+    jds = await service.list_job_descriptions()
+    data = [JobDescriptionListItem(**jd) for jd in jds]
+    return JobDescriptionListResponse(success=True, data=data)
 
 
 @router.get("/job-descriptions/{jd_id}", response_model=JobDescriptionResponse)

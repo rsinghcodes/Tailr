@@ -91,3 +91,14 @@
   outline: none;
   border-color: #52525b;
 }
+
+.min-button-danger {
+  background-color: #18181b;
+  color: #f87171;
+  border: 1px solid #7f1d1d;
+}
+
+.min-button-danger:hover {
+  background-color: #27272a;
+  border-color: #dc2626;
+}

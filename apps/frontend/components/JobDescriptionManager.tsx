@@ -1,9 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useUIStore } from "@/lib/store";
-import { createJobDescription, JobDescriptionData } from "@/lib/api";
-import { Briefcase, Plus, CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
+import {
+  createJobDescription,
+  listJobDescriptions,
+  uploadJobDescription,
+  deleteJobDescription,
+  JobDescriptionData,
+} from "@/lib/api";
+import { Briefcase, Plus, CheckCircle2, ArrowRight, Loader2, Trash2, Upload } from "lucide-react";
 
 export function JobDescriptionManager() {
   const { savedJds, setSavedJds, setJobDescriptionText, setWizardStep, setActiveTab } = useUIStore();
@@ -12,10 +18,17 @@ export function JobDescriptionManager() {
   const [description, setDescription] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [activeJd, setActiveJd] = useState<JobDescriptionData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    listJobDescriptions()
+      .then((jds) => { setSavedJds(jds); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [setSavedJds]);
 
   const handleCreate = async () => {
     if (!title || !description) return;
-
     setIsAnalyzing(true);
     try {
       const jdData = await createJobDescription({
@@ -23,16 +36,34 @@ export function JobDescriptionManager() {
         company: company || "Unknown Company",
         description,
       });
-
       setActiveJd(jdData);
       setSavedJds([jdData, ...savedJds]);
+    } finally {
       setIsAnalyzing(false);
       setTitle("");
       setCompany("");
       setDescription("");
-    } catch {
-      setIsAnalyzing(false);
     }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsAnalyzing(true);
+    try {
+      const jdData = await uploadJobDescription(file, title || undefined, company || undefined);
+      setActiveJd(jdData);
+      setSavedJds([jdData, ...savedJds]);
+    } finally {
+      setIsAnalyzing(false);
+      setTitle("");
+      setCompany("");
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    await deleteJobDescription(id);
+    setSavedJds(savedJds.filter((jd) => jd.id !== id));
   };
 
   return (
@@ -69,20 +100,20 @@ export function JobDescriptionManager() {
           className="min-input w-full font-mono text-xs"
         />
 
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-3">
+          <label className="min-button min-button-secondary cursor-pointer">
+            <Upload className="w-4 h-4" /> Upload File (PDF/DOCX/TXT)
+            <input type="file" accept=".pdf,.docx,.txt" onChange={handleFileUpload} className="hidden" disabled={isAnalyzing} />
+          </label>
           <button
             onClick={handleCreate}
             disabled={isAnalyzing || !title || !description}
             className="min-button min-button-primary"
           >
             {isAnalyzing ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" /> Analyzing Requirements...
-              </>
+              <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing...</>
             ) : (
-              <>
-                <Plus className="w-4 h-4" /> Analyze Job Description
-              </>
+              <><Plus className="w-4 h-4" /> Analyze Job Description</>
             )}
           </button>
         </div>
@@ -140,7 +171,11 @@ export function JobDescriptionManager() {
       )}
 
       {/* Saved JDs List */}
-      {savedJds.length > 0 && (
+      {loading ? (
+        <div className="min-panel p-6 text-center text-zinc-500 text-sm">
+          <Loader2 className="w-5 h-5 animate-spin inline mr-2" /> Loading job descriptions...
+        </div>
+      ) : savedJds.length > 0 && (
         <div className="min-panel p-6 space-y-4">
           <h3 className="text-base font-semibold text-zinc-100 flex items-center gap-2">
             <Briefcase className="w-4 h-4 text-zinc-400" /> Stored Job Descriptions
@@ -152,16 +187,25 @@ export function JobDescriptionManager() {
                   <div className="font-medium text-sm text-zinc-200">{jd.title}</div>
                   <div className="text-xs text-zinc-500">{jd.company}</div>
                 </div>
-                <button
-                  onClick={() => {
-                    setJobDescriptionText(jd.description);
-                    setWizardStep(3);
-                    setActiveTab("wizard");
-                  }}
-                  className="min-button min-button-secondary text-xs"
-                >
-                  Select <ArrowRight className="w-3.5 h-3.5" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      setJobDescriptionText(jd.description);
+                      setWizardStep(3);
+                      setActiveTab("wizard");
+                    }}
+                    className="min-button min-button-secondary text-xs"
+                  >
+                    Select <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(jd.id)}
+                    className="min-button min-button-danger text-xs"
+                    title="Delete"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>

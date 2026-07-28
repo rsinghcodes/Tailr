@@ -4,6 +4,7 @@ from typing import Optional
 from domain.job_description.models import JobDescription, JobRequirements
 from domain.job_description.repository import JobDescriptionRepository
 from application.job_description.analyzer import JobDescriptionAnalyzer
+from infrastructure.llamaindex.extractors import ExtractedJobRequirements
 
 
 class JobDescriptionService:
@@ -25,8 +26,14 @@ class JobDescriptionService:
         location: Optional[str] = None,
         employment_type: Optional[str] = None,
         model: Optional[str] = None,
+        extracted_requirements: Optional[ExtractedJobRequirements] = None,
     ) -> tuple[JobDescription, JobRequirements]:
-        """Creates a new Job Description, analyzes it using an LLM, and persists it."""
+        """Creates a new Job Description, analyzes it using an LLM, and persists it.
+
+        Args:
+            extracted_requirements: Optional structured data pre-extracted by LlamaExtract.
+                Passed to the analyzer as additional context.
+        """
         jd = JobDescription(
             title=title,
             description=description,
@@ -35,16 +42,36 @@ class JobDescriptionService:
             employment_type=employment_type,
         )
 
-        # Save initial record
         await self.repository.save(jd)
 
-        # Run requirement analysis
-        requirements = await self.analyzer.analyze(jd, model=model)
+        requirements = await self.analyzer.analyze(
+            jd,
+            model=model,
+            extracted_requirements=extracted_requirements,
+        )
 
-        # Save updated record with parsed requirements
         await self.repository.save(jd, requirements)
 
         return jd, requirements
+
+    async def list_job_descriptions(
+        self,
+    ) -> list[dict[str, str | int | None]]:
+        """List all job descriptions."""
+        rows = await self.repository.list_all()
+        return [
+            {
+                "id": str(row[0]),
+                "title": row[1],
+                "company": row[2],
+                "description": row[3],
+                "location": row[4],
+                "employment_type": row[5],
+                "created_at": row[6].isoformat() if row[6] else "",
+                "updated_at": row[7].isoformat() if row[7] else "",
+            }
+            for row in rows
+        ]
 
     async def get_job_description(
         self, jd_id: uuid.UUID
