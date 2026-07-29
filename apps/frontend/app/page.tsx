@@ -21,13 +21,13 @@ import {
 } from "lucide-react";
 
 const FLOW_LABELS: Record<FlowStep, string> = {
-  "upload-resume": "Upload Resume",
-  "resume-parsed": "Resume Parsed",
-  "input-jd": "Job Description",
-  "jd-extracting": "Extracting JD",
-  "jd-parsed": "JD Analyzed",
-  "optimizing": "Optimization",
-  "done": "Complete",
+  "upload-resume": "Upload",
+  "resume-parsed": "Parsed",
+  "input-jd": "Job Desc",
+  "jd-extracting": "Extracting",
+  "jd-parsed": "Analyzed",
+  "optimizing": "Optimizing",
+  "done": "Done",
 };
 
 const FLOW_ORDER: FlowStep[] = ["upload-resume", "resume-parsed", "input-jd", "jd-extracting", "jd-parsed", "optimizing", "done"];
@@ -35,26 +35,24 @@ const FLOW_ORDER: FlowStep[] = ["upload-resume", "resume-parsed", "input-jd", "j
 function StepIndicator({ current }: { current: FlowStep }) {
   const currentIdx = FLOW_ORDER.indexOf(current);
   return (
-    <div className="flex items-center gap-2 font-mono mb-6">
+    <div className="flex items-center gap-1.5">
       {FLOW_ORDER.map((step, idx) => {
         const isDone = idx < currentIdx;
         const isActive = idx === currentIdx;
         return (
-          <div key={step} className="flex items-center gap-2">
-            <div
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs transition-all ${
-                isActive
-                  ? "bg-zinc-800 text-zinc-100 border border-zinc-700"
-                  : isDone
-                  ? "bg-emerald-950/30 text-emerald-400 border border-emerald-800/50"
-                  : "bg-zinc-900 text-zinc-500 border border-zinc-800"
-              }`}
-            >
-              {isDone ? <CheckCircle2 className="w-3 h-3" /> : <span className="w-3 h-3 flex items-center justify-center text-[10px] font-bold">{idx + 1}</span>}
+          <div key={step} className="flex items-center gap-1.5">
+            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono transition-all ${
+              isActive
+                ? "bg-[var(--accent)]/10 border border-[var(--accent)]/20 text-[var(--accent)]"
+                : isDone
+                ? "bg-emerald-950/20 border border-emerald-800/30 text-emerald-400"
+                : "text-[var(--text-muted)]"
+            }`}>
+              {isDone ? <CheckCircle2 className="w-3 h-3" /> : <span className="step-dot active" />}
               <span className="hidden sm:inline">{FLOW_LABELS[step]}</span>
             </div>
             {idx < FLOW_ORDER.length - 1 && (
-              <div className={`w-4 h-px ${isDone ? "bg-emerald-800/50" : "bg-zinc-800"}`} />
+              <div className={`w-3 h-px ${isDone ? "bg-emerald-800/40" : "bg-[var(--border-subtle)]"}`} />
             )}
           </div>
         );
@@ -81,7 +79,6 @@ export default function Home() {
   const [jdTitle, setJdTitle] = useState("");
   const [jdCompany, setJdCompany] = useState("");
   const [jdText, setJdText] = useState("");
-  const [isJdUploading, setIsJdUploading] = useState(false);
   const [showData, setShowData] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -231,7 +228,7 @@ export default function Home() {
   }, [setSelectedJdId, setFlowStep]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-zinc-950 text-zinc-100 font-sans">
+    <div className="min-h-screen flex flex-col">
       <Navbar onOpenData={() => setShowData(true)} />
       <DataManager
         open={showData}
@@ -239,80 +236,75 @@ export default function Home() {
         onUseResume={handleUseResume}
         onUseJd={handleUseJd}
       />
-      <main className="max-w-4xl mx-auto w-full px-6 py-8 space-y-6">
+      <main className="max-w-3xl mx-auto w-full px-6 pt-8 pb-16 space-y-5">
         <StepIndicator current={flowStep} />
 
         {errorMsg && (
-          <div className="p-3 rounded-md bg-rose-950/40 border border-rose-900/60 text-rose-400 text-xs flex items-center gap-2 font-mono">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-950/20 border border-rose-900/30 text-rose-400 text-xs">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{errorMsg}</span>
-            <button onClick={() => setErrorMsg(null)} className="ml-auto text-rose-400 hover:text-rose-300">Dismiss</button>
+            <button onClick={() => setErrorMsg(null)} className="ml-auto hover:text-rose-300">Dismiss</button>
           </div>
         )}
 
-        {/* Step: Upload Resume */}
         {flowStep === "upload-resume" && (
-          <div className="min-panel p-8 space-y-6">
+          <div className="space-y-5">
             <div>
-              <h2 className="text-xl font-semibold text-zinc-100 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-zinc-400" /> Upload Your Resume
+              <h2 className="text-lg font-semibold text-[var(--text-primary)] flex items-center gap-2">
+                <FileText className="w-5 h-5 text-[var(--text-muted)]" /> Upload Your Resume
               </h2>
-              <p className="text-xs text-zinc-400 mt-1">
-                Upload a PDF, DOCX, or TXT file. Tailr will parse and extract structured data via LlamaParse and LlamaExtract.
+              <p className="text-xs text-[var(--text-muted)] mt-1">
+                Upload a PDF, DOCX, or TXT file. Tailr will parse and extract structured data.
               </p>
             </div>
             <ResumeUploader onSuccess={(resumeId) => handleResumeUploaded(resumeId)} />
           </div>
         )}
 
-        {/* Step: Resume Parsed */}
         {flowStep === "resume-parsed" && resumeData && (
-          <div className="min-panel p-8 space-y-6">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+          <div className="card-3d p-6 space-y-5">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-4">
               <div>
-                <h2 className="text-lg font-semibold text-zinc-100 flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400" /> Resume Parsed Successfully
+                <h2 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Resume Parsed
                 </h2>
-                <p className="text-xs text-zinc-400 mt-0.5">
-                  LlamaParse extracted text; LlamaExtractor identified skills, experience, education, and more.
-                </p>
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">Structured data extracted from your resume.</p>
               </div>
             </div>
             <ParsedResumeView data={resumeData} />
-            <div className="flex justify-end pt-2 border-t border-zinc-800">
-              <button onClick={() => setFlowStep("input-jd")} className="min-button min-button-primary">
+            <div className="flex justify-end pt-3 border-t border-[var(--border-subtle)]">
+              <button onClick={() => setFlowStep("input-jd")} className="btn btn-primary">
                 Add Job Description <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </div>
         )}
 
-        {/* Step: Input Job Description */}
         {flowStep === "input-jd" && (
-          <div className="min-panel p-8 space-y-6">
+          <div className="card-3d p-6 space-y-5">
             <div>
-              <h2 className="text-xl font-semibold text-zinc-100 flex items-center gap-2">
-                <Briefcase className="w-5 h-5 text-zinc-400" /> Target Job Description
+              <h2 className="text-lg font-semibold text-[var(--text-primary)] flex items-center gap-2">
+                <Briefcase className="w-5 h-5 text-[var(--text-muted)]" /> Target Job Description
               </h2>
-              <p className="text-xs text-zinc-400 mt-1">
-                Paste the job description text or upload a file. Tailr will extract requirements, skills, and keywords.
+              <p className="text-xs text-[var(--text-muted)] mt-1">
+                Paste the job description or upload a file. Tailr will extract requirements and skills.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input
                 type="text"
                 placeholder="Job Title (e.g. Senior AI Engineer)"
                 value={jdTitle}
                 onChange={(e) => setJdTitle(e.target.value)}
-                className="min-input"
+                className="input"
               />
               <input
                 type="text"
                 placeholder="Company Name (optional)"
                 value={jdCompany}
                 onChange={(e) => setJdCompany(e.target.value)}
-                className="min-input"
+                className="input"
               />
             </div>
 
@@ -321,70 +313,61 @@ export default function Home() {
               placeholder="Paste complete job description text here..."
               value={jdText}
               onChange={(e) => setJdText(e.target.value)}
-              className="min-input w-full font-mono text-xs"
+              className="input font-mono text-xs"
             />
 
             <div className="flex items-center justify-between">
-              <button onClick={() => setFlowStep("resume-parsed")} className="min-button min-button-secondary">
+              <button onClick={() => setFlowStep("resume-parsed")} className="btn btn-secondary">
                 <ArrowLeft className="w-4 h-4" /> Back
               </button>
               <div className="flex items-center gap-3">
-                <label className="min-button min-button-secondary cursor-pointer">
-                  <Upload className="w-4 h-4" /> Upload File (PDF/DOCX/TXT)
-                  <input type="file" accept=".pdf,.docx,.txt" onChange={handleJdFileUpload} className="hidden" disabled={isJdUploading} />
+                <label className="btn btn-secondary cursor-pointer">
+                  <Upload className="w-4 h-4" /> Upload File
+                  <input type="file" accept=".pdf,.docx,.txt" onChange={handleJdFileUpload} className="hidden" />
                 </label>
                 <button
                   onClick={handleJdSubmit}
-                  disabled={isJdUploading || !jdTitle.trim() || !jdText.trim()}
-                  className="min-button min-button-primary disabled:opacity-50"
+                  disabled={!jdTitle.trim() || !jdText.trim()}
+                  className="btn btn-primary disabled:opacity-40"
                 >
-                  {isJdUploading ? (
-                    <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
-                  ) : (
-                    <><ExternalLink className="w-4 h-4" /> Analyze JD</>
-                  )}
+                  <ExternalLink className="w-4 h-4" /> Extract JD
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Step: JD Extracting — shows raw extraction first, then LLM analysis */}
         {flowStep === "jd-extracting" && (
-          <div className="min-panel p-8 space-y-6">
+          <div className="card-3d p-6 space-y-5">
             {!rawExtracted ? (
               <>
                 <div>
-                  <h2 className="text-xl font-semibold text-zinc-100 flex items-center gap-2">
-                    <Loader2 className="w-5 h-5 text-blue-400 animate-spin" /> Extracting Job Description
+                  <h2 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 text-[var(--accent)] animate-spin" /> Extracting Job Description
                   </h2>
-                  <p className="text-xs text-zinc-400 mt-1">
-                    LlamaExtract is parsing the job description to identify skills, requirements, and responsibilities...
-                  </p>
+                  <p className="text-xs text-[var(--text-muted)] mt-0.5">LlamaExtract is parsing the job description...</p>
                 </div>
-                <div className="flex items-center gap-3 p-4 rounded-md bg-zinc-900 border border-zinc-800">
-                  <Loader2 className="w-5 h-5 text-zinc-400 animate-spin shrink-0" />
-                  <div className="space-y-1">
-                    <div className="text-xs text-zinc-300 font-mono">Extracting structured data...</div>
-                    <div className="h-1.5 w-48 rounded-full bg-zinc-800 overflow-hidden">
-                      <div className="h-full w-1/2 rounded-full bg-blue-500 animate-pulse" />
+                <div className="flex items-center gap-3 p-4 rounded-lg border border-[var(--border-subtle)]" style={{ background: 'var(--bg-surface)' }}>
+                  <Loader2 className="w-5 h-5 text-[var(--text-muted)] animate-spin shrink-0" />
+                  <div className="space-y-1 flex-1">
+                    <div className="text-xs text-[var(--text-secondary)]">Extracting structured data...</div>
+                    <div className="h-1 w-full rounded-full bg-[var(--border-subtle)] overflow-hidden">
+                      <div className="h-full w-1/2 rounded-full bg-[var(--accent)] animate-pulse" />
                     </div>
                   </div>
                 </div>
               </>
             ) : (
               <>
-                <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+                <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-4">
                   <div>
-                    <h2 className="text-lg font-semibold text-zinc-100 flex items-center gap-2">
-                      <CheckCircle2 className="w-5 h-5 text-emerald-400" /> Step 1 — JD Extracted
+                    <h2 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" /> JD Extracted
                     </h2>
-                    <p className="text-xs text-zinc-400 mt-0.5">
-                      LlamaExtract identified the following structure from the job description.
-                    </p>
+                    <p className="text-xs text-[var(--text-muted)] mt-0.5">Raw extraction complete. Run LLM analysis for enhanced results.</p>
                   </div>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {(() => {
                     const re = rawExtracted;
                     const reqSkills = re["required_skills"] as string[] | undefined;
@@ -396,37 +379,33 @@ export default function Home() {
                       <>
                         {seniority && (
                           <div>
-                            <div className="text-xs font-semibold text-zinc-500 uppercase font-mono mb-1">Seniority</div>
-                            <span className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 border border-zinc-700 text-[11px] font-mono">{seniority}</span>
+                            <div className="section-label mb-1.5">Seniority</div>
+                            <span className="tag">{seniority}</span>
                           </div>
                         )}
                         {reqSkills && reqSkills.length > 0 && (
                           <div>
-                            <div className="text-xs font-semibold text-zinc-500 uppercase font-mono mb-1.5">Required Skills ({reqSkills.length})</div>
+                            <div className="section-label mb-1.5">Required Skills ({reqSkills.length})</div>
                             <div className="flex flex-wrap gap-1.5">
-                              {reqSkills.map((s, i) => (
-                                <span key={i} className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 border border-zinc-700 text-[11px] font-mono">{s}</span>
-                              ))}
+                              {reqSkills.map((s, i) => <span key={i} className="tag">{s}</span>)}
                             </div>
                           </div>
                         )}
                         {prefSkills && prefSkills.length > 0 && (
                           <div>
-                            <div className="text-xs font-semibold text-zinc-500 uppercase font-mono mb-1.5">Preferred Skills ({prefSkills.length})</div>
+                            <div className="section-label mb-1.5">Preferred Skills ({prefSkills.length})</div>
                             <div className="flex flex-wrap gap-1.5">
-                              {prefSkills.map((s, i) => (
-                                <span key={i} className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700 text-[11px] font-mono">{s}</span>
-                              ))}
+                              {prefSkills.map((s, i) => <span key={i} className="tag">{s}</span>)}
                             </div>
                           </div>
                         )}
                         {responsibilities && responsibilities.length > 0 && (
                           <div>
-                            <div className="text-xs font-semibold text-zinc-500 uppercase font-mono mb-1.5">Responsibilities</div>
+                            <div className="section-label mb-1.5">Responsibilities</div>
                             <ul className="space-y-1">
                               {responsibilities.map((r, i) => (
-                                <li key={i} className="flex items-start gap-2 text-xs text-zinc-300">
-                                  <CheckCircle2 className="w-3.5 h-3.5 text-zinc-500 shrink-0 mt-px" />
+                                <li key={i} className="flex items-start gap-2 text-xs text-[var(--text-secondary)]">
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-[var(--text-muted)] shrink-0 mt-px" />
                                   <span>{r}</span>
                                 </li>
                               ))}
@@ -435,11 +414,9 @@ export default function Home() {
                         )}
                         {keywords && keywords.length > 0 && (
                           <div>
-                            <div className="text-xs font-semibold text-zinc-500 uppercase font-mono mb-1.5">Keywords ({keywords.length})</div>
+                            <div className="section-label mb-1.5">Keywords ({keywords.length})</div>
                             <div className="flex flex-wrap gap-1.5">
-                              {keywords.map((k, i) => (
-                                <span key={i} className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700 text-[11px] font-mono">{k}</span>
-                              ))}
+                              {keywords.map((k, i) => <span key={i} className="tag">{k}</span>)}
                             </div>
                           </div>
                         )}
@@ -447,15 +424,15 @@ export default function Home() {
                     );
                   })()}
                 </div>
-                <div className="flex justify-between pt-2 border-t border-zinc-800">
-                  <button onClick={() => { setFlowStep("input-jd"); setRawExtracted(null); setJdData(null); setSelectedJdId(null); }} className="min-button min-button-secondary">
+                <div className="flex justify-between pt-3 border-t border-[var(--border-subtle)]">
+                  <button onClick={() => { setFlowStep("input-jd"); setRawExtracted(null); setJdData(null); setSelectedJdId(null); }} className="btn btn-secondary">
                     <ArrowLeft className="w-4 h-4" /> Change JD
                   </button>
-                  <button onClick={handleAnalyzeJd} disabled={isAnalyzing} className="min-button min-button-primary disabled:opacity-50">
+                  <button onClick={handleAnalyzeJd} disabled={isAnalyzing} className="btn btn-primary disabled:opacity-40">
                     {isAnalyzing ? (
                       <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing...</>
                     ) : (
-                      <>Step 2 — Run LLM Analysis <ArrowRight className="w-4 h-4" /></>
+                      <>Run LLM Analysis <ArrowRight className="w-4 h-4" /></>
                     )}
                   </button>
                 </div>
@@ -464,27 +441,24 @@ export default function Home() {
           </div>
         )}
 
-        {/* Step: JD Parsed */}
         {flowStep === "jd-parsed" && jdData && (
-          <div className="min-panel p-8 space-y-6">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+          <div className="card-3d p-6 space-y-5">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-4">
               <div>
-                <h2 className="text-lg font-semibold text-zinc-100 flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400" /> Job Description Analyzed
+                <h2 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Job Description Analyzed
                 </h2>
-                <p className="text-xs text-zinc-400 mt-0.5">
-                  Llama extracted structured requirements, skills, and responsibilities.
-                </p>
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">LLM analysis complete.</p>
               </div>
             </div>
 
             <div>
-              <div className="text-sm font-semibold text-zinc-200">{jdData["title"] as string}</div>
-              <div className="text-xs text-zinc-400">{jdData["company"] as string}</div>
+              <div className="text-sm font-medium text-[var(--text-primary)]">{jdData["title"] as string}</div>
+              <div className="text-xs text-[var(--text-muted)]">{jdData["company"] as string}</div>
             </div>
 
             {(jdData["parsed_requirements"] as Record<string, unknown>) && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {(() => {
                   const reqs = jdData["parsed_requirements"] as Record<string, unknown>;
                   const reqSkills = reqs["required_skills"] as string[] | undefined;
@@ -494,31 +468,27 @@ export default function Home() {
                     <>
                       {reqSkills && reqSkills.length > 0 && (
                         <div>
-                          <div className="text-xs font-semibold text-zinc-500 uppercase font-mono mb-1.5">Required Skills ({reqSkills.length})</div>
+                          <div className="section-label mb-1.5">Required Skills ({reqSkills.length})</div>
                           <div className="flex flex-wrap gap-1.5">
-                            {reqSkills.map((s, i) => (
-                              <span key={i} className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 border border-zinc-700 text-[11px] font-mono">{s}</span>
-                            ))}
+                            {reqSkills.map((s, i) => <span key={i} className="tag">{s}</span>)}
                           </div>
                         </div>
                       )}
                       {prefSkills && prefSkills.length > 0 && (
                         <div>
-                          <div className="text-xs font-semibold text-zinc-500 uppercase font-mono mb-1.5">Preferred Skills ({prefSkills.length})</div>
+                          <div className="section-label mb-1.5">Preferred Skills ({prefSkills.length})</div>
                           <div className="flex flex-wrap gap-1.5">
-                            {prefSkills.map((s, i) => (
-                              <span key={i} className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700 text-[11px] font-mono">{s}</span>
-                            ))}
+                            {prefSkills.map((s, i) => <span key={i} className="tag">{s}</span>)}
                           </div>
                         </div>
                       )}
                       {responsibilities && responsibilities.length > 0 && (
                         <div>
-                          <div className="text-xs font-semibold text-zinc-500 uppercase font-mono mb-1.5">Core Responsibilities</div>
+                          <div className="section-label mb-1.5">Core Responsibilities</div>
                           <ul className="space-y-1">
                             {responsibilities.map((r, i) => (
-                              <li key={i} className="flex items-start gap-2 text-xs text-zinc-300">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-zinc-500 shrink-0 mt-px" />
+                              <li key={i} className="flex items-start gap-2 text-xs text-[var(--text-secondary)]">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-[var(--text-muted)] shrink-0 mt-px" />
                                 <span>{r}</span>
                               </li>
                             ))}
@@ -531,25 +501,24 @@ export default function Home() {
               </div>
             )}
 
-            <div className="flex justify-between pt-2 border-t border-zinc-800">
-              <button onClick={() => setFlowStep("input-jd")} className="min-button min-button-secondary">
+            <div className="flex justify-between pt-3 border-t border-[var(--border-subtle)]">
+              <button onClick={() => setFlowStep("input-jd")} className="btn btn-secondary">
                 <ArrowLeft className="w-4 h-4" /> Change JD
               </button>
-              <button onClick={handleStartOptimization} className="min-button min-button-primary">
+              <button onClick={handleStartOptimization} className="btn btn-primary">
                 <Play className="w-4 h-4" /> Start Optimization
               </button>
             </div>
           </div>
         )}
 
-        {/* Step: Optimizing */}
         {flowStep === "optimizing" && (
-          <div className="min-panel p-8 space-y-6">
+          <div className="card-3d p-6 space-y-5">
             <div>
-              <h2 className="text-lg font-semibold text-zinc-100 flex items-center gap-2">
-                <Cpu className="w-5 h-5 text-zinc-400" /> Running Multi-Agent Pipeline
+              <h2 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
+                <Cpu className="w-5 h-5 text-[var(--text-muted)]" /> Running Multi-Agent Pipeline
               </h2>
-              <p className="text-xs text-zinc-400 mt-1">
+              <p className="text-xs text-[var(--text-muted)] mt-0.5">
                 LangGraph orchestrates context retrieval, rewriting, guardrail validation, and ATS scoring.
               </p>
             </div>
@@ -561,16 +530,16 @@ export default function Home() {
                 return (
                   <div
                     key={idx}
-                    className={`flex items-center gap-2 px-3 py-2.5 rounded border text-xs font-mono transition-all ${
+                    className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border text-xs font-mono transition-all ${
                       isDone
-                        ? "bg-emerald-950/30 border-emerald-800/50 text-emerald-300"
+                        ? "border-emerald-800/30 text-emerald-400" + " bg-emerald-950/10"
                         : isActive
-                        ? "bg-zinc-800 border-zinc-600 text-zinc-100 animate-pulse"
-                        : "bg-zinc-900 border-zinc-800 text-zinc-500"
+                        ? "border-[var(--border-mid)] text-[var(--text-primary)]" + " bg-[var(--bg-surface)]"
+                        : "border-[var(--border-subtle)] text-[var(--text-muted)]"
                     }`}
                   >
                     <div className="w-4 h-4 shrink-0 flex items-center justify-center">
-                      {isDone ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : isActive ? <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-300" /> : <div className="w-2 h-2 rounded-full bg-zinc-600" />}
+                      {isDone ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : isActive ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <div className="w-2 h-2 rounded-full bg-[var(--border-mid)]" />}
                     </div>
                     <span className="truncate">{s.label}</span>
                   </div>
@@ -579,7 +548,7 @@ export default function Home() {
             </div>
 
             {errorMsg && (
-              <div className="p-3 rounded-md bg-rose-950/40 border border-rose-900/60 text-rose-400 text-xs flex items-center gap-2 font-mono">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-950/20 border border-rose-900/30 text-rose-400 text-xs">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{errorMsg}</span>
               </div>
@@ -587,26 +556,25 @@ export default function Home() {
           </div>
         )}
 
-        {/* Step: Done - Results */}
         {flowStep === "done" && (
-          <div className="min-panel p-8 space-y-6">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+          <div className="card-3d p-6 space-y-5">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-4">
               <div>
-                <h2 className="text-lg font-semibold text-zinc-100 flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400" /> Optimization Complete
+                <h2 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Optimization Complete
                 </h2>
-                <p className="text-xs text-zinc-400 mt-0.5">Your resume has been tailored for the target job description.</p>
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">Resume tailored for the target job description.</p>
               </div>
-              <button onClick={() => { setFlowStep("upload-resume"); setResumeData(null); setJdData(null); setSelectedResumeId(null); setSelectedJdId(null); }} className="min-button min-button-secondary text-xs">
-                <ArrowLeft className="w-3.5 h-3.5" /> New Optimization
+              <button onClick={() => { setFlowStep("upload-resume"); setResumeData(null); setJdData(null); setSelectedResumeId(null); setSelectedJdId(null); }} className="btn btn-secondary text-xs">
+                <ArrowLeft className="w-3.5 h-3.5" /> New
               </button>
             </div>
             <ResultsView />
           </div>
         )}
       </main>
-      <footer className="border-t border-zinc-800 py-4 text-center text-xs text-zinc-500 font-mono">
-        Tailr v1.0 — FastAPI • Next.js 16 • LlamaIndex • LangGraph • Guardrails AI Engine
+      <footer className="border-t border-[var(--border-subtle)] py-4 text-center text-[11px] text-[var(--text-muted)]">
+        Tailr — FastAPI · Next.js · LlamaIndex · LangGraph · Guardrails AI
       </footer>
     </div>
   );
@@ -618,9 +586,9 @@ function ResultsView() {
 
   if (!activeWorkflowResponse) {
     return (
-      <div className="p-12 text-center space-y-3">
-        <FileText className="w-8 h-8 text-zinc-600 mx-auto" />
-        <p className="text-xs text-zinc-400">No results available.</p>
+      <div className="py-12 text-center space-y-3">
+        <FileText className="w-8 h-8 text-[var(--text-muted)] mx-auto" />
+        <p className="text-xs text-[var(--text-muted)]">No results available.</p>
       </div>
     );
   }
@@ -642,62 +610,62 @@ function ResultsView() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="p-4 rounded-md bg-zinc-900 border border-zinc-800 space-y-1">
+        <div className="rounded-lg p-4 border border-[var(--border-subtle)] space-y-1" style={{ background: 'var(--bg-surface)' }}>
           <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400 uppercase">
             <ShieldCheck className="w-4 h-4" /> Guardrails: {guardrailStatus}
           </div>
-          <p className="text-xs text-zinc-400">All AI outputs passed safety and validation checks.</p>
+          <p className="text-xs text-[var(--text-muted)]">All AI outputs passed validation checks.</p>
         </div>
-        <div className="p-4 rounded-md bg-zinc-900 border border-zinc-800 space-y-1">
-          <div className="flex items-center gap-2 text-xs font-semibold text-zinc-200 uppercase font-mono">
-            <Cpu className="w-4 h-4 text-zinc-400" /> ATS Score: {atsScore} / 100
+        <div className="rounded-lg p-4 border border-[var(--border-subtle)] space-y-1" style={{ background: 'var(--bg-surface)' }}>
+          <div className="flex items-center gap-2 text-xs font-semibold text-[var(--text-primary)] uppercase">
+            <Cpu className="w-4 h-4 text-[var(--text-muted)]" /> ATS Score: {atsScore} / 100
           </div>
-          <p className="text-xs text-zinc-400">Keyword Coverage: {Math.round(keywordCoverage * 100)}%</p>
+          <p className="text-xs text-[var(--text-muted)]">Keyword Coverage: {Math.round(keywordCoverage * 100)}%</p>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 text-xs font-mono text-zinc-500">
+      <div className="flex items-center gap-2 text-xs font-mono text-[var(--text-muted)]">
         <span>Workflow ID:</span>
-        <span className="text-zinc-300 font-bold">{workflow_id}</span>
+        <span className="text-[var(--text-secondary)] font-bold">{workflow_id}</span>
       </div>
 
       {summary && (
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <div className="text-xs font-semibold text-zinc-400 uppercase font-mono">Professional Summary</div>
-            <button onClick={handleCopySummary} className="min-button min-button-secondary text-xs">
+            <div className="section-label">Professional Summary</div>
+            <button onClick={handleCopySummary} className="btn btn-secondary text-xs">
               {copied ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <ExternalLink className="w-3.5 h-3.5" />}
               {copied ? "Copied!" : "Copy"}
             </button>
           </div>
-          <div className="p-4 rounded-md bg-zinc-900 border border-zinc-800 text-zinc-200 text-xs leading-relaxed">
+          <div className="rounded-lg p-4 border border-[var(--border-subtle)] text-xs text-[var(--text-secondary)] leading-relaxed" style={{ background: 'var(--bg-surface)' }}>
             {summary}
           </div>
         </div>
       )}
 
       {experience && experience.length > 0 && (
-        <div className="space-y-3 pt-2">
-          <div className="text-xs font-semibold text-zinc-400 uppercase font-mono">Work Experience</div>
+        <div className="space-y-3 pt-1">
+          <div className="section-label">Work Experience</div>
           {experience.map((exp, idx) => {
             const role = exp["role"] as string;
             const company = exp["company"] as string;
             const bullets = exp["bullets"] as Array<Record<string, unknown>> | string[] | undefined;
             return (
-              <div key={idx} className="p-4 rounded-md bg-zinc-900 border border-zinc-800 space-y-2">
-                <div className="flex items-center justify-between font-mono">
-                  <h4 className="font-semibold text-zinc-100 text-xs">{role}</h4>
-                  <span className="text-xs text-zinc-400">{company}</span>
+              <div key={idx} className="rounded-lg p-4 border border-[var(--border-subtle)] space-y-2" style={{ background: 'var(--bg-surface)' }}>
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium text-[var(--text-primary)] text-xs">{role}</h4>
+                  <span className="text-xs text-[var(--text-muted)]">{company}</span>
                 </div>
                 {bullets && bullets.length > 0 && (
-                  <ul className="space-y-1.5 text-xs text-zinc-300">
+                  <ul className="space-y-1.5 text-xs text-[var(--text-secondary)]">
                     {bullets.map((b, bIdx) => {
                       const text = typeof b === "string" ? b : String((b as Record<string, unknown>)?.["text"] ?? "");
                       return (
                         <li key={bIdx} className="flex items-start gap-2">
-                          <span className="text-zinc-500">·</span>
+                          <span className="text-[var(--text-muted)]">·</span>
                           <span>{text}</span>
                         </li>
                       );
@@ -711,12 +679,12 @@ function ResultsView() {
       )}
 
       {recommendations && recommendations.length > 0 && (
-        <div className="pt-3 border-t border-zinc-800">
-          <div className="text-xs font-semibold text-zinc-400 uppercase font-mono mb-2 block">ATS Recommendations</div>
-          <div className="space-y-1.5 font-mono text-xs">
+        <div className="pt-2 border-t border-[var(--border-subtle)]">
+          <div className="section-label mb-2">ATS Recommendations</div>
+          <div className="space-y-1.5 text-xs">
             {recommendations.map((rec, rIdx) => (
-              <div key={rIdx} className="p-2.5 rounded-md bg-zinc-900 border border-zinc-800 text-zinc-300 flex items-center gap-2">
-                <CheckCircle2 className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+              <div key={rIdx} className="flex items-center gap-2 p-2.5 rounded-lg border border-[var(--border-subtle)] text-[var(--text-secondary)]" style={{ background: 'var(--bg-surface)' }}>
+                <CheckCircle2 className="w-3.5 h-3.5 text-[var(--text-muted)] shrink-0" />
                 <span>{rec}</span>
               </div>
             ))}

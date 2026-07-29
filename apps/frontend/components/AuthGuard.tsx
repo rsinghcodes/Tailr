@@ -1,28 +1,33 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useEffect, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth-store";
 
-export function AuthGuard({ children }: { children: React.ReactNode }) {
+export function AuthGuard({ children }: { children: ReactNode }) {
   const router = useRouter();
-  const pathname = usePathname();
-  const { isAuthenticated, hydrate } = useAuthStore();
+  const { user } = useAuthStore();
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    hydrate();
-  }, [hydrate]);
+    useAuthStore.getState().hydrate();
+    setHydrated(true);
+  }, []);
 
   useEffect(() => {
-    const { isAuthenticated } = useAuthStore.getState();
-    if (!isAuthenticated && pathname !== "/login") {
-      router.push("/login");
-    }
-  }, [pathname, router]);
+    if (hydrated && !user) router.push("/login");
+  }, [hydrated, user, router]);
 
-  if (!isAuthenticated && pathname !== "/login") {
-    return null;
+  if (!hydrated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 rounded-full border-2 border-indigo-500/30 border-t-indigo-500 animate-spin" />
+          <span className="text-sm text-zinc-500">Loading...</span>
+        </div>
+      </div>
+    );
   }
 
-  return <>{children}</>;
+  return user ? <>{children}</> : null;
 }

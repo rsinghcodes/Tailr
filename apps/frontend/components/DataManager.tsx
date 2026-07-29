@@ -9,7 +9,7 @@ import {
 import { ParsedResumeView, JdDetailView } from "@/components/DetailViews";
 import {
   FileText, Briefcase, Trash2, ChevronDown, ChevronRight,
-  CheckCircle2, X, Loader2, Play,
+  X, Loader2, Play,
 } from "lucide-react";
 
 export function DataManager({
@@ -112,50 +112,36 @@ export function DataManager({
 
     return (
       <div key={r.id}>
-        <div className="flex items-center justify-between p-3 rounded bg-zinc-800/50 border border-zinc-700 hover:border-zinc-600 transition-colors">
-          <button
-            onClick={() => toggleExpand(r.id, "resume")}
-            className="flex items-center gap-3 min-w-0 flex-1 text-left"
-          >
+        <div className="card-3d-sm px-3 py-2.5 flex items-center justify-between gap-2">
+          <button onClick={() => toggleExpand(r.id, "resume")} className="flex items-center gap-3 min-w-0 flex-1 text-left">
             {isLoadingDetail ? (
-              <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin text-zinc-500" />
-            ) : isExpanded ? (
-              <ChevronDown className="w-3.5 h-3.5 shrink-0 text-zinc-400" />
+              <Loader2 className="w-3 h-3 shrink-0 animate-spin text-[var(--text-muted)]" />
             ) : (
-              <ChevronRight className="w-3.5 h-3.5 shrink-0 text-zinc-500" />
+              <ChevronRight className={`w-3 h-3 shrink-0 text-[var(--text-muted)] transition-transform ${isExpanded ? "rotate-90" : ""}`} />
             )}
-            <FileText className="w-4 h-4 shrink-0 text-zinc-400" />
+            <FileText className="w-4 h-4 shrink-0 text-[var(--text-muted)]" />
             <div className="min-w-0">
-              <div className="text-xs font-semibold text-zinc-200 truncate">{r.title}</div>
-              <div className="text-[10px] text-zinc-500 font-mono mt-px">
+              <div className="text-xs font-medium text-[var(--text-primary)] truncate">{r.title}</div>
+              <div className="text-[10px] text-[var(--text-muted)] mt-px">
                 v{r.current_version} · {new Date(r.updated_at).toLocaleDateString()}
                 {selectedResumeId === r.id && <span className="text-emerald-400 ml-2">· Selected</span>}
               </div>
             </div>
           </button>
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1 shrink-0">
             {selectedResumeId !== r.id && onUseResume && (
-              <button
-                onClick={() => { onUseResume(r.id); onClose(); }}
-                className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-mono bg-emerald-900/40 border border-emerald-700/50 text-emerald-300 hover:bg-emerald-800/40 transition-colors"
-                title="Use this resume"
-              >
+              <button onClick={() => { onUseResume(r.id); onClose(); }} className="btn btn-ghost px-2 py-1 text-[10px]">
                 <Play className="w-3 h-3" /> Use
               </button>
             )}
-            <button
-              onClick={() => handleDeleteResume(r.id)}
-              disabled={deleting === r.id}
-              className="p-1.5 rounded hover:bg-zinc-700 text-zinc-500 hover:text-rose-400 disabled:opacity-50"
-              title="Delete"
-            >
+            <button onClick={() => handleDeleteResume(r.id)} disabled={deleting === r.id} className="btn btn-ghost p-1.5 text-[var(--text-muted)] hover:text-rose-400">
               {deleting === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
             </button>
           </div>
         </div>
         {isExpanded && (
-          <div className="ml-8 mt-1 p-3 rounded bg-zinc-900 border border-zinc-700/50 text-xs max-h-96 overflow-y-auto">
-            {detail ? <ParsedResumeView data={detail} /> : <div className="text-zinc-500">No details available.</div>}
+          <div className="ml-6 mt-1 p-3 rounded-lg border border-[var(--border-subtle)]" style={{ background: 'var(--bg-surface)' }}>
+            {detail ? <ParsedResumeView data={detail} /> : <div className="text-xs text-[var(--text-muted)]">No details available.</div>}
           </div>
         )}
       </div>
@@ -169,49 +155,35 @@ export function DataManager({
 
     return (
       <div key={j.id}>
-        <div className="flex items-center justify-between p-3 rounded bg-zinc-800/50 border border-zinc-700 hover:border-zinc-600 transition-colors">
-          <button
-            onClick={() => toggleExpand(j.id, "jd")}
-            className="flex items-center gap-3 min-w-0 flex-1 text-left"
-          >
+        <div className="card-3d-sm px-3 py-2.5 flex items-center justify-between gap-2">
+          <button onClick={() => toggleExpand(j.id, "jd")} className="flex items-center gap-3 min-w-0 flex-1 text-left">
             {isLoadingDetail ? (
-              <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin text-zinc-500" />
-            ) : isExpanded ? (
-              <ChevronDown className="w-3.5 h-3.5 shrink-0 text-zinc-400" />
+              <Loader2 className="w-3 h-3 shrink-0 animate-spin text-[var(--text-muted)]" />
             ) : (
-              <ChevronRight className="w-3.5 h-3.5 shrink-0 text-zinc-500" />
+              <ChevronRight className={`w-3 h-3 shrink-0 text-[var(--text-muted)] transition-transform ${isExpanded ? "rotate-90" : ""}`} />
             )}
-            <Briefcase className="w-4 h-4 shrink-0 text-zinc-400" />
+            <Briefcase className="w-4 h-4 shrink-0 text-[var(--text-muted)]" />
             <div className="min-w-0">
-              <div className="text-xs font-semibold text-zinc-200 truncate">{j.title}</div>
-              <div className="text-[10px] text-zinc-500 font-mono mt-px">
+              <div className="text-xs font-medium text-[var(--text-primary)] truncate">{j.title}</div>
+              <div className="text-[10px] text-[var(--text-muted)] mt-px">
                 {j.company}{selectedJdId === j.id && <span className="text-emerald-400 ml-2">· Selected</span>}
               </div>
             </div>
           </button>
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1 shrink-0">
             {selectedJdId !== j.id && onUseJd && (
-              <button
-                onClick={() => { onUseJd(j.id); onClose(); }}
-                className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-mono bg-emerald-900/40 border border-emerald-700/50 text-emerald-300 hover:bg-emerald-800/40 transition-colors"
-                title="Use this job description"
-              >
+              <button onClick={() => { onUseJd(j.id); onClose(); }} className="btn btn-ghost px-2 py-1 text-[10px]">
                 <Play className="w-3 h-3" /> Use
               </button>
             )}
-            <button
-              onClick={() => handleDeleteJd(j.id)}
-              disabled={deleting === j.id}
-              className="p-1.5 rounded hover:bg-zinc-700 text-zinc-500 hover:text-rose-400 disabled:opacity-50"
-              title="Delete"
-            >
+            <button onClick={() => handleDeleteJd(j.id)} disabled={deleting === j.id} className="btn btn-ghost p-1.5 text-[var(--text-muted)] hover:text-rose-400">
               {deleting === j.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
             </button>
           </div>
         </div>
         {isExpanded && (
-          <div className="ml-8 mt-1 p-3 rounded bg-zinc-900 border border-zinc-700/50 text-xs max-h-96 overflow-y-auto">
-            {detail ? <JdDetailView data={detail} /> : <div className="text-zinc-500">No details available.</div>}
+          <div className="ml-6 mt-1 p-3 rounded-lg border border-[var(--border-subtle)]" style={{ background: 'var(--bg-surface)' }}>
+            {detail ? <JdDetailView data={detail} /> : <div className="text-xs text-[var(--text-muted)]">No details available.</div>}
           </div>
         )}
       </div>
@@ -220,52 +192,40 @@ export function DataManager({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-zinc-900 border border-zinc-700 rounded-lg w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-700">
-          <h2 className="text-sm font-semibold text-zinc-100">My Data</h2>
-          <button onClick={onClose} className="p-1 rounded hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200">
+      <div className="card-3d w-full max-w-2xl max-h-[80vh] flex flex-col p-0 overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-[var(--border-subtle)]">
+          <h2 className="text-sm font-semibold text-[var(--text-primary)]">My Data</h2>
+          <button onClick={onClose} className="btn btn-ghost p-1.5">
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="flex border-b border-zinc-700 px-5">
-          <button
-            onClick={() => setTab("resumes")}
-            className={`px-3 py-2.5 text-xs font-medium font-mono border-b-2 transition-colors ${
-              tab === "resumes" ? "border-zinc-100 text-zinc-100" : "border-transparent text-zinc-500 hover:text-zinc-300"
-            }`}
-          >
+        <div className="flex gap-6 px-5 pt-3 pb-0 border-b border-[var(--border-subtle)]">
+          <button onClick={() => setTab("resumes")} className={`pb-3 text-xs font-mono transition-colors border-b-2 ${
+            tab === "resumes" ? "border-[var(--accent)] text-[var(--text-primary)]" : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+          }`}>
             Resumes ({savedResumes.length})
           </button>
-          <button
-            onClick={() => setTab("jds")}
-            className={`px-3 py-2.5 text-xs font-medium font-mono border-b-2 transition-colors ${
-              tab === "jds" ? "border-zinc-100 text-zinc-100" : "border-transparent text-zinc-500 hover:text-zinc-300"
-            }`}
-          >
+          <button onClick={() => setTab("jds")} className={`pb-3 text-xs font-mono transition-colors border-b-2 ${
+            tab === "jds" ? "border-[var(--accent)] text-[var(--text-primary)]" : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+          }`}>
             Job Descriptions ({savedJds.length})
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-2 min-h-[200px]">
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-5 h-5 animate-spin text-zinc-500" />
-            </div>
+            <div className="flex items-center justify-center py-12"><Loader2 className="w-5 h-5 animate-spin text-[var(--text-muted)]" /></div>
           ) : error ? (
-            <div className="p-3 rounded bg-rose-950/40 border border-rose-900/60 text-rose-400 text-xs">{error}</div>
+            <div className="p-3 rounded-lg bg-rose-950/30 border border-rose-900/50 text-rose-400 text-xs">{error}</div>
           ) : tab === "resumes" ? (
-            savedResumes.length === 0 ? (
-              <div className="py-12 text-center text-xs text-zinc-500 font-mono">No resumes uploaded yet.</div>
-            ) : (
-              savedResumes.map(renderResumeItem)
-            )
+            savedResumes.length === 0
+              ? <div className="py-12 text-center text-xs text-[var(--text-muted)]">No resumes uploaded yet.</div>
+              : savedResumes.map(renderResumeItem)
           ) : (
-            savedJds.length === 0 ? (
-              <div className="py-12 text-center text-xs text-zinc-500 font-mono">No job descriptions yet.</div>
-            ) : (
-              savedJds.map(renderJdItem)
-            )
+            savedJds.length === 0
+              ? <div className="py-12 text-center text-xs text-[var(--text-muted)]">No job descriptions yet.</div>
+              : savedJds.map(renderJdItem)
           )}
         </div>
       </div>
