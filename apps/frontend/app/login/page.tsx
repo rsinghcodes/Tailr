@@ -3,13 +3,13 @@
 import { useState, FormEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth-store";
-import { Loader2, AlertCircle, Cpu } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 
 const API_BASE = "http://localhost:8000/api/v1";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setAuth, isAuthenticated } = useAuthStore();
+  const { setAuth } = useAuthStore();
 
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
@@ -58,30 +58,30 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-950 text-zinc-100">
+    <div className="min-h-screen flex items-center justify-center">
       <div className="w-full max-w-sm space-y-6 p-8">
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-10 h-10 rounded-md bg-zinc-100 text-zinc-950 font-bold text-sm mx-auto mb-2">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center font-bold text-white text-sm mx-auto shadow-lg shadow-indigo-500/20">
             T
           </div>
-          <h1 className="text-xl font-semibold">Tailr</h1>
-          <p className="text-xs text-zinc-400">AI-Powered Resume Optimization</p>
+          <h1 className="text-lg font-semibold text-zinc-100">Tailr</h1>
+          <p className="text-xs text-zinc-500">AI-Powered Resume Optimization</p>
         </div>
 
-        <div className="min-panel p-6 space-y-4">
-          <div className="flex border border-zinc-800 rounded-md overflow-hidden text-xs font-medium">
+        <div className="card-3d p-6 space-y-4">
+          <div className="flex rounded-lg overflow-hidden text-xs font-medium border border-[var(--border-subtle)]">
             <button
               onClick={() => { setMode("login"); setError(null); }}
-              className={`flex-1 py-2 text-center transition-colors ${
-                mode === "login" ? "bg-zinc-800 text-zinc-100" : "bg-zinc-900 text-zinc-500 hover:text-zinc-300"
+              className={`flex-1 py-2 text-center transition-all ${
+                mode === "login" ? "bg-[var(--accent)] text-white" : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
               }`}
             >
               Sign In
             </button>
             <button
               onClick={() => { setMode("register"); setError(null); }}
-              className={`flex-1 py-2 text-center transition-colors ${
-                mode === "register" ? "bg-zinc-800 text-zinc-100" : "bg-zinc-900 text-zinc-500 hover:text-zinc-300"
+              className={`flex-1 py-2 text-center transition-all ${
+                mode === "register" ? "bg-[var(--accent)] text-white" : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
               }`}
             >
               Register
@@ -96,7 +96,7 @@ export default function LoginPage() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
-                className="min-input w-full"
+                className="input"
               />
             )}
             <input
@@ -105,7 +105,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="min-input w-full"
+              className="input"
             />
             <input
               type="password"
@@ -114,11 +114,11 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="min-input w-full"
+              className="input"
             />
 
             {error && (
-              <div className="flex items-center gap-2 p-2.5 rounded bg-rose-950/40 border border-rose-900/60 text-rose-400 text-xs">
+              <div className="flex items-center gap-2 p-2.5 rounded-lg bg-rose-950/30 border border-rose-900/50 text-rose-400 text-xs">
                 <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                 <span>{error}</span>
               </div>
@@ -127,7 +127,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="min-button min-button-primary w-full justify-center disabled:opacity-50"
+              className="btn btn-primary w-full"
             >
               {loading ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /> {mode === "login" ? "Signing in..." : "Creating account..."}</>

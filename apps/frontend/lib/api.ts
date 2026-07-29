@@ -49,6 +49,7 @@ export interface JobDescriptionData {
   employment_type: string | null;
   description: string;
   parsed_requirements?: JobRequirements;
+  raw_extracted?: Record<string, unknown>;
 }
 
 export interface WorkflowResponse {
@@ -226,6 +227,25 @@ export async function deleteJobDescription(id: string): Promise<void> {
 
 export async function getJobDescription(id: string): Promise<JobDescriptionData> {
   const res = await request<{ success: boolean; data: JobDescriptionData }>(`/job-descriptions/${id}`);
+  return res.data;
+}
+
+export interface AnalyzeResponseData {
+  id: string;
+  parsed_requirements?: JobRequirements;
+}
+
+export async function analyzeJobDescription(
+  jdId: string,
+  model?: string
+): Promise<AnalyzeResponseData> {
+  const res = await request<{ success: boolean; data: AnalyzeResponseData }>(
+    `/job-descriptions/${jdId}/analyze`,
+    {
+      method: "POST",
+      body: JSON.stringify({ model }),
+    }
+  );
   return res.data;
 }
 

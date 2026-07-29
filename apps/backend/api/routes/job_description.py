@@ -9,6 +9,9 @@ from api.dependencies.services import (
     get_llama_extractor,
 )
 from api.routes.job_description_schemas import (
+    AnalyzeRequest,
+    AnalyzeResponse,
+    AnalyzeResponseData,
     JobDescriptionCreateRequest,
     JobDescriptionListResponse,
     JobDescriptionListItem,
@@ -31,16 +34,30 @@ ALLOWED_EXTENSIONS = {".pdf", ".docx", ".txt"}
 async def create_job_description(
     payload: JobDescriptionCreateRequest,
     service: JobDescriptionService = Depends(get_job_description_service),
+    extractor: LlamaExtractor = Depends(get_llama_extractor),
 ):
-    """Analyze and create a new Job Description from text input."""
+    """Create a JD from text. LlamaExtract extracts structure first; NO LLM analysis yet."""
     try:
-        jd, reqs = await service.create_job_description(
+        content_bytes = payload.description.encode("utf-8")
+        extracted = await extractor.extract_job_requirements(content_bytes, "jd.txt")
+
+        jd = await service.create_job_description(
             title=payload.title,
             description=payload.description,
             company=payload.company,
             location=payload.location,
             employment_type=payload.employment_type,
-            model=payload.model,
+            raw_extracted=extracted.model_dump(mode="json"),
+        )
+
+        from infrastructure.llamaindex.vector_store import VectorStoreService
+
+        vector_store = VectorStoreService()
+        jd_dict = extracted.model_dump(mode="json")
+        await vector_store.index_structured_extraction(
+            data=jd_dict,
+            source_type="jd",
+            source_id=str(jd.id),
         )
 
         response_data = JobDescriptionResponseData(
@@ -50,13 +67,13 @@ async def create_job_description(
             location=jd.location,
             employment_type=jd.employment_type,
             description=jd.description,
-            parsed_requirements=reqs,
+            raw_extracted=extracted.model_dump(mode="json"),
         )
         return JobDescriptionResponse(success=True, data=response_data)
     except Exception as exc:
-        logger.error("Failed to analyze job description: %s", str(exc))
+        logger.error("Failed to create job description: %s", str(exc))
         raise HTTPException(
-            status_code=422, detail=f"Job description analysis failed: {str(exc)}"
+            status_code=422, detail=f"Job description creation failed: {str(exc)}"
         ) from exc
 
 
@@ -72,7 +89,7 @@ async def upload_job_description(
     service: JobDescriptionService = Depends(get_job_description_service),
     extractor: LlamaExtractor = Depends(get_llama_extractor),
 ):
-    """Upload a job description file (PDF, DOCX, TXT). Extracts structured data via LlamaExtract, then analyzes via LLM."""
+    """Upload a JD file (PDF/DOCX/TXT). LlamaExtract extracts structure first; NO LLM analysis yet."""
     if not file.filename:
         raise HTTPException(status_code=400, detail="Filename is required.")
 
@@ -93,13 +110,13 @@ async def upload_job_description(
         jd_company = extracted.company
 
     try:
-        jd, reqs = await service.create_job_description(
+        jd = await service.create_job_description(
             title=jd_title,
             description="",
             company=jd_company,
             location=location,
             employment_type=employment_type,
-            extracted_requirements=extracted,
+            raw_extracted=extracted.model_dump(mode="json"),
         )
 
         from infrastructure.llamaindex.vector_store import VectorStoreService
@@ -119,13 +136,41 @@ async def upload_job_description(
             location=jd.location,
             employment_type=jd.employment_type,
             description=jd.description,
-            parsed_requirements=reqs,
+            raw_extracted=extracted.model_dump(mode="json"),
         )
         return JobDescriptionResponse(success=True, data=response_data)
     except Exception as exc:
         logger.error("Failed to upload job description: %s", str(exc))
         raise HTTPException(
             status_code=422, detail=f"Job description upload failed: {str(exc)}"
+        ) from exc
+
+
+@router.post(
+    "/job-descriptions/{jd_id}/analyze", response_model=AnalyzeResponse, status_code=200
+)
+async def analyze_job_description(
+    jd_id: uuid.UUID,
+    payload: AnalyzeRequest,
+    service: JobDescriptionService = Depends(get_job_description_service),
+):
+    """Run LLM analysis on an already-extracted job description."""
+    try:
+        jd, reqs = await service.analyze_job_description(
+            jd_id=jd_id,
+            model=payload.model,
+        )
+        response_data = AnalyzeResponseData(
+            id=jd.id,
+            parsed_requirements=reqs,
+        )
+        return AnalyzeResponse(success=True, data=response_data)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    except Exception as exc:
+        logger.error("Failed to analyze job description: %s", str(exc))
+        raise HTTPException(
+            status_code=422, detail=f"Job description analysis failed: {str(exc)}"
         ) from exc
 
 
@@ -158,6 +203,7 @@ async def get_job_description(
         employment_type=jd.employment_type,
         description=jd.description,
         parsed_requirements=reqs,
+        raw_extracted=jd.raw_extracted,
     )
     return JobDescriptionResponse(success=True, data=response_data)
 

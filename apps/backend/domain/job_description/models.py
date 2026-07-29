@@ -1,4 +1,5 @@
 import uuid
+from typing import Any, Optional
 from pydantic import BaseModel, Field
 
 
@@ -9,6 +10,7 @@ class JobDescription(BaseModel):
     location: str | None = None
     employment_type: str | None = None
     description: str
+    raw_extracted: Optional[dict[str, Any]] = None
 
 
 class JobRequirements(BaseModel):
