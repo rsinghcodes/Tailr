@@ -29,6 +29,9 @@ class JobDescriptionRepositoryImpl(JobDescriptionRepository):
             title=db_model.title,
             company=db_model.company,
             description=db_model.description,
+            location=db_model.location,
+            employment_type=db_model.employment_type,
+            raw_extracted=db_model.raw_extracted,
         )
 
         reqs = None
@@ -56,8 +59,6 @@ class JobDescriptionRepositoryImpl(JobDescriptionRepository):
             JobDescriptionModel.title,
             JobDescriptionModel.company,
             JobDescriptionModel.description,
-            JobDescriptionModel.location,
-            JobDescriptionModel.employment_type,
             JobDescriptionModel.created_at,
             JobDescriptionModel.updated_at,
         ).order_by(JobDescriptionModel.updated_at.desc())
@@ -68,8 +69,8 @@ class JobDescriptionRepositoryImpl(JobDescriptionRepository):
                 row.title,
                 row.company,
                 row.description,
-                row.location,
-                row.employment_type,
+                "",
+                "",
                 row.created_at,
                 row.updated_at,
             )
@@ -79,7 +80,6 @@ class JobDescriptionRepositoryImpl(JobDescriptionRepository):
     async def save(
         self, jd: JobDescription, requirements: Optional[JobRequirements] = None
     ) -> JobDescription:
-        # Check if record exists
         stmt = select(JobDescriptionModel).where(JobDescriptionModel.id == jd.id)
         result = await self.session.execute(stmt)
         db_model = result.scalar_one_or_none()
@@ -90,6 +90,12 @@ class JobDescriptionRepositoryImpl(JobDescriptionRepository):
             db_model.title = jd.title
             db_model.company = jd.company or "Unknown Company"
             db_model.description = jd.description
+            if jd.location is not None:
+                db_model.location = jd.location
+            if jd.employment_type is not None:
+                db_model.employment_type = jd.employment_type
+            if jd.raw_extracted is not None:
+                db_model.raw_extracted = jd.raw_extracted
             if reqs_dict is not None:
                 db_model.parsed_requirements = reqs_dict
         else:
@@ -98,6 +104,9 @@ class JobDescriptionRepositoryImpl(JobDescriptionRepository):
                 title=jd.title,
                 company=jd.company or "Unknown Company",
                 description=jd.description,
+                location=jd.location,
+                employment_type=jd.employment_type,
+                raw_extracted=jd.raw_extracted,
                 parsed_requirements=reqs_dict,
             )
             self.session.add(db_model)

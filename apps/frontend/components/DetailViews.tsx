@@ -181,12 +181,15 @@ export function ParsedResumeView({ data }: { data: Record<string, unknown> }) {
 export function JdDetailView({ data }: { data: Record<string, unknown> }) {
   const title = data["title"] as string | undefined;
   const company = data["company"] as string | undefined;
+  const raw = data["raw_extracted"] as Record<string, unknown> | undefined;
   const reqs = data["parsed_requirements"] as Record<string, unknown> | undefined;
-  const reqSkills = reqs?.["required_skills"] as string[] | undefined;
-  const prefSkills = reqs?.["preferred_skills"] as string[] | undefined;
-  const responsibilities = reqs?.["responsibilities"] as string[] | undefined;
+
+  const reqSkills = (reqs?.["required_skills"] || raw?.["required_skills"]) as string[] | undefined;
+  const prefSkills = (reqs?.["preferred_skills"] || raw?.["preferred_skills"]) as string[] | undefined;
+  const responsibilities = (reqs?.["responsibilities"] || raw?.["responsibilities"]) as string[] | undefined;
+  const keywords = (reqs?.["keywords"] || raw?.["keywords"]) as string[] | undefined;
   const softSkills = reqs?.["soft_skills"] as string[] | undefined;
-  const keywords = reqs?.["keywords"] as string[] | undefined;
+  const seniority = raw?.["seniority"] as string | undefined;
 
   return (
     <div className="space-y-3">
@@ -194,6 +197,19 @@ export function JdDetailView({ data }: { data: Record<string, unknown> }) {
         <div className="text-xs font-semibold text-zinc-200">{title}</div>
         {company && <div className="text-xs text-zinc-400">{company}</div>}
       </div>
+
+      {!reqs && raw && (
+        <div className="text-[10px] text-amber-400 font-mono flex items-center gap-1">
+          <span>Extracted only — run LLM analysis to see enhanced results</span>
+        </div>
+      )}
+
+      {seniority && (
+        <div>
+          <div className="text-xs font-semibold text-zinc-500 uppercase font-mono mb-1">Seniority</div>
+          <span className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 border border-zinc-700 text-[11px] font-mono">{seniority}</span>
+        </div>
+      )}
 
       {reqSkills && reqSkills.length > 0 && (
         <div>
@@ -219,7 +235,7 @@ export function JdDetailView({ data }: { data: Record<string, unknown> }) {
 
       {responsibilities && responsibilities.length > 0 && (
         <div>
-          <div className="text-xs font-semibold text-zinc-500 uppercase font-mono mb-1.5">Core Responsibilities</div>
+          <div className="text-xs font-semibold text-zinc-500 uppercase font-mono mb-1.5">{reqs ? "Core Responsibilities" : "Responsibilities"}</div>
           <ul className="space-y-1">
             {responsibilities.map((r, i) => (
               <li key={i} className="flex items-start gap-2 text-xs text-zinc-300">

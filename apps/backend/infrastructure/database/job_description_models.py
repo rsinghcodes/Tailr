@@ -11,4 +11,7 @@ class JobDescriptionModel(BaseEntity):
     company: Mapped[str] = mapped_column(String(100), nullable=False)
     title: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
+    location: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    employment_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     parsed_requirements: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    raw_extracted: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)

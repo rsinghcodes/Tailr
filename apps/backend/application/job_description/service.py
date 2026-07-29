@@ -1,5 +1,5 @@
 import uuid
-from typing import Optional
+from typing import Optional, Any
 
 from domain.job_description.models import JobDescription, JobRequirements
 from domain.job_description.repository import JobDescriptionRepository
@@ -25,29 +25,40 @@ class JobDescriptionService:
         company: Optional[str] = None,
         location: Optional[str] = None,
         employment_type: Optional[str] = None,
-        model: Optional[str] = None,
-        extracted_requirements: Optional[ExtractedJobRequirements] = None,
-    ) -> tuple[JobDescription, JobRequirements]:
-        """Creates a new Job Description, analyzes it using an LLM, and persists it.
-
-        Args:
-            extracted_requirements: Optional structured data pre-extracted by LlamaExtract.
-                Passed to the analyzer as additional context.
-        """
+        raw_extracted: Optional[dict[str, Any]] = None,
+    ) -> JobDescription:
+        """Creates a new Job Description and persists it. No LLM analysis."""
         jd = JobDescription(
             title=title,
             description=description,
             company=company,
             location=location,
             employment_type=employment_type,
+            raw_extracted=raw_extracted,
         )
-
         await self.repository.save(jd)
+        return jd
+
+    async def analyze_job_description(
+        self,
+        jd_id: uuid.UUID,
+        model: Optional[str] = None,
+    ) -> tuple[JobDescription, JobRequirements]:
+        """Run LLM analysis on an existing Job Description. Requires saved raw_extracted data."""
+        result = await self.repository.get_by_id(jd_id)
+        if not result:
+            raise ValueError(f"Job description {jd_id} not found")
+
+        jd, _existing_reqs = result
+
+        extracted = None
+        if jd.raw_extracted:
+            extracted = ExtractedJobRequirements(**jd.raw_extracted)
 
         requirements = await self.analyzer.analyze(
             jd,
             model=model,
-            extracted_requirements=extracted_requirements,
+            extracted_requirements=extracted,
         )
 
         await self.repository.save(jd, requirements)
