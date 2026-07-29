@@ -12,7 +12,7 @@ from config.settings import settings
 logger = logging.getLogger(__name__)
 
 EMBEDDING_MODEL = "models/gemini-embedding-001"
-EMBEDDING_DIM = 768
+EMBEDDING_DIM = 3072
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 100
 
