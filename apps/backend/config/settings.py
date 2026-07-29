@@ -1,10 +1,8 @@
-
 from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-
     APP_NAME: str = "Tailr"
     APP_ENV: str = "development"
     DEBUG: bool = True
@@ -23,6 +21,10 @@ class Settings(BaseSettings):
     QDRANT_URL: str = ""
     QDRANT_API_KEY: str = ""
     QDRANT_COLLECTION: str = "tailr-documents"
+
+    JWT_SECRET: str = "tailr-jwt-secret"
+    JWT_ALGORITHM: str = "HS256"
+    JWT_EXPIRE_MINUTES: int = 1440
 
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]
 

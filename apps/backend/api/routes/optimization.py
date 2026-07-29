@@ -6,14 +6,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from infrastructure.database import get_db
 from infrastructure.repositories.resume_repository import ResumeRepositoryImpl
-from infrastructure.repositories.job_description_repository import JobDescriptionRepositoryImpl
+from infrastructure.repositories.job_description_repository import (
+    JobDescriptionRepositoryImpl,
+)
 from domain.shared.llm_provider import LLMProvider
 from prompts.registry import PromptRegistry
+from api.dependencies.auth import get_current_user
 from api.dependencies.services import get_llm_provider, get_prompt_registry
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["Optimization Engine"])
+router = APIRouter(
+    tags=["Optimization Engine"], dependencies=[Depends(get_current_user)]
+)
 
 
 class PlanOptimizationRequest(BaseModel):
@@ -51,11 +56,16 @@ async def plan_optimization(
 
     resume = await resume_repo.get_by_version_id(uuid.UUID(body.resume_id))
     if not resume:
-        raise HTTPException(status_code=404, detail=f"Resume {body.resume_id} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Resume {body.resume_id} not found"
+        )
 
     jd_result = await jd_repo.get_by_id(uuid.UUID(body.job_description_id))
     if not jd_result:
-        raise HTTPException(status_code=404, detail=f"Job description {body.job_description_id} not found")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Job description {body.job_description_id} not found",
+        )
     jd, reqs = jd_result
 
     try:
@@ -63,7 +73,9 @@ async def plan_optimization(
         user_template = registry.get_prompt("planner", "user", "v1")
 
         resume_json = resume.model_dump(mode="json")
-        jd_requirements = reqs.model_dump(mode="json") if reqs else {"description": jd.description}
+        jd_requirements = (
+            reqs.model_dump(mode="json") if reqs else {"description": jd.description}
+        )
 
         user_prompt = user_template.format(
             resume_json=str(resume_json),
@@ -77,9 +89,18 @@ async def plan_optimization(
         )
 
         import json
+
         plan_data = json.loads(plan) if isinstance(plan, str) else plan
-        target_sections = plan_data.get("target_sections", ["summary", "experience"]) if isinstance(plan_data, dict) else ["summary", "experience"]
-        strategy = plan_data.get("strategy", "Optimize resume for job match") if isinstance(plan_data, dict) else str(plan)
+        target_sections = (
+            plan_data.get("target_sections", ["summary", "experience"])
+            if isinstance(plan_data, dict)
+            else ["summary", "experience"]
+        )
+        strategy = (
+            plan_data.get("strategy", "Optimize resume for job match")
+            if isinstance(plan_data, dict)
+            else str(plan)
+        )
 
         return PlanOptimizationResponse(
             plan_id=f"plan-{uuid.uuid4().hex[:8]}",
@@ -103,7 +124,9 @@ async def rewrite_resume_content(
 
     resume = await resume_repo.get_by_version_id(uuid.UUID(body.resume_id))
     if not resume:
-        raise HTTPException(status_code=404, detail=f"Resume {body.resume_id} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Resume {body.resume_id} not found"
+        )
 
     try:
         system_prompt = registry.get_prompt("rewrite", "system", "v1")

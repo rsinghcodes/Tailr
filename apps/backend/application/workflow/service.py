@@ -11,12 +11,30 @@ from config.settings import settings
 logger = logging.getLogger(__name__)
 
 STEP_LABELS: dict[str, dict[str, str]] = {
-    "retrieve_context": {"label": "Context Retrieval", "description": "Searching knowledge base for relevant context"},
-    "plan": {"label": "Rewrite Planning", "description": "Generating optimization strategy"},
-    "rewrite": {"label": "Resume Rewriting", "description": "Applying optimizations to resume content"},
-    "guardrails": {"label": "Guardrail Check", "description": "Running safety and quality checks"},
-    "validation": {"label": "Validation", "description": "Validating business rules and completeness"},
-    "ats_analysis": {"label": "ATS Analysis", "description": "Scoring resume against applicant tracking system"},
+    "retrieve_context": {
+        "label": "Context Retrieval",
+        "description": "Searching knowledge base for relevant context",
+    },
+    "plan": {
+        "label": "Rewrite Planning",
+        "description": "Generating optimization strategy",
+    },
+    "rewrite": {
+        "label": "Resume Rewriting",
+        "description": "Applying optimizations to resume content",
+    },
+    "guardrails": {
+        "label": "Guardrail Check",
+        "description": "Running safety and quality checks",
+    },
+    "validation": {
+        "label": "Validation",
+        "description": "Validating business rules and completeness",
+    },
+    "ats_analysis": {
+        "label": "ATS Analysis",
+        "description": "Scoring resume against applicant tracking system",
+    },
     "render": {"label": "Rendering", "description": "Generating final output"},
 }
 
@@ -34,8 +52,6 @@ class WorkflowApplicationService:
 
     def _build_initial_state(
         self,
-        raw_resume_text: str | None = None,
-        job_description_text: str | None = None,
         user_id: str = "default_user",
         canonical_resume: dict[str, Any] | None = None,
         job_requirements: dict[str, Any] | None = None,
@@ -44,8 +60,6 @@ class WorkflowApplicationService:
             "request_id": str(uuid.uuid4()),
             "workflow_id": str(uuid.uuid4()),
             "user_id": user_id,
-            "raw_resume_text": raw_resume_text,
-            "job_description_text": job_description_text,
             "telemetry": {
                 "current_step": "NEW",
                 "step_history": [],
@@ -65,20 +79,21 @@ class WorkflowApplicationService:
 
     async def start_workflow(
         self,
-        raw_resume_text: str | None = None,
-        job_description_text: str | None = None,
         user_id: str = "default_user",
         canonical_resume: dict[str, Any] | None = None,
         job_requirements: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         graph = get_compiled_graph()
         initial_state = self._build_initial_state(
-            raw_resume_text, job_description_text, user_id,
+            user_id,
             canonical_resume=canonical_resume,
             job_requirements=job_requirements,
         )
 
-        logger.info("Starting LangGraph workflow", extra={"workflow_id": initial_state["workflow_id"], "user_id": user_id})
+        logger.info(
+            "Starting LangGraph workflow",
+            extra={"workflow_id": initial_state["workflow_id"], "user_id": user_id},
+        )
 
         final_state = await graph.ainvoke(initial_state)
 
@@ -87,7 +102,9 @@ class WorkflowApplicationService:
             for v in violations:
                 await self.guardrail_repo.record_event(
                     workflow_id=final_state["workflow_id"],
-                    validator_name=final_state["guardrail_report"].get("metadata", {}).get("failed_validator", "guardrails"),
+                    validator_name=final_state["guardrail_report"]
+                    .get("metadata", {})
+                    .get("failed_validator", "guardrails"),
                     severity=v.get("severity", "high"),
                     violation_code=v.get("code"),
                     repaired=final_state["guardrail_report"].get("repaired", False),
@@ -98,21 +115,21 @@ class WorkflowApplicationService:
 
     async def start_workflow_stream(
         self,
-        raw_resume_text: str | None = None,
-        job_description_text: str | None = None,
         user_id: str = "default_user",
         canonical_resume: dict[str, Any] | None = None,
         job_requirements: dict[str, Any] | None = None,
     ) -> AsyncGenerator[dict[str, Any], None]:
         graph = get_compiled_graph()
         initial_state = self._build_initial_state(
-            raw_resume_text, job_description_text, user_id,
+            user_id,
             canonical_resume=canonical_resume,
             job_requirements=job_requirements,
         )
         workflow_id = initial_state["workflow_id"]
 
-        logger.info("Starting streamed LangGraph workflow", extra={"workflow_id": workflow_id})
+        logger.info(
+            "Starting streamed LangGraph workflow", extra={"workflow_id": workflow_id}
+        )
 
         yield {
             "event": "workflow_start",
@@ -123,7 +140,9 @@ class WorkflowApplicationService:
         async for event in graph.astream(initial_state, stream_mode="updates"):
             for node_name, node_output in event.items():
                 step_index += 1
-                meta = STEP_LABELS.get(node_name, {"label": node_name, "description": ""})
+                meta = STEP_LABELS.get(
+                    node_name, {"label": node_name, "description": ""}
+                )
 
                 yield {
                     "event": "step_start",
@@ -166,8 +185,13 @@ class WorkflowApplicationService:
                 wf_uuid = uuid.UUID(workflow_id)
                 domain_state = await self.workflow_repo.get_by_id(wf_uuid)
                 if domain_state:
-                    return {"workflow_id": str(domain_state.id), "status": domain_state.current_state.value}
+                    return {
+                        "workflow_id": str(domain_state.id),
+                        "status": domain_state.current_state.value,
+                    }
             except Exception as exc:
-                logger.warning("Failed to retrieve workflow state from database: %s", str(exc))
+                logger.warning(
+                    "Failed to retrieve workflow state from database: %s", str(exc)
+                )
 
         return None

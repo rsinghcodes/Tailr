@@ -3,6 +3,7 @@ from infrastructure.database.resume_models import ResumeModel, ResumeVersionMode
 from infrastructure.database.job_description_models import JobDescriptionModel
 from infrastructure.database.workflow_models import WorkflowRunModel
 from infrastructure.database.guardrail_models import GuardrailEventModel
+from infrastructure.database.user_models import UserModel
 
 __all__ = [
     "SystemInfo",
@@ -11,4 +12,5 @@ __all__ = [
     "JobDescriptionModel",
     "WorkflowRunModel",
     "GuardrailEventModel",
+    "UserModel",
 ]

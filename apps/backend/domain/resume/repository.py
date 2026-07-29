@@ -14,7 +14,6 @@ class ResumeRepository(ABC):
     async def save(
         self,
         resume: Resume,
-        raw_text: Optional[str] = None,
         title: Optional[str] = None,
         resume_container_id: Optional[uuid.UUID] = None,
     ) -> Resume:
@@ -25,7 +24,9 @@ class ResumeRepository(ABC):
         pass
 
     @abstractmethod
-    async def list_all(self) -> list[tuple[uuid.UUID, str, int, str, datetime, datetime]]:
+    async def list_all(
+        self,
+    ) -> list[tuple[uuid.UUID, str, int, str, datetime, datetime]]:
         pass
 
     @abstractmethod

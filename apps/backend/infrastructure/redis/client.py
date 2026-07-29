@@ -54,7 +54,9 @@ class RedisClient:
             logger.warning("Redis GET error for key %s: %s", key, str(exc))
             return None
 
-    async def set(self, key: str, value: str, ttl_seconds: Optional[int] = None) -> bool:
+    async def set(
+        self, key: str, value: str, ttl_seconds: Optional[int] = None
+    ) -> bool:
         """Sets key-value pair with optional TTL."""
         try:
             client = self.get_client()

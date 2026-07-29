@@ -19,7 +19,9 @@ class ValidationEngine:
     def __init__(self, validators: list[BusinessValidator] | None = None):
         self.validators = validators or [RuleValidator(), CitationValidator()]
 
-    async def validate(self, rewritten_resume: Any, canonical_resume: Any) -> ValidationReport:
+    async def validate(
+        self, rewritten_resume: Any, canonical_resume: Any
+    ) -> ValidationReport:
         logger.info("Executing Business Validation Engine")
         all_violations: list[ValidationViolation] = []
         checks_run = 0
@@ -29,18 +31,29 @@ class ValidationEngine:
             violations = await validator.validate(rewritten_resume, canonical_resume)
             all_violations.extend(violations)
 
-        critical_or_errors = [v for v in all_violations if v.severity in (ValidationSeverity.ERROR, ValidationSeverity.CRITICAL)]
+        critical_or_errors = [
+            v
+            for v in all_violations
+            if v.severity in (ValidationSeverity.ERROR, ValidationSeverity.CRITICAL)
+        ]
         status = "FAILED" if critical_or_errors else "PASSED"
 
         report = ValidationReport(
             status=status,
             checks_run=checks_run,
             violations=all_violations,
-            warnings=[v.message for v in all_violations if v.severity == ValidationSeverity.WARNING],
+            warnings=[
+                v.message
+                for v in all_violations
+                if v.severity == ValidationSeverity.WARNING
+            ],
         )
 
         if status == "FAILED":
-            logger.warning("Business Validation Engine failed with %d errors", len(critical_or_errors))
+            logger.warning(
+                "Business Validation Engine failed with %d errors",
+                len(critical_or_errors),
+            )
             raise BusinessValidationError(report)
 
         return report

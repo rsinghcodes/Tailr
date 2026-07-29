@@ -31,13 +31,7 @@ def register_exception_handlers(app: FastAPI) -> None:
 
         return JSONResponse(
             status_code=status_code,
-            content={
-                "success": False,
-                "error": {
-                    "code": code,
-                    "message": msg
-                }
-            }
+            content={"success": False, "error": {"code": code, "message": msg}},
         )
 
     @app.exception_handler(HTTPException)
@@ -56,13 +50,7 @@ def register_exception_handlers(app: FastAPI) -> None:
 
         return JSONResponse(
             status_code=exc.status_code,
-            content={
-                "success": False,
-                "error": {
-                    "code": code,
-                    "message": exc.detail
-                }
-            }
+            content={"success": False, "error": {"code": code, "message": exc.detail}},
         )
 
     @app.exception_handler(RequestValidationError)
@@ -73,16 +61,13 @@ def register_exception_handlers(app: FastAPI) -> None:
             loc = " -> ".join(str(x) for x in err.get("loc", []))
             msg = err.get("msg", "invalid value")
             details.append(f"{loc}: {msg}")
-        
+
         return JSONResponse(
             status_code=422,
             content={
                 "success": False,
-                "error": {
-                    "code": "VALIDATION_ERROR",
-                    "message": "; ".join(details)
-                }
-            }
+                "error": {"code": "VALIDATION_ERROR", "message": "; ".join(details)},
+            },
         )
 
     @app.exception_handler(Exception)
@@ -94,7 +79,7 @@ def register_exception_handlers(app: FastAPI) -> None:
                 "success": False,
                 "error": {
                     "code": "INTERNAL_ERROR",
-                    "message": "An unexpected internal server error occurred."
-                }
-            }
+                    "message": "An unexpected internal server error occurred.",
+                },
+            },
         )

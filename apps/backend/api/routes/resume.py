@@ -1,13 +1,14 @@
-import asyncio
 import logging
-import os
-import tempfile
 import uuid
 from typing import Optional
 from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 
-from api.dependencies.services import get_resume_service, get_llama_parser, get_llama_extractor
+from api.dependencies.auth import get_current_user
+from api.dependencies.services import (
+    get_resume_service,
+    get_llama_extractor,
+)
 from api.routes.resume_schemas import (
     ResumeDetailsResponse,
     ResumeListResponse,
@@ -17,12 +18,11 @@ from api.routes.resume_schemas import (
     ResumeVersionsResponse,
 )
 from application.resume.service import ResumeService
-from infrastructure.llamaindex.parser import LlamaDocParser
 from infrastructure.llamaindex.extractors import LlamaExtractor
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["Resumes"])
+router = APIRouter(tags=["Resumes"], dependencies=[Depends(get_current_user)])
 
 ALLOWED_EXTENSIONS = {".pdf", ".docx", ".txt", ".tex"}
 
@@ -33,48 +33,23 @@ async def upload_resume(
     title: Optional[str] = Form(None),
     resume_container_id: Optional[uuid.UUID] = Form(None),
     service: ResumeService = Depends(get_resume_service),
-    parser: LlamaDocParser = Depends(get_llama_parser),
     extractor: LlamaExtractor = Depends(get_llama_extractor),
 ):
-    """Upload a resume file (PDF, DOCX, TXT). Parses and extracts structured data via LlamaCloud."""
+    """Upload a resume file (PDF, DOCX, TXT). Extracts structured data via LlamaExtract."""
     if not file.filename:
         raise HTTPException(status_code=400, detail="Filename is required.")
-
-    ext = os.path.splitext(file.filename)[1].lower()
-    if ext not in ALLOWED_EXTENSIONS:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unsupported file type '{ext}'. Allowed: {', '.join(ALLOWED_EXTENSIONS)}",
-        )
 
     try:
         content_bytes = await file.read()
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"Failed to read file: {exc}") from exc
+        raise HTTPException(
+            status_code=400, detail=f"Failed to read file: {exc}"
+        ) from exc
 
-    raw_text = ""
-    if ext in (".pdf", ".docx"):
-        tmp_path = None
-        try:
-            with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
-                tmp.write(content_bytes)
-                tmp_path = tmp.name
-            parsed = await parser.parse_file(tmp_path)
-            raw_text = parsed[0]["text"] if parsed else content_bytes.decode("utf-8", errors="replace")
-        finally:
-            if tmp_path and os.path.exists(tmp_path):
-                os.unlink(tmp_path)
-    else:
-        raw_text = content_bytes.decode("utf-8")
-
-    if not raw_text.strip():
-        raise HTTPException(status_code=422, detail="Parsed content is empty.")
-
-    extracted = await extractor.extract_resume(raw_text)
+    extracted = await extractor.extract_resume(content_bytes, file.filename)
 
     try:
         resume, container_id = await service.upload_resume(
-            raw_text=raw_text,
             extracted=extracted,
             filename=file.filename,
             title=title,
@@ -82,8 +57,14 @@ async def upload_resume(
         )
 
         from infrastructure.llamaindex.vector_store import VectorStoreService
+
         vector_store = VectorStoreService()
-        asyncio.ensure_future(vector_store.index_document(raw_text, file.filename))
+        resume_dict = resume.model_dump(mode="json")
+        await vector_store.index_structured_extraction(
+            data=resume_dict,
+            source_type="resume",
+            source_id=str(container_id),
+        )
 
         return ResumeUploadResponse(resume_id=container_id, status="uploaded")
     except Exception as exc:
@@ -113,7 +94,9 @@ async def download_resume_pdf(
     return StreamingResponse(
         iter([pdf_bytes]),
         media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="resume_{resume_id}.pdf"'},
+        headers={
+            "Content-Disposition": f'attachment; filename="resume_{resume_id}.pdf"'
+        },
     )
 
 

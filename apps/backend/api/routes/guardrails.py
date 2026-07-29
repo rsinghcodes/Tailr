@@ -3,6 +3,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
 
+from api.dependencies.auth import get_current_user
 from application.guardrails.service import GuardrailApplicationService
 from api.dependencies.services import get_guardrail_service
 from guardrails.pipeline import GuardrailsEngine
@@ -10,7 +11,7 @@ from guardrails.base import GuardrailContext, GuardrailResultStatus
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["Guardrails Audit"])
+router = APIRouter(tags=["Guardrails Audit"], dependencies=[Depends(get_current_user)])
 
 
 class GuardrailEventResponse(BaseModel):
@@ -72,7 +73,9 @@ async def list_guardrail_events(
     guardrail_service: GuardrailApplicationService = Depends(get_guardrail_service),
 ):
     """Retrieve immutable audit events for a workflow execution."""
-    events = await guardrail_service.get_events_for_workflow(workflow_id=workflow_id, limit=limit)
+    events = await guardrail_service.get_events_for_workflow(
+        workflow_id=workflow_id, limit=limit
+    )
     items = [
         GuardrailEventResponse(
             id=str(e.id),
@@ -108,7 +111,10 @@ async def validate_ai_output(body: ValidateOutputRequest):
 @router.post("/guardrails/injection-check", response_model=InjectionCheckResponse)
 async def check_prompt_injection(body: InjectionCheckRequest):
     """Check text for prompt injection attempts."""
-    from guardrails.validators.prompt_injection_validator import PromptInjectionValidator
+    from guardrails.validators.prompt_injection_validator import (
+        PromptInjectionValidator,
+    )
+
     validator = PromptInjectionValidator()
     result = await validator.validate(body.content, GuardrailContext())
     detected = result.status == GuardrailResultStatus.REJECTED

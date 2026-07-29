@@ -18,7 +18,6 @@ from telemetry.types import RequestId
 
 
 class RequestIDMiddleware(BaseHTTPMiddleware):
-
     async def dispatch(self, request: Request, call_next):
 
         request_id = request.headers.get(

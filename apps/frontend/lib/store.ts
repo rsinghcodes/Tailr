@@ -1,7 +1,13 @@
 import { create } from "zustand";
 import type { WorkflowResponse, ResumeListItem, JobDescriptionData } from "./api";
 
-export type TabType = "dashboard" | "wizard" | "resumes" | "job_descriptions" | "results" | "audit";
+export type FlowStep =
+  | "upload-resume"
+  | "resume-parsed"
+  | "input-jd"
+  | "jd-parsed"
+  | "optimizing"
+  | "done";
 
 export interface StreamStepState {
   step: string;
@@ -13,11 +19,8 @@ export interface StreamStepState {
 }
 
 interface UIState {
-  activeTab: TabType;
-  setActiveTab: (tab: TabType) => void;
-
-  wizardStep: number;
-  setWizardStep: (step: number) => void;
+  flowStep: FlowStep;
+  setFlowStep: (step: FlowStep) => void;
 
   selectedResumeId: string | null;
   setSelectedResumeId: (id: string | null) => void;
@@ -52,11 +55,8 @@ const STEPS_MAP: { step: string; label: string; description: string }[] = [
 ];
 
 export const useUIStore = create<UIState>((set) => ({
-  activeTab: "dashboard",
-  setActiveTab: (tab) => set({ activeTab: tab }),
-
-  wizardStep: 1,
-  setWizardStep: (step) => set({ wizardStep: step }),
+  flowStep: "upload-resume",
+  setFlowStep: (step) => set({ flowStep: step }),
 
   selectedResumeId: null,
   setSelectedResumeId: (id) => set({ selectedResumeId: id }),

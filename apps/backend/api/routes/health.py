@@ -33,11 +33,16 @@ async def health_check():
         async with engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
         latency = round((time.perf_counter() - start_time) * 1000, 2)
-        services["postgres"] = ServiceHealthDetail(status="healthy", online=True, latency_ms=latency)
+        services["postgres"] = ServiceHealthDetail(
+            status="healthy", online=True, latency_ms=latency
+        )
     except Exception as exc:
         latency = round((time.perf_counter() - start_time) * 1000, 2)
         services["postgres"] = ServiceHealthDetail(
-            status="unhealthy", online=False, latency_ms=latency, details={"error": str(exc)}
+            status="unhealthy",
+            online=False,
+            latency_ms=latency,
+            details={"error": str(exc)},
         )
 
     # 2. Redis Check
@@ -54,7 +59,10 @@ async def health_check():
     except Exception as exc:
         latency = round((time.perf_counter() - start_time) * 1000, 2)
         services["redis"] = ServiceHealthDetail(
-            status="offline", online=False, latency_ms=latency, details={"error": str(exc)}
+            status="offline",
+            online=False,
+            latency_ms=latency,
+            details={"error": str(exc)},
         )
 
     # 3. Gemini API Check
@@ -72,6 +80,8 @@ async def health_check():
     # Calculate overall system status
     all_online = all(s.online for s in services.values())
     postgres_online = services["postgres"].online
-    overall_status = "healthy" if all_online else ("degraded" if postgres_online else "unhealthy")
+    overall_status = (
+        "healthy" if all_online else ("degraded" if postgres_online else "unhealthy")
+    )
 
     return SystemHealthResponse(status=overall_status, services=services)

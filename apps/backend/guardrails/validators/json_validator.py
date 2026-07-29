@@ -15,7 +15,9 @@ from guardrails.base import (
 class JSONValidator(BaseValidator):
     name: str = "json_validator"
 
-    async def validate(self, content: Any, context: GuardrailContext) -> GuardrailResult:
+    async def validate(
+        self, content: Any, context: GuardrailContext
+    ) -> GuardrailResult:
         start_time = time.perf_counter()
 
         if isinstance(content, (dict, list)):

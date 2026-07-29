@@ -15,4 +15,4 @@ def get_request_id() -> str | None:
 
 
 def clear_request_id():
-    request_id.set(None)    
+    request_id.set(None)

@@ -40,7 +40,10 @@ async def run_startup_checks() -> dict[str, bool]:
         if redis_online:
             logger.info("[Startup Diagnostic] Redis Cache: ONLINE")
         else:
-            logger.warning("[Startup Diagnostic] Redis Cache: OFFLINE (Connection refused at %s)", redis_client.redis_url)
+            logger.warning(
+                "[Startup Diagnostic] Redis Cache: OFFLINE (Connection refused at %s)",
+                redis_client.redis_url,
+            )
         results["redis"] = redis_online
     except Exception as exc:
         logger.warning("[Startup Diagnostic] Redis Cache: OFFLINE (%s)", str(exc))
@@ -50,7 +53,10 @@ async def run_startup_checks() -> dict[str, bool]:
     try:
         gemini_status = await gemini_health_checker.check_health()
         if gemini_status.get("online"):
-            logger.info("[Startup Diagnostic] Gemini API: ONLINE (Model: %s)", gemini_status.get("model"))
+            logger.info(
+                "[Startup Diagnostic] Gemini API: ONLINE (Model: %s)",
+                gemini_status.get("model"),
+            )
             results["gemini"] = True
         else:
             logger.warning(

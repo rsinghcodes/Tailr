@@ -7,7 +7,9 @@ from infrastructure.repositories.resume_repository import ResumeRepositoryImpl
 from application.resume.service import ResumeService
 
 from domain.job_description.repository import JobDescriptionRepository
-from infrastructure.repositories.job_description_repository import JobDescriptionRepositoryImpl
+from infrastructure.repositories.job_description_repository import (
+    JobDescriptionRepositoryImpl,
+)
 from application.job_description.service import JobDescriptionService
 from application.job_description.analyzer import JobDescriptionAnalyzer
 from domain.shared.llm_provider import LLMProvider
@@ -18,8 +20,10 @@ from infrastructure.repositories.workflow_repository import WorkflowRepositoryIm
 from infrastructure.repositories.guardrail_repository import GuardrailRepositoryImpl
 from application.workflow.service import WorkflowApplicationService
 from application.guardrails.service import GuardrailApplicationService
+from domain.user.repository import UserRepository
+from infrastructure.repositories.user_repository import UserRepositoryImpl
+from application.auth.service import AuthService
 from infrastructure.llamaindex.client import get_llama_client
-from infrastructure.llamaindex.parser import LlamaDocParser
 from infrastructure.llamaindex.extractors import LlamaExtractor
 from infrastructure.llamaindex.vector_store import VectorStoreService
 
@@ -38,10 +42,6 @@ def get_llm_provider() -> LLMProvider:
     return _llm_provider
 
 
-def get_llama_parser() -> LlamaDocParser:
-    return LlamaDocParser(client=_llama_client)
-
-
 def get_llama_extractor() -> LlamaExtractor:
     return LlamaExtractor(client=_llama_client)
 
@@ -50,12 +50,14 @@ def get_vector_store_service() -> VectorStoreService:
     return VectorStoreService()
 
 
-async def get_resume_repository(session: AsyncSession = Depends(get_db)) -> ResumeRepository:
+async def get_resume_repository(
+    session: AsyncSession = Depends(get_db),
+) -> ResumeRepository:
     return ResumeRepositoryImpl(session)
 
 
 async def get_resume_service(
-    repo: ResumeRepository = Depends(get_resume_repository)
+    repo: ResumeRepository = Depends(get_resume_repository),
 ) -> ResumeService:
     return ResumeService(repo)
 
@@ -80,11 +82,15 @@ async def get_job_description_service(
     return JobDescriptionService(repo, analyzer)
 
 
-async def get_workflow_repository(session: AsyncSession = Depends(get_db)) -> WorkflowRepositoryImpl:
+async def get_workflow_repository(
+    session: AsyncSession = Depends(get_db),
+) -> WorkflowRepositoryImpl:
     return WorkflowRepositoryImpl(session)
 
 
-async def get_guardrail_repository(session: AsyncSession = Depends(get_db)) -> GuardrailRepositoryImpl:
+async def get_guardrail_repository(
+    session: AsyncSession = Depends(get_db),
+) -> GuardrailRepositoryImpl:
     return GuardrailRepositoryImpl(session)
 
 
@@ -92,10 +98,24 @@ async def get_workflow_service(
     workflow_repo: WorkflowRepositoryImpl = Depends(get_workflow_repository),
     guardrail_repo: GuardrailRepositoryImpl = Depends(get_guardrail_repository),
 ) -> WorkflowApplicationService:
-    return WorkflowApplicationService(workflow_repo=workflow_repo, guardrail_repo=guardrail_repo)
+    return WorkflowApplicationService(
+        workflow_repo=workflow_repo, guardrail_repo=guardrail_repo
+    )
 
 
 async def get_guardrail_service(
     guardrail_repo: GuardrailRepositoryImpl = Depends(get_guardrail_repository),
 ) -> GuardrailApplicationService:
     return GuardrailApplicationService(guardrail_repo=guardrail_repo)
+
+
+async def get_user_repository(
+    session: AsyncSession = Depends(get_db),
+) -> UserRepository:
+    return UserRepositoryImpl(session)
+
+
+async def get_auth_service(
+    user_repo: UserRepository = Depends(get_user_repository),
+) -> AuthService:
+    return AuthService(user_repo)

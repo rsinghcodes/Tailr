@@ -6,15 +6,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from infrastructure.database import get_db
 from infrastructure.repositories.resume_repository import ResumeRepositoryImpl
-from infrastructure.repositories.job_description_repository import JobDescriptionRepositoryImpl
+from infrastructure.repositories.job_description_repository import (
+    JobDescriptionRepositoryImpl,
+)
 from domain.shared.llm_provider import LLMProvider
 from domain.ats.models import ATSReport
 from prompts.registry import PromptRegistry
+from api.dependencies.auth import get_current_user
 from api.dependencies.services import get_llm_provider, get_prompt_registry
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["ATS Analytics"])
+router = APIRouter(tags=["ATS Analytics"], dependencies=[Depends(get_current_user)])
 
 
 class ATSAnalyzeRequest(BaseModel):
@@ -52,11 +55,16 @@ async def analyze_ats_compatibility(
 
     resume = await resume_repo.get_by_version_id(uuid.UUID(body.resume_id))
     if not resume:
-        raise HTTPException(status_code=404, detail=f"Resume {body.resume_id} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Resume {body.resume_id} not found"
+        )
 
     jd_result = await jd_repo.get_by_id(uuid.UUID(body.job_description_id))
     if not jd_result:
-        raise HTTPException(status_code=404, detail=f"Job description {body.job_description_id} not found")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Job description {body.job_description_id} not found",
+        )
     jd, reqs = jd_result
 
     try:
@@ -64,7 +72,9 @@ async def analyze_ats_compatibility(
         user_template = registry.get_prompt("ats", "user", "v1")
 
         resume_json = resume.model_dump(mode="json")
-        jd_requirements = reqs.model_dump(mode="json") if reqs else {"description": jd.description}
+        jd_requirements = (
+            reqs.model_dump(mode="json") if reqs else {"description": jd.description}
+        )
 
         user_prompt = user_template.format(
             original_resume=str(resume_json),
@@ -96,15 +106,24 @@ async def compare_ats_scores(
 
     original = await resume_repo.get_by_version_id(uuid.UUID(body.original_resume_id))
     if not original:
-        raise HTTPException(status_code=404, detail=f"Original resume {body.original_resume_id} not found")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Original resume {body.original_resume_id} not found",
+        )
 
     tailored = await resume_repo.get_by_version_id(uuid.UUID(body.tailored_resume_id))
     if not tailored:
-        raise HTTPException(status_code=404, detail=f"Tailored resume {body.tailored_resume_id} not found")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Tailored resume {body.tailored_resume_id} not found",
+        )
 
     jd_result = await jd_repo.get_by_id(uuid.UUID(body.job_description_id))
     if not jd_result:
-        raise HTTPException(status_code=404, detail=f"Job description {body.job_description_id} not found")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Job description {body.job_description_id} not found",
+        )
     jd, reqs = jd_result
 
     try:
@@ -113,7 +132,9 @@ async def compare_ats_scores(
 
         original_json = original.model_dump(mode="json")
         tailored_json = tailored.model_dump(mode="json")
-        jd_requirements = reqs.model_dump(mode="json") if reqs else {"description": jd.description}
+        jd_requirements = (
+            reqs.model_dump(mode="json") if reqs else {"description": jd.description}
+        )
 
         user_prompt = user_template.format(
             original_resume=str(original_json),
@@ -143,4 +164,6 @@ async def compare_ats_scores(
         )
     except Exception as exc:
         logger.error("ATS comparison failed: %s", str(exc))
-        raise HTTPException(status_code=500, detail=f"ATS comparison failed: {str(exc)}")
+        raise HTTPException(
+            status_code=500, detail=f"ATS comparison failed: {str(exc)}"
+        )

@@ -4,7 +4,11 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.pool import NullPool
 from config.settings import settings
 
-is_testing = "pytest" in sys.modules or "PYTEST_CURRENT_TEST" in os.environ or os.getenv("TESTING", "").lower() in ("true", "1")
+is_testing = (
+    "pytest" in sys.modules
+    or "PYTEST_CURRENT_TEST" in os.environ
+    or os.getenv("TESTING", "").lower() in ("true", "1")
+)
 
 engine_kwargs = {
     "echo": settings.DEBUG,

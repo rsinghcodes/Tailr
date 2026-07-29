@@ -11,7 +11,6 @@ from infrastructure.database.base import Base
 
 
 class BaseEntity(Base):
-
     __abstract__ = True
 
     id: Mapped[uuid.UUID] = mapped_column(

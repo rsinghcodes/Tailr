@@ -13,7 +13,9 @@ from guardrails.base import (
 class HallucinationValidator(BaseValidator):
     name: str = "hallucination_validator"
 
-    async def validate(self, content: Any, context: GuardrailContext) -> GuardrailResult:
+    async def validate(
+        self, content: Any, context: GuardrailContext
+    ) -> GuardrailResult:
         start_time = time.perf_counter()
 
         canonical_resume = context.canonical_resume
@@ -32,7 +34,11 @@ class HallucinationValidator(BaseValidator):
         if isinstance(canonical_resume, dict):
             exps = canonical_resume.get("experience", [])
             for e in exps:
-                c = e.get("company") if isinstance(e, dict) else getattr(e, "company", None)
+                c = (
+                    e.get("company")
+                    if isinstance(e, dict)
+                    else getattr(e, "company", None)
+                )
                 if c:
                     known_companies.add(c.lower())
 
@@ -55,10 +61,18 @@ class HallucinationValidator(BaseValidator):
         content_dict = content if isinstance(content, dict) else {}
 
         # Check experiences
-        if "experience" in content_dict and isinstance(content_dict["experience"], list):
+        if "experience" in content_dict and isinstance(
+            content_dict["experience"], list
+        ):
             for exp in content_dict["experience"]:
-                company = exp.get("company", "").lower() if isinstance(exp, dict) else getattr(exp, "company", "").lower()
-                if company and not any(known in company or company in known for known in known_companies):
+                company = (
+                    exp.get("company", "").lower()
+                    if isinstance(exp, dict)
+                    else getattr(exp, "company", "").lower()
+                )
+                if company and not any(
+                    known in company or company in known for known in known_companies
+                ):
                     violations.append(
                         GuardrailViolation(
                             code="HALLUCINATED_EMPLOYER",
@@ -71,8 +85,14 @@ class HallucinationValidator(BaseValidator):
         # Check projects
         if "projects" in content_dict and isinstance(content_dict["projects"], list):
             for proj in content_dict["projects"]:
-                title = proj.get("title", "").lower() if isinstance(proj, dict) else getattr(proj, "title", "").lower()
-                if title and not any(known in title or title in known for known in known_projects):
+                title = (
+                    proj.get("title", "").lower()
+                    if isinstance(proj, dict)
+                    else getattr(proj, "title", "").lower()
+                )
+                if title and not any(
+                    known in title or title in known for known in known_projects
+                ):
                     violations.append(
                         GuardrailViolation(
                             code="HALLUCINATED_PROJECT",

@@ -17,7 +17,9 @@ class SchemaValidator(BaseValidator):
     def __init__(self, target_schema: Type[BaseModel] | None = None):
         self.target_schema = target_schema
 
-    async def validate(self, content: Any, context: GuardrailContext) -> GuardrailResult:
+    async def validate(
+        self, content: Any, context: GuardrailContext
+    ) -> GuardrailResult:
         start_time = time.perf_counter()
 
         schema_class = self.target_schema or context.metadata.get("target_schema")

@@ -28,6 +28,19 @@ class JobDescriptionRepository(ABC):
         pass
 
     @abstractmethod
-    async def list_all(self) -> list[tuple[uuid.UUID, str, str | None, str | None, str | None, str | None, datetime, datetime]]:
+    async def list_all(
+        self,
+    ) -> list[
+        tuple[
+            uuid.UUID,
+            str,
+            str | None,
+            str | None,
+            str | None,
+            str | None,
+            datetime,
+            datetime,
+        ]
+    ]:
         """List all job descriptions ordered by updated_at desc."""
         pass

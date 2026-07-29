@@ -50,6 +50,8 @@ class BaseValidator(ABC):
     name: str = "base_validator"
 
     @abstractmethod
-    async def validate(self, content: Any, context: GuardrailContext) -> GuardrailResult:
+    async def validate(
+        self, content: Any, context: GuardrailContext
+    ) -> GuardrailResult:
         """Validate AI-generated content against safety and integrity rules."""
         pass

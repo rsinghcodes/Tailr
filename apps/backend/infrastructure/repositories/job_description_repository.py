@@ -37,7 +37,20 @@ class JobDescriptionRepositoryImpl(JobDescriptionRepository):
 
         return jd, reqs
 
-    async def list_all(self) -> list[tuple[uuid.UUID, str, str | None, str | None, str | None, str | None, datetime, datetime]]:
+    async def list_all(
+        self,
+    ) -> list[
+        tuple[
+            uuid.UUID,
+            str,
+            str | None,
+            str | None,
+            str | None,
+            str | None,
+            datetime,
+            datetime,
+        ]
+    ]:
         stmt = select(
             JobDescriptionModel.id,
             JobDescriptionModel.title,
@@ -50,8 +63,16 @@ class JobDescriptionRepositoryImpl(JobDescriptionRepository):
         ).order_by(JobDescriptionModel.updated_at.desc())
         result = await self.session.execute(stmt)
         return [
-            (row.id, row.title, row.company, row.description,
-             row.location, row.employment_type, row.created_at, row.updated_at)
+            (
+                row.id,
+                row.title,
+                row.company,
+                row.description,
+                row.location,
+                row.employment_type,
+                row.created_at,
+                row.updated_at,
+            )
             for row in result.all()
         ]
 

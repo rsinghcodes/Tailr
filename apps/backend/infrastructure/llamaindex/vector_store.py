@@ -52,37 +52,69 @@ class VectorStoreService:
         if self._collection not in names:
             await client.create_collection(
                 collection_name=self._collection,
-                vectors_config=VectorParams(size=EMBEDDING_DIM, distance=Distance.COSINE),
+                vectors_config=VectorParams(
+                    size=EMBEDDING_DIM, distance=Distance.COSINE
+                ),
             )
             logger.info("Created Qdrant collection '%s'", self._collection)
         self._collection_initialized = True
 
-    async def index_document(self, text: str, filename: str = "document.txt") -> bool:
+    async def index_structured_extraction(
+        self,
+        data: dict,
+        source_type: str,
+        source_id: str,
+    ) -> bool:
         try:
             await self._ensure_collection()
             client = await self._ensure_client()
 
-            chunks = self._text_splitter.split_text(text)
-            if not chunks:
-                logger.warning("No chunks produced for '%s'", filename)
+            sections = _build_sections(data, source_type)
+            if not sections:
+                logger.warning("No sections produced for '%s'", source_id)
                 return False
 
-            embeddings = await self._embeddings.aembed_documents(chunks)
+            all_chunks: list[str] = []
+            all_payloads: list[dict] = []
+
+            for section_name, section_text in sections:
+                section_chunks = self._text_splitter.split_text(section_text)
+                for chunk in section_chunks:
+                    all_chunks.append(chunk)
+                    all_payloads.append({
+                        "section": section_name,
+                        "source_id": source_id,
+                        "source_type": source_type,
+                        "text": chunk,
+                    })
+
+            embeddings = await self._embeddings.aembed_documents(all_chunks)
 
             points = [
                 PointStruct(
                     id=str(uuid.uuid4()),
                     vector=emb,
-                    payload={"filename": filename, "chunk_index": i, "text": chunk},
+                    payload=payload,
                 )
-                for i, (chunk, emb) in enumerate(zip(chunks, embeddings))
+                for emb, payload in zip(embeddings, all_payloads)
             ]
 
             await client.upsert(collection_name=self._collection, points=points)
-            logger.info("Indexed %d chunks from '%s' to Qdrant '%s'", len(chunks), filename, self._collection)
+            logger.info(
+                "Indexed %d chunks from %s '%s' to Qdrant '%s'",
+                len(all_chunks),
+                source_type,
+                source_id,
+                self._collection,
+            )
             return True
         except Exception as exc:
-            logger.error("Failed to index document '%s': %s", filename, str(exc))
+            logger.error(
+                "Failed to index structured %s '%s': %s",
+                source_type,
+                source_id,
+                str(exc),
+            )
             return False
 
     async def query_context(self, query: str, top_k: int = 5) -> str:
@@ -109,3 +141,67 @@ class VectorStoreService:
         except Exception as exc:
             logger.error("Qdrant retrieval failed: %s", str(exc))
             return "No relevant context found."
+
+
+def _build_sections(data: dict, source_type: str) -> list[tuple[str, str]]:
+    sections: list[tuple[str, str]] = []
+
+    if source_type == "resume":
+        if summary := data.get("summary", ""):
+            sections.append(("summary", summary))
+        if skills := data.get("skills", []):
+            texts = [s.get("name", str(s)) if isinstance(s, dict) else str(s) for s in skills]
+            sections.append(("skills", ", ".join(texts)))
+        if experience := data.get("experience", []):
+            parts = []
+            for exp in experience:
+                bullets = exp.get("bullets", [])
+                bullet_texts = [b.get("text", str(b)) if isinstance(b, dict) else str(b) for b in bullets]
+                techs = exp.get("technologies", [])
+                line = f"{exp.get('role', '')} at {exp.get('company', '')}"
+                if techs:
+                    line += f" [{', '.join(techs)}]"
+                if bullet_texts:
+                    line += ": " + " ".join(bullet_texts)
+                parts.append(line)
+            sections.append(("experience", "\n".join(parts)))
+        if education := data.get("education", []):
+            parts = []
+            for edu in education:
+                line = f"{edu.get('degree', '')} at {edu.get('institution', '')}"
+                if edu.get("field"):
+                    line += f" ({edu['field']})"
+                parts.append(line)
+            sections.append(("education", "\n".join(parts)))
+        if projects := data.get("projects", []):
+            parts = []
+            for proj in projects:
+                title = proj.get("title", "")
+                desc = proj.get("description", "")
+                techs = proj.get("technologies", [])
+                bullets = proj.get("bullets", [])
+                line = title
+                if techs:
+                    line += f" [{', '.join(techs)}]"
+                if desc:
+                    line += f": {desc}"
+                if bullets:
+                    bullet_texts = [b.get("text", str(b)) if isinstance(b, dict) else str(b) for b in bullets]
+                    line += " | " + " ".join(bullet_texts)
+                parts.append(line)
+            sections.append(("projects", "\n".join(parts)))
+        if certifications := data.get("certifications", []):
+            texts = [c.get("name", str(c)) if isinstance(c, dict) else str(c) for c in certifications]
+            sections.append(("certifications", ", ".join(texts)))
+
+    elif source_type == "jd":
+        if title := data.get("title", ""):
+            sections.append(("title", title))
+        if required_skills := data.get("required_skills", []):
+            sections.append(("required_skills", ", ".join(required_skills) if isinstance(required_skills, list) else str(required_skills)))
+        if preferred_skills := data.get("preferred_skills", []):
+            sections.append(("preferred_skills", ", ".join(preferred_skills) if isinstance(preferred_skills, list) else str(preferred_skills)))
+        if responsibilities := data.get("responsibilities", []):
+            sections.append(("responsibilities", "\n".join(responsibilities) if isinstance(responsibilities, list) else str(responsibilities)))
+
+    return sections

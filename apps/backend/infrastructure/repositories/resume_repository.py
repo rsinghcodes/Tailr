@@ -23,7 +23,6 @@ class ResumeRepositoryImpl(ResumeRepository):
     async def save(
         self,
         resume: Resume,
-        raw_text: Optional[str] = None,
         title: Optional[str] = None,
         resume_container_id: Optional[uuid.UUID] = None,
     ) -> tuple[Resume, uuid.UUID]:
@@ -34,7 +33,7 @@ class ResumeRepositoryImpl(ResumeRepository):
             db_resume = ResumeModel(
                 title=title or f"Resume - {datetime.utcnow().strftime('%Y-%m-%d')}",
                 current_version=1,
-                status="active"
+                status="active",
             )
             self.session.add(db_resume)
             await self.session.flush()
@@ -49,24 +48,23 @@ class ResumeRepositoryImpl(ResumeRepository):
 
         current_ver = db_resume.current_version if db_resume else 1
 
-        stmt_version = select(ResumeVersionModel).where(ResumeVersionModel.id == resume.id)
+        stmt_version = select(ResumeVersionModel).where(
+            ResumeVersionModel.id == resume.id
+        )
         result_version = await self.session.execute(stmt_version)
         db_version = result_version.scalar_one_or_none()
 
         if db_version:
             db_version.canonical_json = resume.model_dump(mode="json")
-            if raw_text:
-                db_version.raw_text = raw_text
             db_version.updated_at = datetime.utcnow()
         else:
             db_version = ResumeVersionModel(
                 id=resume.id,
                 resume_id=container_id,
                 version=current_ver,
-                raw_text=raw_text,
                 canonical_json=resume.model_dump(mode="json"),
                 created_at=resume.created_at,
-                updated_at=resume.updated_at
+                updated_at=resume.updated_at,
             )
             self.session.add(db_version)
 
@@ -84,30 +82,43 @@ class ResumeRepositoryImpl(ResumeRepository):
         await self.session.commit()
         return True
 
-    async def list_all(self) -> list[tuple[uuid.UUID, str, int, str, datetime, datetime]]:
+    async def list_all(
+        self,
+    ) -> list[tuple[uuid.UUID, str, int, str, datetime, datetime]]:
         stmt = select(
             ResumeModel.id,
             ResumeModel.title,
             ResumeModel.current_version,
             ResumeModel.status,
             ResumeModel.created_at,
-            ResumeModel.updated_at
+            ResumeModel.updated_at,
         ).order_by(ResumeModel.updated_at.desc())
         result = await self.session.execute(stmt)
         return [
-            (row.id, row.title, row.current_version, row.status, row.created_at, row.updated_at)
+            (
+                row.id,
+                row.title,
+                row.current_version,
+                row.status,
+                row.created_at,
+                row.updated_at,
+            )
             for row in result.all()
         ]
 
     async def get_versions_by_resume_id(
         self, resume_id: uuid.UUID
     ) -> list[tuple[uuid.UUID, int, datetime, datetime]]:
-        stmt = select(
-            ResumeVersionModel.id,
-            ResumeVersionModel.version,
-            ResumeVersionModel.created_at,
-            ResumeVersionModel.updated_at
-        ).where(ResumeVersionModel.resume_id == resume_id).order_by(ResumeVersionModel.version.desc())
+        stmt = (
+            select(
+                ResumeVersionModel.id,
+                ResumeVersionModel.version,
+                ResumeVersionModel.created_at,
+                ResumeVersionModel.updated_at,
+            )
+            .where(ResumeVersionModel.resume_id == resume_id)
+            .order_by(ResumeVersionModel.version.desc())
+        )
         result = await self.session.execute(stmt)
         return [
             (row.id, row.version, row.created_at, row.updated_at)

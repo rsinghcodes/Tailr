@@ -1,6 +1,15 @@
 import uuid
 from typing import Any, Optional
-from domain.resume.models import Resume, Skill, Experience, ExperienceBullet, Education, Project
+from domain.resume.models import (
+    Resume,
+    Skill,
+    Experience,
+    ExperienceBullet,
+    Education,
+    Project,
+    Certification,
+    Achievement,
+)
 from domain.resume.repository import ResumeRepository
 from infrastructure.redis.cache import RedisCacheService
 
@@ -8,13 +17,16 @@ from infrastructure.redis.cache import RedisCacheService
 class ResumeService:
     """Application service to manage resume creation, updating, versioning, listing, and deletion."""
 
-    def __init__(self, repository: ResumeRepository, cache_service: Optional[RedisCacheService] = None):
+    def __init__(
+        self,
+        repository: ResumeRepository,
+        cache_service: Optional[RedisCacheService] = None,
+    ):
         self.repository = repository
         self.cache_service = cache_service or RedisCacheService()
 
     async def upload_resume(
         self,
-        raw_text: str,
         filename: str,
         title: Optional[str] = None,
         resume_container_id: Optional[uuid.UUID] = None,
@@ -22,44 +34,69 @@ class ResumeService:
     ) -> tuple[Resume, uuid.UUID]:
         if extracted:
             resume = Resume(
-                summary=extracted.summary or raw_text[:500],
+                summary=extracted.summary or "",
                 skills=[Skill(name=s) for s in (extracted.skills or [])],
                 experience=[
                     Experience(
-                        company=e.get("company", ""),
-                        role=e.get("role", ""),
-                        start_date=e.get("start_date", ""),
-                        end_date=e.get("end_date"),
-                        bullets=[ExperienceBullet(text=b) for b in e.get("bullets", [])],
+                        company=e.company,
+                        role=e.role,
+                        location=e.location or None,
+                        employment_type=e.employment_type or None,
+                        start_date=e.start_date,
+                        end_date=e.end_date or None,
+                        technologies=list(e.technologies or []),
+                        bullets=[ExperienceBullet(text=b) for b in (e.bullets or [])],
+                        achievements=list(e.achievements or []),
                     )
                     for e in (extracted.experience or [])
                 ],
                 education=[
                     Education(
-                        institution=e.get("institution", ""),
-                        degree=e.get("degree", ""),
-                        start_date=e.get("start_date", ""),
-                        end_date=e.get("end_date"),
+                        institution=e.institution,
+                        degree=e.degree,
+                        field=e.field or None,
+                        cgpa=e.cgpa or None,
+                        start_date=e.start_date,
+                        end_date=e.end_date or None,
                     )
                     for e in (extracted.education or [])
                 ],
                 projects=[
                     Project(
-                        title=p.get("title", ""),
-                        description=p.get("description"),
+                        title=p.title,
+                        description=p.description or None,
+                        technologies=list(p.technologies or []),
+                        bullets=list(p.bullets or []),
                     )
                     for p in (extracted.projects or [])
                 ],
+                certifications=[
+                    Certification(
+                        name=c.name,
+                        issuer=c.issuer,
+                        credential_id=c.credential_id or None,
+                        issue_date=c.issue_date or None,
+                    )
+                    for c in (extracted.certifications or [])
+                ],
+                achievements=[
+                    Achievement(
+                        title=a.title,
+                        description=a.description or None,
+                        category=a.category or None,
+                        date=a.date or None,
+                    )
+                    for a in (extracted.achievements or [])
+                ],
             )
         else:
-            resume = Resume(summary=raw_text[:500] if len(raw_text) > 500 else raw_text)
+            resume = Resume(summary="")
         resume.metadata.template_name = filename
         if title:
             resume.metadata.additional_metadata["custom_title"] = title
 
         _, container_id = await self.repository.save(
             resume=resume,
-            raw_text=raw_text,
             title=title,
             resume_container_id=resume_container_id,
         )

@@ -6,14 +6,19 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
+from api.dependencies.auth import get_current_user
 from application.workflow.service import WorkflowApplicationService
 from application.resume.service import ResumeService
 from application.job_description.service import JobDescriptionService
-from api.dependencies.services import get_workflow_service, get_resume_service, get_job_description_service
+from api.dependencies.services import (
+    get_workflow_service,
+    get_resume_service,
+    get_job_description_service,
+)
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["Workflows"])
+router = APIRouter(tags=["Workflows"], dependencies=[Depends(get_current_user)])
 
 
 class WorkflowStartRequest(BaseModel):
@@ -34,22 +39,26 @@ async def _resolve_workflow_data(
     request: WorkflowStartRequest,
     resume_service: ResumeService,
     jd_service: JobDescriptionService,
-) -> tuple[str | None, str | None, dict[str, Any] | None, dict[str, Any] | None]:
-    raw_resume_text = None
-    job_description_text = None
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
     canonical_resume = None
     job_requirements = None
 
     if request.resume_id:
-        versions = await resume_service.get_resume_versions(uuid.UUID(request.resume_id))
+        versions = await resume_service.get_resume_versions(
+            uuid.UUID(request.resume_id)
+        )
         if versions:
-            resume = await resume_service.get_resume_by_version(versions[0]["version_id"])
+            resume = await resume_service.get_resume_by_version(
+                versions[0]["version_id"]
+            )
             if resume:
-                raw_resume_text = resume.summary or ""
                 canonical_resume = {
                     "summary": resume.summary,
                     "skills": [
-                        {"name": s.name, "category": s.category.value if s.category else None}
+                        {
+                            "name": s.name,
+                            "category": s.category.value if s.category else None,
+                        }
                         for s in (resume.skills or [])
                     ],
                     "experience": [
@@ -82,10 +91,11 @@ async def _resolve_workflow_data(
                 }
 
     if request.job_description_id:
-        jd_result = await jd_service.get_job_description(uuid.UUID(request.job_description_id))
+        jd_result = await jd_service.get_job_description(
+            uuid.UUID(request.job_description_id)
+        )
         if jd_result:
             jd, reqs = jd_result
-            job_description_text = jd.description or ""
             if reqs:
                 job_requirements = {
                     "title": reqs.title,
@@ -97,7 +107,7 @@ async def _resolve_workflow_data(
                     "experience_level": reqs.experience_level,
                 }
 
-    return raw_resume_text, job_description_text, canonical_resume, job_requirements
+    return canonical_resume, job_requirements
 
 
 @router.post("/workflows/stream")
@@ -115,15 +125,14 @@ async def stream_workflow(
       - step_complete   {step, step_index, total_steps, label, output}
       - workflow_complete {workflow_id}
     """
-    raw_resume_text, job_description_text, canonical_resume, job_requirements = await _resolve_workflow_data(
-        request, resume_service, jd_service
-    )
+    (
+        canonical_resume,
+        job_requirements,
+    ) = await _resolve_workflow_data(request, resume_service, jd_service)
 
     async def event_generator():
         try:
             async for event in workflow_service.start_workflow_stream(
-                raw_resume_text=raw_resume_text,
-                job_description_text=job_description_text,
                 canonical_resume=canonical_resume,
                 job_requirements=job_requirements,
             ):
@@ -154,13 +163,12 @@ async def start_workflow(
 ):
     """Start an event-driven resume optimization workflow."""
     try:
-        raw_resume_text, job_description_text, canonical_resume, job_requirements = await _resolve_workflow_data(
-            request, resume_service, jd_service
-        )
+        (
+            canonical_resume,
+            job_requirements,
+        ) = await _resolve_workflow_data(request, resume_service, jd_service)
 
         final_state = await workflow_service.start_workflow(
-            raw_resume_text=raw_resume_text,
-            job_description_text=job_description_text,
             canonical_resume=canonical_resume,
             job_requirements=job_requirements,
         )
@@ -175,7 +183,9 @@ async def start_workflow(
         )
     except Exception as exc:
         logger.error("Workflow execution failed: %s", str(exc))
-        raise HTTPException(status_code=422, detail=f"Workflow failed: {str(exc)}") from exc
+        raise HTTPException(
+            status_code=422, detail=f"Workflow failed: {str(exc)}"
+        ) from exc
 
 
 @router.get("/workflows/{workflow_id}", response_model=WorkflowResponse)
@@ -186,7 +196,9 @@ async def get_workflow_status(
     """Retrieve the current state and telemetry of a specific workflow run."""
     state = await workflow_service.get_workflow_state(workflow_id)
     if not state:
-        raise HTTPException(status_code=404, detail=f"Workflow '{workflow_id}' not found.")
+        raise HTTPException(
+            status_code=404, detail=f"Workflow '{workflow_id}' not found."
+        )
 
     return WorkflowResponse(
         workflow_id=state.get("workflow_id", workflow_id),

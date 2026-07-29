@@ -1,5 +1,11 @@
 const API_BASE = "http://localhost:8000/api/v1";
 
+function getAuthHeaders(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  const token = localStorage.getItem("tailr_token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 // ──────────────────────────────────────────
 // Types
 // ──────────────────────────────────────────
@@ -86,13 +92,39 @@ export interface GuardrailEventsResponse {
   items: GuardrailEventItem[];
 }
 
+// ─── Auth ────────────────────────────────
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  full_name: string;
+}
+
+export interface TokenResponse {
+  access_token: string;
+  token_type: string;
+  user: AuthUser;
+}
+
+export async function signup(data: { email: string; password: string; full_name: string }): Promise<TokenResponse> {
+  return request<TokenResponse>("/auth/signup", { method: "POST", body: JSON.stringify(data) });
+}
+
+export async function login(data: { email: string; password: string }): Promise<TokenResponse> {
+  return request<TokenResponse>("/auth/login", { method: "POST", body: JSON.stringify(data) });
+}
+
+export async function getMe(): Promise<AuthUser> {
+  return request<AuthUser>("/auth/me");
+}
+
 // ──────────────────────────────────────────
 // API Client
 // ──────────────────────────────────────────
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: { "Content-Type": "application/json", ...options?.headers },
+    headers: { "Content-Type": "application/json", ...getAuthHeaders(), ...options?.headers },
     ...options,
   });
   if (!res.ok) {
@@ -120,7 +152,7 @@ export async function uploadResumeFile(file: File, title?: string): Promise<Resu
   const form = new FormData();
   form.append("file", file);
   if (title) form.append("title", title);
-  const res = await fetch(`${API_BASE}/resumes`, { method: "POST", body: form });
+  const res = await fetch(`${API_BASE}/resumes`, { method: "POST", body: form, headers: getAuthHeaders() });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body?.error?.message || body?.detail || `HTTP ${res.status}`);
@@ -140,6 +172,15 @@ export async function deleteResume(id: string): Promise<void> {
 export async function getResumeVersions(id: string): Promise<ResumeVersionItem[]> {
   const res = await request<{ success: boolean; data: ResumeVersionItem[] }>(`/resumes/${id}/versions`);
   return res.data;
+}
+
+export async function getResumeDetails(id: string): Promise<Record<string, unknown>> {
+  const res = await request<{ success: boolean; data: Record<string, unknown> }>(`/resumes/${id}`);
+  return res.data;
+}
+
+export async function getJobDescriptionDetails(id: string): Promise<JobDescriptionData> {
+  return getJobDescription(id);
 }
 
 // ─── Job Descriptions ────────────────────
@@ -170,7 +211,7 @@ export async function uploadJobDescription(
   form.append("file", file);
   if (title) form.append("title", title);
   if (company) form.append("company", company);
-  const res = await fetch(`${API_BASE}/job-descriptions/upload`, { method: "POST", body: form });
+  const res = await fetch(`${API_BASE}/job-descriptions/upload`, { method: "POST", body: form, headers: getAuthHeaders() });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body?.error?.message || body?.detail || `HTTP ${res.status}`);
@@ -206,7 +247,7 @@ export async function* streamWorkflow(requestBody: {
 }): AsyncGenerator<WorkflowStreamEvent> {
   const res = await fetch(`${API_BASE}/workflows/stream`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
     body: JSON.stringify(requestBody),
   });
   if (!res.ok) throw new Error(`SSE request failed: ${res.status}`);

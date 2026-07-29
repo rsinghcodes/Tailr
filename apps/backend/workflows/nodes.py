@@ -13,6 +13,7 @@ def _get_llm() -> LLMProvider:
     global _llm
     if _llm is None:
         from infrastructure.langchain.llm_provider import GeminiProvider
+
         _llm = GeminiProvider()
     return _llm
 
@@ -40,9 +41,20 @@ async def retrieve_context_node(state: WorkflowState) -> dict[str, Any]:
 
         vector_store = VectorStoreService()
 
-        resume_text = state.get("raw_resume_text", "")
-        jd_text = state.get("job_description_text", "")
-        query = f"{resume_text[:200]} {jd_text[:200]}"
+        resume = state.get("canonical_resume", {}) or {}
+        jd = state.get("job_requirements", {}) or {}
+        query_parts = []
+        if resume.get("summary"):
+            query_parts.append(resume["summary"])
+        if resume.get("skills"):
+            query_parts.append(", ".join(s["name"] for s in resume["skills"] if isinstance(s, dict)))
+        if jd.get("title"):
+            query_parts.append(jd["title"])
+        if jd.get("required_skills"):
+            query_parts.append(", ".join(jd["required_skills"]))
+        if jd.get("responsibilities"):
+            query_parts.append(" ".join(jd["responsibilities"]))
+        query = " ".join(query_parts)[:500] if query_parts else "resume optimization context"
 
         context = await vector_store.query_context(query, top_k=5)
         return {"retrieved_context": context}
@@ -137,11 +149,21 @@ async def rewrite_node(state: WorkflowState) -> dict[str, Any]:
         parsed = json.loads(result) if isinstance(result, str) else result
 
         rewritten_resume = {
-            "summary": parsed.get("summary", state.get("canonical_resume", {}).get("summary", "")),
-            "skills": parsed.get("skills", state.get("canonical_resume", {}).get("skills", [])),
-            "experience": parsed.get("experience", state.get("canonical_resume", {}).get("experience", [])),
-            "projects": parsed.get("projects", state.get("canonical_resume", {}).get("projects", [])),
-            "education": parsed.get("education", state.get("canonical_resume", {}).get("education", [])),
+            "summary": parsed.get(
+                "summary", state.get("canonical_resume", {}).get("summary", "")
+            ),
+            "skills": parsed.get(
+                "skills", state.get("canonical_resume", {}).get("skills", [])
+            ),
+            "experience": parsed.get(
+                "experience", state.get("canonical_resume", {}).get("experience", [])
+            ),
+            "projects": parsed.get(
+                "projects", state.get("canonical_resume", {}).get("projects", [])
+            ),
+            "education": parsed.get(
+                "education", state.get("canonical_resume", {}).get("education", [])
+            ),
         }
 
         return {"rewritten_resume": rewritten_resume}
@@ -172,7 +194,9 @@ async def guardrails_node(state: WorkflowState) -> dict[str, Any]:
         guardrail_report = {
             "status": result.status.value,
             "repaired": result.repair_applied or getattr(result, "repaired", False),
-            "violations": [v.model_dump(mode="json") for v in result.violations] if result.violations else [],
+            "violations": [v.model_dump(mode="json") for v in result.violations]
+            if result.violations
+            else [],
             "repaired_content": getattr(result, "repaired_content", None),
             "warnings": result.warnings,
             "metadata": result.metadata,

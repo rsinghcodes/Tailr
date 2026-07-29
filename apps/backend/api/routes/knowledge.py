@@ -2,12 +2,15 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
+from api.dependencies.auth import get_current_user
 from api.dependencies.services import get_vector_store_service
 from infrastructure.llamaindex.vector_store import VectorStoreService
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["Knowledge Base & Search"])
+router = APIRouter(
+    tags=["Knowledge Base & Search"], dependencies=[Depends(get_current_user)]
+)
 
 
 class IndexKnowledgeRequest(BaseModel):
@@ -71,12 +74,14 @@ async def search_knowledge_base(
                     line = line.split("]", 1)[1].strip()
                 except (ValueError, IndexError):
                     pass
-            results.append(SearchResultItem(
-                chunk_id=f"chunk-{idx}",
-                content=line.strip(),
-                score=score,
-                entity_type="resume",
-            ))
+            results.append(
+                SearchResultItem(
+                    chunk_id=f"chunk-{idx}",
+                    content=line.strip(),
+                    score=score,
+                    entity_type="resume",
+                )
+            )
         return SearchKnowledgeResponse(results=results)
     except Exception as exc:
         logger.error("Knowledge search failed: %s", str(exc))

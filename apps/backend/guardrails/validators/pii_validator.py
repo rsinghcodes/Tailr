@@ -23,7 +23,9 @@ class PIIValidator(BaseValidator):
         (r"\b(?:\d[ -]*?){13,19}\b", "Credit Card Number"),
     ]
 
-    async def validate(self, content: Any, context: GuardrailContext) -> GuardrailResult:
+    async def validate(
+        self, content: Any, context: GuardrailContext
+    ) -> GuardrailResult:
         start_time = time.perf_counter()
         text = str(content)
 

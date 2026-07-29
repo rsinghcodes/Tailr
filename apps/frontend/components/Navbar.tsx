@@ -1,25 +1,24 @@
 "use client";
 
-import { useUIStore, TabType } from "@/lib/store";
-import { LayoutDashboard, Cpu, FileText, Briefcase, ShieldCheck, History } from "lucide-react";
+"use client";
 
-export function Navbar() {
-  const { activeTab, setActiveTab } = useUIStore();
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/lib/auth-store";
+import { ShieldCheck, LogOut, Database } from "lucide-react";
 
-  const navItems: { id: TabType; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "wizard", label: "Tailor Resume", icon: Cpu },
-    { id: "resumes", label: "Resumes", icon: FileText },
-    { id: "job_descriptions", label: "Job Descriptions", icon: Briefcase },
-    { id: "results", label: "Results", icon: FileText },
-    { id: "audit", label: "Audit Log", icon: History },
-  ];
+export function Navbar({ onOpenData }: { onOpenData?: () => void }) {
+  const router = useRouter();
+  const { user, logout } = useAuthStore();
+
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800">
       <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-        {/* Brand */}
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab("dashboard")}>
+        <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-md bg-zinc-100 flex items-center justify-center font-bold text-zinc-950 text-xs">
             T
           </div>
@@ -31,32 +30,31 @@ export function Navbar() {
           </span>
         </div>
 
-        {/* Navigation Tabs */}
-        <nav className="flex items-center gap-1 bg-zinc-900 p-1 rounded-md border border-zinc-800">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
+        <div className="flex items-center gap-3">
+          <div className="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Guardrails Active</span>
+          </div>
+          {user && (
+            <div className="flex items-center gap-2">
               <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                  isActive
-                    ? "bg-zinc-800 text-zinc-100 font-semibold border border-zinc-700 shadow-xs"
-                    : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40"
-                }`}
+                onClick={onOpenData}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+                title="Manage Data"
               >
-                <Icon className="w-3.5 h-3.5" />
-                {item.label}
+                <Database className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">My Data</span>
               </button>
-            );
-          })}
-        </nav>
-
-        {/* Guardrails Status Badge */}
-        <div className="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Guardrails Active</span>
+              <span className="text-xs text-zinc-400 font-mono hidden sm:inline">{user.email}</span>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs text-zinc-400 hover:text-rose-400 hover:bg-zinc-800 transition-colors"
+                title="Logout"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

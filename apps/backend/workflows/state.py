@@ -6,9 +6,6 @@ class WorkflowState(TypedDict, total=False):
     workflow_id: str
     user_id: str
 
-    raw_resume_text: Optional[str]
-    job_description_text: Optional[str]
-
     canonical_resume: Optional[dict[str, Any]]
     job_requirements: Optional[dict[str, Any]]
     retrieved_context: Optional[str]

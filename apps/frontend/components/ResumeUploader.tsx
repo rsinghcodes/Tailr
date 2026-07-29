@@ -6,7 +6,7 @@ import { useUIStore } from "@/lib/store";
 import { FileText, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 
 interface ResumeUploaderProps {
-  onSuccess?: (rawContent: string, filename: string) => void;
+  onSuccess?: (resumeId: string, filename: string) => void;
 }
 
 const ALLOWED_EXTENSIONS = [".pdf", ".docx", ".txt"];
@@ -31,14 +31,13 @@ export function ResumeUploader({ onSuccess }: ResumeUploaderProps) {
 
     try {
       const title = selectedFile.name.replace(/\.[^/.]+$/, "");
-
-      await uploadResumeFile(selectedFile, title);
+      const result = await uploadResumeFile(selectedFile, title);
 
       setIsUploading(false);
       setStatusMsg({ type: "success", text: `Uploaded ${selectedFile.name}` });
 
       if (onSuccess) {
-        onSuccess("", selectedFile.name);
+        onSuccess(result.resume_id, selectedFile.name);
       }
     } catch (err: unknown) {
       setIsUploading(false);

@@ -5,7 +5,11 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from pydantic import BaseModel
 from config.settings import settings
 from domain.shared.llm_provider import LLMProvider
-from domain.shared.exceptions import LLMProviderError, LLMProviderTimeoutError, LLMValidationError
+from domain.shared.exceptions import (
+    LLMProviderError,
+    LLMProviderTimeoutError,
+    LLMValidationError,
+)
 
 T = TypeVar("T", bound=BaseModel)
 logger = logging.getLogger(__name__)
@@ -56,9 +60,13 @@ class GeminiProvider(LLMProvider):
         except Exception as exc:
             error_msg = str(exc)
             if "timeout" in error_msg.lower():
-                raise LLMProviderTimeoutError(f"Gemini request timed out: {error_msg}") from exc
+                raise LLMProviderTimeoutError(
+                    f"Gemini request timed out: {error_msg}"
+                ) from exc
             if "validation" in error_msg.lower() or "schema" in error_msg.lower():
-                raise LLMValidationError(f"Gemini response failed validation: {error_msg}") from exc
+                raise LLMValidationError(
+                    f"Gemini response failed validation: {error_msg}"
+                ) from exc
             raise LLMProviderError(f"Gemini request failed: {error_msg}") from exc
 
     async def close(self) -> None:

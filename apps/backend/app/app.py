@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from api.routes.auth import router as auth_router
 from api.routes.health import router as health_router
 from api.routes.resume import router as resume_router
 from api.routes.job_description import router as job_description_router
@@ -42,6 +43,7 @@ def create_app() -> FastAPI:
     app.add_middleware(RequestIDMiddleware)
     app.add_middleware(LoggingMiddleware)
 
+    app.include_router(auth_router, prefix=settings.API_PREFIX)
     app.include_router(health_router, prefix=settings.API_PREFIX)
     app.include_router(resume_router, prefix=settings.API_PREFIX)
     app.include_router(job_description_router, prefix=settings.API_PREFIX)
