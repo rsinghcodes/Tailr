@@ -135,7 +135,7 @@ This starts
 
 - PostgreSQL
 - Redis
-- Ollama
+- Google Gemini
 
 ---
 

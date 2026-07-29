@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from abc import ABC, abstractmethod
 from typing import Optional
 from domain.job_description.models import JobDescription, JobRequirements
@@ -24,4 +25,22 @@ class JobDescriptionRepository(ABC):
     @abstractmethod
     async def delete(self, jd_id: uuid.UUID) -> bool:
         """Delete a job description by its ID."""
+        pass
+
+    @abstractmethod
+    async def list_all(
+        self,
+    ) -> list[
+        tuple[
+            uuid.UUID,
+            str,
+            str | None,
+            str | None,
+            str | None,
+            str | None,
+            datetime,
+            datetime,
+        ]
+    ]:
+        """List all job descriptions ordered by updated_at desc."""
         pass

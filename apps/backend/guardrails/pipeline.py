@@ -14,7 +14,6 @@ from guardrails.validators.hallucination_validator import HallucinationValidator
 from guardrails.validators.resume_validator import ResumeValidator
 from guardrails.validators.pii_validator import PIIValidator
 from guardrails.validators.ats_validator import ATSValidator
-from guardrails.validators.latex_safety_validator import LatexSafetyValidator
 
 
 class GuardrailsEngine:
@@ -29,7 +28,6 @@ class GuardrailsEngine:
             ResumeValidator(),
             PIIValidator(),
             ATSValidator(),
-            LatexSafetyValidator(),
         ],
         "analysis_standard": [
             JSONValidator(),
@@ -45,7 +43,6 @@ class GuardrailsEngine:
             ResumeValidator(),
             PIIValidator(),
             ATSValidator(),
-            LatexSafetyValidator(),
         ],
     }
 
@@ -61,7 +58,9 @@ class GuardrailsEngine:
         start_time = time.perf_counter()
         profile = profile_name or context.profile_name or "rewrite_strict"
 
-        validators_to_run = self.custom_validators or self.PROFILES.get(profile, self.PROFILES["rewrite_strict"])
+        validators_to_run = self.custom_validators or self.PROFILES.get(
+            profile, self.PROFILES["rewrite_strict"]
+        )
 
         current_content = content
         all_violations: list[GuardrailViolation] = []
@@ -92,7 +91,11 @@ class GuardrailsEngine:
             if res.repaired_content is not None:
                 current_content = res.repaired_content
 
-        final_status = GuardrailResultStatus.REPAIRED if is_repaired else GuardrailResultStatus.APPROVED
+        final_status = (
+            GuardrailResultStatus.REPAIRED
+            if is_repaired
+            else GuardrailResultStatus.APPROVED
+        )
 
         return GuardrailResult(
             status=final_status,

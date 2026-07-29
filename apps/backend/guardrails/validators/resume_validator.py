@@ -13,7 +13,9 @@ from guardrails.base import (
 class ResumeValidator(BaseValidator):
     name: str = "resume_validator"
 
-    async def validate(self, content: Any, context: GuardrailContext) -> GuardrailResult:
+    async def validate(
+        self, content: Any, context: GuardrailContext
+    ) -> GuardrailResult:
         start_time = time.perf_counter()
 
         if not isinstance(content, dict):
@@ -49,7 +51,7 @@ class ResumeValidator(BaseValidator):
                             violations.append(
                                 GuardrailViolation(
                                     code="INVALID_DATE_RANGE",
-                                    message=f"Experience #{idx+1} start date ({start}) is after end date ({end})",
+                                    message=f"Experience #{idx + 1} start date ({start}) is after end date ({end})",
                                     severity=ViolationSeverity.HIGH,
                                     field=f"experience[{idx}].start_date",
                                 )

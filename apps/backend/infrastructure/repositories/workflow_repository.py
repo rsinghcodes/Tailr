@@ -31,7 +31,9 @@ class WorkflowRepositoryImpl(WorkflowRepository):
         # 1. Persist/Resolve Job Description
         db_jd_id = None
         if state.job_description:
-            stmt_jd = select(JobDescriptionModel).where(JobDescriptionModel.id == state.job_description.id)
+            stmt_jd = select(JobDescriptionModel).where(
+                JobDescriptionModel.id == state.job_description.id
+            )
             res_jd = await self.session.execute(stmt_jd)
             db_jd = res_jd.scalar_one_or_none()
 
@@ -41,7 +43,7 @@ class WorkflowRepositoryImpl(WorkflowRepository):
                     company=state.job_description.company or "Unknown",
                     title=state.job_description.title,
                     description=state.job_description.description,
-                    parsed_requirements=None
+                    parsed_requirements=None,
                 )
                 self.session.add(db_jd)
                 await self.session.flush()
@@ -55,7 +57,9 @@ class WorkflowRepositoryImpl(WorkflowRepository):
         db_resume_container_id = None
         if state.resume:
             # Check if version exists
-            stmt_v = select(ResumeVersionModel).where(ResumeVersionModel.id == state.resume.id)
+            stmt_v = select(ResumeVersionModel).where(
+                ResumeVersionModel.id == state.resume.id
+            )
             res_v = await self.session.execute(stmt_v)
             db_version = res_v.scalar_one_or_none()
 
@@ -63,7 +67,9 @@ class WorkflowRepositoryImpl(WorkflowRepository):
                 # Save it via resume repo
                 await self.resume_repo.save(state.resume)
                 # fetch it again to get its container ID
-                stmt_v2 = select(ResumeVersionModel).where(ResumeVersionModel.id == state.resume.id)
+                stmt_v2 = select(ResumeVersionModel).where(
+                    ResumeVersionModel.id == state.resume.id
+                )
                 res_v2 = await self.session.execute(stmt_v2)
                 db_version = res_v2.scalar_one_or_none()
 
@@ -73,18 +79,21 @@ class WorkflowRepositoryImpl(WorkflowRepository):
         # 3. Persist/Resolve Optimized Resume
         _db_opt_resume_container_id = None
         if state.rewritten_resume:
-            stmt_ov = select(ResumeVersionModel).where(ResumeVersionModel.id == state.rewritten_resume.id)
+            stmt_ov = select(ResumeVersionModel).where(
+                ResumeVersionModel.id == state.rewritten_resume.id
+            )
             res_ov = await self.session.execute(stmt_ov)
             db_opt_version = res_ov.scalar_one_or_none()
 
             if not db_opt_version:
                 # Save it under the same container id if we have one
                 await self.resume_repo.save(
-                    state.rewritten_resume,
-                    resume_container_id=db_resume_container_id
+                    state.rewritten_resume, resume_container_id=db_resume_container_id
                 )
                 # fetch container details
-                stmt_ov2 = select(ResumeVersionModel).where(ResumeVersionModel.id == state.rewritten_resume.id)
+                stmt_ov2 = select(ResumeVersionModel).where(
+                    ResumeVersionModel.id == state.rewritten_resume.id
+                )
                 res_ov2 = await self.session.execute(stmt_ov2)
                 db_opt_version = res_ov2.scalar_one_or_none()
 
@@ -95,8 +104,12 @@ class WorkflowRepositoryImpl(WorkflowRepository):
         state_data = {
             "retrieved_context": state.retrieved_context,
             "rewrite_plan": state.rewrite_plan,
-            "validation_report": state.validation_report.model_dump(mode="json") if state.validation_report else None,
-            "ats_report": state.ats_report.model_dump(mode="json") if state.ats_report else None
+            "validation_report": state.validation_report.model_dump(mode="json")
+            if state.validation_report
+            else None,
+            "ats_report": state.ats_report.model_dump(mode="json")
+            if state.ats_report
+            else None,
         }
 
         # 5. Persist/Update WorkflowRunModel
@@ -109,7 +122,11 @@ class WorkflowRepositoryImpl(WorkflowRepository):
             db_run.resume_id = db_resume_container_id
             db_run.job_description_id = db_jd_id
             db_run.state_data = state_data
-            db_run.completed_at = datetime.utcnow() if state.status in (WorkflowStatus.COMPLETED, WorkflowStatus.FAILED) else None
+            db_run.completed_at = (
+                datetime.utcnow()
+                if state.status in (WorkflowStatus.COMPLETED, WorkflowStatus.FAILED)
+                else None
+            )
             db_run.updated_at = datetime.utcnow()
         else:
             db_run = WorkflowRunModel(
@@ -119,10 +136,12 @@ class WorkflowRepositoryImpl(WorkflowRepository):
                 status=state.status.value,
                 current_step=None,
                 started_at=state.created_at,
-                completed_at=datetime.utcnow() if state.status in (WorkflowStatus.COMPLETED, WorkflowStatus.FAILED) else None,
+                completed_at=datetime.utcnow()
+                if state.status in (WorkflowStatus.COMPLETED, WorkflowStatus.FAILED)
+                else None,
                 token_usage=None,
                 latency_ms=None,
-                state_data=state_data
+                state_data=state_data,
             )
             db_run.created_at = state.created_at
             db_run.updated_at = state.updated_at
@@ -137,7 +156,7 @@ class WorkflowRepositoryImpl(WorkflowRepository):
         db_run = result.scalar_one_or_none()
         if not db_run:
             return False
-        
+
         await self.session.delete(db_run)
         await self.session.commit()
         return True
@@ -148,7 +167,12 @@ class WorkflowRepositoryImpl(WorkflowRepository):
         resume = None
         if db_run.resume_id:
             # Get latest version in container
-            stmt_v = select(ResumeVersionModel).where(ResumeVersionModel.resume_id == db_run.resume_id).order_by(ResumeVersionModel.version.desc()).limit(1)
+            stmt_v = (
+                select(ResumeVersionModel)
+                .where(ResumeVersionModel.resume_id == db_run.resume_id)
+                .order_by(ResumeVersionModel.version.desc())
+                .limit(1)
+            )
             res_v = await self.session.execute(stmt_v)
             db_v = res_v.scalar_one_or_none()
             if db_v:
@@ -159,30 +183,46 @@ class WorkflowRepositoryImpl(WorkflowRepository):
         # We can look up the specific optimized container, or fetch by ID if stored in state_data or versions table
         # If there is a linked optimized resume container, fetch its latest version
         if db_run.job_description_id:  # Fetch JD details if linked
-            stmt_jd = select(JobDescriptionModel).where(JobDescriptionModel.id == db_run.job_description_id)
+            stmt_jd = select(JobDescriptionModel).where(
+                JobDescriptionModel.id == db_run.job_description_id
+            )
             res_jd = await self.session.execute(stmt_jd)
             db_jd = res_jd.scalar_one_or_none()
-            job_description = JobDescription(
-                id=db_jd.id,
-                title=db_jd.title,
-                company=db_jd.company,
-                description=db_jd.description
-            ) if db_jd else None
+            job_description = (
+                JobDescription(
+                    id=db_jd.id,
+                    title=db_jd.title,
+                    company=db_jd.company,
+                    description=db_jd.description,
+                )
+                if db_jd
+                else None
+            )
         else:
             job_description = None
 
         state_data = db_run.state_data or {}
-        
+
         # Load optimized resume version
         # If state_data has a custom key, or we just look up the latest version on the optimized resume container
-        if db_run.resume_id:  # If we have a container, try to find the rewritten version
+        if (
+            db_run.resume_id
+        ):  # If we have a container, try to find the rewritten version
             # Usually, original version is 1, rewritten is 2+ in the same container.
             # So let's look for version 2+ or look up the optimized resume container
             # In our database schema we have optimized_resume_id (which is not physically in the schema of Database-Design.md, but let's check!
             # Ah, Database-Design.md lists workflow_runs with only: id, resume_id, job_description_id, status, current_step, started_at, completed_at, token_usage, latency_ms.
             # So the optimized resume version is usually just another version in the same resume container!)
             # So let's fetch version 2 of the container for rewritten_resume if it exists.
-            stmt_ov = select(ResumeVersionModel).where(ResumeVersionModel.resume_id == db_run.resume_id, ResumeVersionModel.version > 1).order_by(ResumeVersionModel.version.desc()).limit(1)
+            stmt_ov = (
+                select(ResumeVersionModel)
+                .where(
+                    ResumeVersionModel.resume_id == db_run.resume_id,
+                    ResumeVersionModel.version > 1,
+                )
+                .order_by(ResumeVersionModel.version.desc())
+                .limit(1)
+            )
             res_ov = await self.session.execute(stmt_ov)
             db_ov = res_ov.scalar_one_or_none()
             if db_ov:
@@ -207,6 +247,6 @@ class WorkflowRepositoryImpl(WorkflowRepository):
             ats_report=ats_report,
             created_at=db_run.created_at,
             updated_at=db_run.updated_at,
-            version=1
+            version=1,
         )
         return state

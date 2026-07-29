@@ -28,7 +28,9 @@ class PromptInjectionValidator(BaseValidator):
         r"bypass\s+guardrails",
     ]
 
-    async def validate(self, content: Any, context: GuardrailContext) -> GuardrailResult:
+    async def validate(
+        self, content: Any, context: GuardrailContext
+    ) -> GuardrailResult:
         start_time = time.perf_counter()
         text = str(content)
 

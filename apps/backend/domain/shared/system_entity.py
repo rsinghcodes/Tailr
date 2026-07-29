@@ -6,7 +6,6 @@ from domain.shared.base_entity import BaseEntity
 
 
 class SystemInfo(BaseEntity):
-
     __tablename__ = "system_info"
 
     name: Mapped[str] = mapped_column(

@@ -26,3 +26,19 @@ class JobDescriptionResponseData(BaseModel):
 class JobDescriptionResponse(BaseModel):
     success: bool = True
     data: JobDescriptionResponseData
+
+
+class JobDescriptionListItem(BaseModel):
+    id: uuid.UUID
+    title: str
+    company: Optional[str] = None
+    location: Optional[str] = None
+    employment_type: Optional[str] = None
+    description: str
+    created_at: str = ""
+    updated_at: str = ""
+
+
+class JobDescriptionListResponse(BaseModel):
+    success: bool = True
+    data: list[JobDescriptionListItem]

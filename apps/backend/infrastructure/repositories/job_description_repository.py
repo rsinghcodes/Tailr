@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -35,6 +36,45 @@ class JobDescriptionRepositoryImpl(JobDescriptionRepository):
             reqs = JobRequirements(**db_model.parsed_requirements)
 
         return jd, reqs
+
+    async def list_all(
+        self,
+    ) -> list[
+        tuple[
+            uuid.UUID,
+            str,
+            str | None,
+            str | None,
+            str | None,
+            str | None,
+            datetime,
+            datetime,
+        ]
+    ]:
+        stmt = select(
+            JobDescriptionModel.id,
+            JobDescriptionModel.title,
+            JobDescriptionModel.company,
+            JobDescriptionModel.description,
+            JobDescriptionModel.location,
+            JobDescriptionModel.employment_type,
+            JobDescriptionModel.created_at,
+            JobDescriptionModel.updated_at,
+        ).order_by(JobDescriptionModel.updated_at.desc())
+        result = await self.session.execute(stmt)
+        return [
+            (
+                row.id,
+                row.title,
+                row.company,
+                row.description,
+                row.location,
+                row.employment_type,
+                row.created_at,
+                row.updated_at,
+            )
+            for row in result.all()
+        ]
 
     async def save(
         self, jd: JobDescription, requirements: Optional[JobRequirements] = None

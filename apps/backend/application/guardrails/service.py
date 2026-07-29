@@ -12,7 +12,11 @@ class GuardrailApplicationService:
     def __init__(self, guardrail_repo: Optional[GuardrailRepositoryImpl] = None):
         self.guardrail_repo = guardrail_repo
 
-    async def get_events_for_workflow(self, workflow_id: str, limit: int = 20) -> Sequence[GuardrailEventModel]:
+    async def get_events_for_workflow(
+        self, workflow_id: str, limit: int = 20
+    ) -> Sequence[GuardrailEventModel]:
         if self.guardrail_repo:
-            return await self.guardrail_repo.list_by_workflow(workflow_id=workflow_id, limit=limit)
+            return await self.guardrail_repo.list_by_workflow(
+                workflow_id=workflow_id, limit=limit
+            )
         return []

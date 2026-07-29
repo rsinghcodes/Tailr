@@ -31,6 +31,8 @@ class BusinessValidator(ABC):
     name: str = "business_validator"
 
     @abstractmethod
-    async def validate(self, rewritten_resume: Any, canonical_resume: Any) -> list[ValidationViolation]:
+    async def validate(
+        self, rewritten_resume: Any, canonical_resume: Any
+    ) -> list[ValidationViolation]:
         """Validate business rules on Guardrails-approved content."""
         pass

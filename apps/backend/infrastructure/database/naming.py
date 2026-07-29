@@ -8,6 +8,4 @@ NAMING_CONVENTION = {
     "pk": "pk_%(table_name)s",
 }
 
-metadata = MetaData(
-    naming_convention=NAMING_CONVENTION
-)
+metadata = MetaData(naming_convention=NAMING_CONVENTION)

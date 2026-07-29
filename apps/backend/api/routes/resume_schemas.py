@@ -27,7 +27,6 @@ class ResumeListResponse(BaseModel):
 class ResumeVersionItem(BaseModel):
     version_id: uuid.UUID
     version: int
-    latex_path: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 

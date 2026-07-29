@@ -16,7 +16,9 @@ class ATSValidator(BaseValidator):
 
     FORBIDDEN_CHARACTERS = [r"[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]"]  # Control characters
 
-    async def validate(self, content: Any, context: GuardrailContext) -> GuardrailResult:
+    async def validate(
+        self, content: Any, context: GuardrailContext
+    ) -> GuardrailResult:
         start_time = time.perf_counter()
         text = str(content)
 

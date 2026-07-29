@@ -24,8 +24,12 @@ class WorkflowRunModel(BaseEntity):
     )
     status: Mapped[str] = mapped_column(String(50), nullable=False)
     current_step: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    completed_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     token_usage: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
     latency_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     state_data: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)

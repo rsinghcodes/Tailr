@@ -33,7 +33,9 @@ class GuardrailRepositoryImpl:
         await self.session.flush()
         return db_event
 
-    async def list_by_workflow(self, workflow_id: str, limit: int = 50) -> Sequence[GuardrailEventModel]:
+    async def list_by_workflow(
+        self, workflow_id: str, limit: int = 50
+    ) -> Sequence[GuardrailEventModel]:
         stmt = (
             select(GuardrailEventModel)
             .where(GuardrailEventModel.workflow_id == workflow_id)

@@ -5,7 +5,9 @@ from validators.base import BusinessValidator, ValidationViolation, ValidationSe
 class RuleValidator(BusinessValidator):
     name: str = "rule_validator"
 
-    async def validate(self, rewritten_resume: Any, canonical_resume: Any) -> list[ValidationViolation]:
+    async def validate(
+        self, rewritten_resume: Any, canonical_resume: Any
+    ) -> list[ValidationViolation]:
         violations: list[ValidationViolation] = []
 
         if not isinstance(rewritten_resume, dict):
@@ -35,7 +37,7 @@ class RuleValidator(BusinessValidator):
                             violations.append(
                                 ValidationViolation(
                                     code="BUSINESS_RULE_INVALID_DATE_SEQUENCE",
-                                    message=f"Start date ({start}) cannot be after end date ({end}) in experience #{idx+1}.",
+                                    message=f"Start date ({start}) cannot be after end date ({end}) in experience #{idx + 1}.",
                                     severity=ValidationSeverity.ERROR,
                                     field=f"experience[{idx}].start_date",
                                 )

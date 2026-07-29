@@ -3,14 +3,15 @@
 import { useState, useRef, ChangeEvent, DragEvent } from "react";
 import { uploadResumeFile } from "@/lib/api";
 import { useUIStore } from "@/lib/store";
-import { Upload, FileText, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { FileText, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 
 interface ResumeUploaderProps {
-  onSuccess?: (rawContent: string, filename: string) => void;
+  onSuccess?: (resumeId: string, filename: string) => void;
 }
 
+const ALLOWED_EXTENSIONS = [".pdf", ".docx", ".txt"];
+
 export function ResumeUploader({ onSuccess }: ResumeUploaderProps) {
-  const { setMasterResumeText } = useUIStore();
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -18,8 +19,9 @@ export function ResumeUploader({ onSuccess }: ResumeUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleFile = async (selectedFile: File) => {
-    if (!selectedFile.name.endsWith(".tex") && !selectedFile.name.endsWith(".txt")) {
-      setStatusMsg({ type: "error", text: "Only .tex or .txt files are supported." });
+    const ext = "." + selectedFile.name.split(".").pop()?.toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      setStatusMsg({ type: "error", text: `Unsupported file type. Allowed: ${ALLOWED_EXTENSIONS.join(", ")}` });
       return;
     }
 
@@ -28,17 +30,14 @@ export function ResumeUploader({ onSuccess }: ResumeUploaderProps) {
     setIsUploading(true);
 
     try {
-      const text = await selectedFile.text();
-      setMasterResumeText(text);
-
-      // Upload to backend API endpoint POST /api/v1/resumes
-      await uploadResumeFile(selectedFile, selectedFile.name.replace(/\.[^/.]+$/, ""));
+      const title = selectedFile.name.replace(/\.[^/.]+$/, "");
+      const result = await uploadResumeFile(selectedFile, title);
 
       setIsUploading(false);
-      setStatusMsg({ type: "success", text: `Successfully uploaded ${selectedFile.name}` });
+      setStatusMsg({ type: "success", text: `Uploaded ${selectedFile.name}` });
 
       if (onSuccess) {
-        onSuccess(text, selectedFile.name);
+        onSuccess(result.resume_id, selectedFile.name);
       }
     } catch (err: unknown) {
       setIsUploading(false);
@@ -64,10 +63,7 @@ export function ResumeUploader({ onSuccess }: ResumeUploaderProps) {
   return (
     <div className="space-y-3">
       <div
-        onDragOver={(e) => {
-          e.preventDefault();
-          setIsDragOver(true);
-        }}
+        onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
         onDragLeave={() => setIsDragOver(false)}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
@@ -78,27 +74,23 @@ export function ResumeUploader({ onSuccess }: ResumeUploaderProps) {
         <input
           ref={fileInputRef}
           type="file"
-          accept=".tex,.txt"
+          accept=".pdf,.docx,.txt"
           onChange={handleFileChange}
           className="hidden"
         />
-
         <div className="flex flex-col items-center justify-center space-y-2">
           {isUploading ? (
             <Loader2 className="w-8 h-8 text-zinc-400 animate-spin" />
           ) : file ? (
             <FileText className="w-8 h-8 text-zinc-300" />
           ) : (
-            <Upload className="w-8 h-8 text-zinc-500" />
+            <UploadIcon />
           )}
-
           <div>
             <p className="text-sm font-medium text-zinc-200">
-              {file ? file.name : "Upload LaTeX (.tex) or Text (.txt) Resume"}
+              {file ? file.name : "Upload Resume (PDF, DOCX, or TXT)"}
             </p>
-            <p className="text-xs text-zinc-500 mt-0.5">
-              Drag and drop your file here or click to browse files
-            </p>
+            <p className="text-xs text-zinc-500 mt-0.5">Drag & drop or click to browse</p>
           </div>
         </div>
       </div>
@@ -111,14 +103,18 @@ export function ResumeUploader({ onSuccess }: ResumeUploaderProps) {
               : "bg-rose-950/40 text-rose-400 border border-rose-900/60"
           }`}
         >
-          {statusMsg.type === "success" ? (
-            <CheckCircle2 className="w-4 h-4 shrink-0" />
-          ) : (
-            <AlertCircle className="w-4 h-4 shrink-0" />
-          )}
+          {statusMsg.type === "success" ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
           <span>{statusMsg.text}</span>
         </div>
       )}
     </div>
+  );
+}
+
+function UploadIcon() {
+  return (
+    <svg className="w-8 h-8 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+    </svg>
   );
 }

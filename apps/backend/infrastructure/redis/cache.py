@@ -11,7 +11,9 @@ logger = logging.getLogger(__name__)
 class RedisCacheService:
     """Service to serialize, deserialize, and cache Pydantic domain models in Redis."""
 
-    def __init__(self, client: Optional[RedisClient] = None, default_ttl_seconds: int = 3600):
+    def __init__(
+        self, client: Optional[RedisClient] = None, default_ttl_seconds: int = 3600
+    ):
         """Initializes the Redis cache service.
 
         Args:

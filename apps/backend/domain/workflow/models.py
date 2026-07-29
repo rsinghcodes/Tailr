@@ -43,4 +43,3 @@ class WorkflowState(BaseDomainModel):
     render_result: Any | None = None
     telemetry: dict[str, Any] = Field(default_factory=dict)
     status: WorkflowStatus = WorkflowStatus.NEW
-

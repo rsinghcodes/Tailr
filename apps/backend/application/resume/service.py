@@ -1,81 +1,112 @@
 import uuid
-from typing import Optional
-from domain.resume.models import Resume
+from typing import Any, Optional
+from domain.resume.models import (
+    Resume,
+    Skill,
+    Experience,
+    ExperienceBullet,
+    Education,
+    Project,
+    Certification,
+    Achievement,
+)
 from domain.resume.repository import ResumeRepository
-from parsers.tokenizer.lexer import LaTeXLexer
-from parsers.latex.parser import LaTeXParser
-from parsers.canonical.analyzer import LaTeXSemanticAnalyzer
 from infrastructure.redis.cache import RedisCacheService
 
 
 class ResumeService:
-    """Application service to manage resume parsing, creation, updating, versioning, listing, and deletion."""
+    """Application service to manage resume creation, updating, versioning, listing, and deletion."""
 
-    def __init__(self, repository: ResumeRepository, cache_service: Optional[RedisCacheService] = None):
-        """Initializes the resume service.
-
-        Args:
-            repository: The resume repository port.
-            cache_service: Optional Redis cache service adapter.
-        """
+    def __init__(
+        self,
+        repository: ResumeRepository,
+        cache_service: Optional[RedisCacheService] = None,
+    ):
         self.repository = repository
         self.cache_service = cache_service or RedisCacheService()
 
     async def upload_resume(
         self,
-        raw_latex: str,
         filename: str,
         title: Optional[str] = None,
         resume_container_id: Optional[uuid.UUID] = None,
-    ) -> Resume:
-        """Parses LaTeX content, builds a Canonical Resume Model, and persists it.
-
-        Args:
-            raw_latex: The raw LaTeX text content of the resume.
-            filename: The original uploaded file name.
-            title: An optional title for the resume.
-            resume_container_id: An optional ID of an existing resume container to add a new version to.
-
-        Returns:
-            The parsed domain Resume entity.
-        """
-        # Run compiler-style parsing pipeline
-        lexer = LaTeXLexer(raw_latex)
-        tokens = lexer.tokenize()
-        parser = LaTeXParser(tokens)
-        doc = parser.parse()
-
-        analyzer = LaTeXSemanticAnalyzer()
-        resume = analyzer.analyze(doc)
-
-        # Explicitly update template name metadata from filename or parsed name
+        extracted: Any = None,
+    ) -> tuple[Resume, uuid.UUID]:
+        if extracted:
+            resume = Resume(
+                summary=extracted.summary or "",
+                skills=[Skill(name=s) for s in (extracted.skills or [])],
+                experience=[
+                    Experience(
+                        company=e.company,
+                        role=e.role,
+                        location=e.location or None,
+                        employment_type=e.employment_type or None,
+                        start_date=e.start_date,
+                        end_date=e.end_date or None,
+                        technologies=list(e.technologies or []),
+                        bullets=[ExperienceBullet(text=b) for b in (e.bullets or [])],
+                        achievements=list(e.achievements or []),
+                    )
+                    for e in (extracted.experience or [])
+                ],
+                education=[
+                    Education(
+                        institution=e.institution,
+                        degree=e.degree,
+                        field=e.field or None,
+                        cgpa=e.cgpa or None,
+                        start_date=e.start_date,
+                        end_date=e.end_date or None,
+                    )
+                    for e in (extracted.education or [])
+                ],
+                projects=[
+                    Project(
+                        title=p.title,
+                        description=p.description or None,
+                        technologies=list(p.technologies or []),
+                        bullets=list(p.bullets or []),
+                    )
+                    for p in (extracted.projects or [])
+                ],
+                certifications=[
+                    Certification(
+                        name=c.name,
+                        issuer=c.issuer,
+                        credential_id=c.credential_id or None,
+                        issue_date=c.issue_date or None,
+                    )
+                    for c in (extracted.certifications or [])
+                ],
+                achievements=[
+                    Achievement(
+                        title=a.title,
+                        description=a.description or None,
+                        category=a.category or None,
+                        date=a.date or None,
+                    )
+                    for a in (extracted.achievements or [])
+                ],
+            )
+        else:
+            resume = Resume(summary="")
         resume.metadata.template_name = filename
         if title:
             resume.metadata.additional_metadata["custom_title"] = title
 
-        # Save to repository
-        await self.repository.save(
+        _, container_id = await self.repository.save(
             resume=resume,
-            raw_latex=raw_latex,
             title=title,
             resume_container_id=resume_container_id,
         )
 
-        # Cache parsed domain resume entity in Redis
         cache_key = f"resume:version:{resume.id}"
         await self.cache_service.set_model(cache_key, resume, ttl_seconds=3600)
 
-        return resume
+        return resume, container_id
 
     async def get_resume_by_version(self, version_id: uuid.UUID) -> Optional[Resume]:
-        """Retrieves a specific resume version, utilizing Redis caching.
-
-        Args:
-            version_id: The unique ID of the resume version.
-
-        Returns:
-            The domain Resume entity if found, else None.
-        """
         cache_key = f"resume:version:{version_id}"
         cached_resume = await self.cache_service.get_model(cache_key, Resume)
         if cached_resume:
@@ -87,11 +118,6 @@ class ResumeService:
         return resume
 
     async def list_resumes(self) -> list[dict]:
-        """Lists all parent resume containers.
-
-        Returns:
-            A list of dictionary records summarizing each resume.
-        """
         raw_list = await self.repository.list_all()
         return [
             {
@@ -106,33 +132,16 @@ class ResumeService:
         ]
 
     async def get_resume_versions(self, resume_id: uuid.UUID) -> list[dict]:
-        """Retrieves all version records for a specific resume container.
-
-        Args:
-            resume_id: The unique ID of the parent resume container.
-
-        Returns:
-            A list of dictionary records representing each version.
-        """
         raw_list = await self.repository.get_versions_by_resume_id(resume_id)
         return [
             {
                 "version_id": item[0],
                 "version": item[1],
-                "latex_path": item[2],
-                "created_at": item[3],
-                "updated_at": item[4],
+                "created_at": item[2],
+                "updated_at": item[3],
             }
             for item in raw_list
         ]
 
     async def delete_resume_container(self, resume_id: uuid.UUID) -> bool:
-        """Deletes a parent resume container and all its associated version records.
-
-        Args:
-            resume_id: The unique ID of the resume container to delete.
-
-        Returns:
-            True if deleted successfully, False if not found.
-        """
         return await self.repository.delete(resume_id)

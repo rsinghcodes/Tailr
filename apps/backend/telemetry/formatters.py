@@ -2,7 +2,6 @@ from pythonjsonlogger import jsonlogger
 
 
 class TailrFormatter(jsonlogger.JsonFormatter):
-
     def add_fields(
         self,
         log_record,
