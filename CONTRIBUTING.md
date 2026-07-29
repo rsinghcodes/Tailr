@@ -92,7 +92,7 @@ git checkout -b feature/amazing-feature
 ## Backend
 
 ```bash
-cd backend
+cd apps/backend
 
 python -m venv .venv
 
@@ -111,12 +111,14 @@ Install dependencies
 pip install -r requirements.txt
 ```
 
+Create `.env` (`apps/backend/.env`) with required secrets (Gemini, Qdrant Cloud, LlamaExtract, PostgreSQL, JWT).
+
 ---
 
 ## Frontend
 
 ```bash
-cd frontend
+cd apps/frontend
 
 npm install
 
@@ -127,15 +129,13 @@ npm run dev
 
 ## Infrastructure
 
-```bash
-docker compose up -d
-```
+External services (configured via `.env`):
 
-This starts
-
-- PostgreSQL
-- Redis
-- Google Gemini
+- PostgreSQL 17
+- Qdrant Cloud (vector database)
+- Google Gemini API (LLM + embeddings)
+- LlamaExtract API (document extraction)
+- Redis (optional, for caching)
 
 ---
 
@@ -225,7 +225,7 @@ Small pull requests are preferred over large ones.
 
 ## Python
 
-- Python 3.12+
+- Python 3.13+
 - Type hints required
 - Follow PEP 8
 - Use Ruff
@@ -250,11 +250,11 @@ Small pull requests are preferred over large ones.
 
 Please follow the project's architecture.
 
-- Clean Architecture
+- Clean Architecture (domain / application / infrastructure layers)
 - Repository Pattern
 - Dependency Injection
-- Multi-Agent Design
-- RAG-first Retrieval
+- Multi-Agent Design (LangGraph)
+- RAG-first Retrieval (Qdrant Cloud + Gemini embeddings)
 - Domain-driven organization
 
 Business logic should never depend directly on frameworks.
