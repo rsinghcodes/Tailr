@@ -5,8 +5,7 @@ export type FlowStep =
   | "upload-resume"
   | "resume-parsed"
   | "input-jd"
-  | "jd-extracting"
-  | "jd-parsed"
+  | "jd-ready"
   | "optimizing"
   | "done";
 

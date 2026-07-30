@@ -95,17 +95,17 @@ async def _resolve_workflow_data(
             uuid.UUID(request.job_description_id)
         )
         if jd_result:
-            jd, reqs = jd_result
-            if reqs:
-                job_requirements = {
-                    "title": reqs.title,
-                    "required_skills": reqs.required_skills,
-                    "preferred_skills": reqs.preferred_skills,
-                    "responsibilities": reqs.responsibilities,
-                    "soft_skills": reqs.soft_skills,
-                    "keywords": reqs.keywords,
-                    "experience_level": reqs.experience_level,
-                }
+            jd, _ = jd_result
+            raw = jd.raw_extracted or {}
+            job_requirements = {
+                "title": raw.get("title") or jd.title or "",
+                "required_skills": raw.get("required_skills", []),
+                "preferred_skills": raw.get("preferred_skills", []),
+                "responsibilities": raw.get("responsibilities", []),
+                "soft_skills": [],
+                "keywords": raw.get("keywords", []),
+                "experience_level": raw.get("seniority", ""),
+            }
 
     return canonical_resume, job_requirements
 

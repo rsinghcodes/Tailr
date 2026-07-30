@@ -3,20 +3,16 @@ from typing import Optional, Any
 
 from domain.job_description.models import JobDescription, JobRequirements
 from domain.job_description.repository import JobDescriptionRepository
-from application.job_description.analyzer import JobDescriptionAnalyzer
-from infrastructure.llamaindex.extractors import ExtractedJobRequirements
 
 
 class JobDescriptionService:
-    """Application service to manage job description upload, analysis, and lifecycle."""
+    """Application service to manage job description upload and lifecycle."""
 
     def __init__(
         self,
         repository: JobDescriptionRepository,
-        analyzer: JobDescriptionAnalyzer,
     ):
         self.repository = repository
-        self.analyzer = analyzer
 
     async def create_job_description(
         self,
@@ -27,7 +23,7 @@ class JobDescriptionService:
         employment_type: Optional[str] = None,
         raw_extracted: Optional[dict[str, Any]] = None,
     ) -> JobDescription:
-        """Creates a new Job Description and persists it. No LLM analysis."""
+        """Creates a new Job Description and persists it."""
         jd = JobDescription(
             title=title,
             description=description,
@@ -38,32 +34,6 @@ class JobDescriptionService:
         )
         await self.repository.save(jd)
         return jd
-
-    async def analyze_job_description(
-        self,
-        jd_id: uuid.UUID,
-        model: Optional[str] = None,
-    ) -> tuple[JobDescription, JobRequirements]:
-        """Run LLM analysis on an existing Job Description. Requires saved raw_extracted data."""
-        result = await self.repository.get_by_id(jd_id)
-        if not result:
-            raise ValueError(f"Job description {jd_id} not found")
-
-        jd, _existing_reqs = result
-
-        extracted = None
-        if jd.raw_extracted:
-            extracted = ExtractedJobRequirements(**jd.raw_extracted)
-
-        requirements = await self.analyzer.analyze(
-            jd,
-            model=model,
-            extracted_requirements=extracted,
-        )
-
-        await self.repository.save(jd, requirements)
-
-        return jd, requirements
 
     async def list_job_descriptions(
         self,
