@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, startTransition } from "react";
 import { useUIStore } from "@/lib/store";
 import {
   listResumes, deleteResume, getResumeDetails,
@@ -8,7 +8,7 @@ import {
 } from "@/lib/api";
 import { ParsedResumeView, JdDetailView } from "@/components/DetailViews";
 import {
-  FileText, Briefcase, Trash2, ChevronDown, ChevronRight,
+  FileText, Briefcase, Trash2, ChevronRight,
   X, Loader2, Play,
 } from "lucide-react";
 
@@ -38,12 +38,14 @@ export function DataManager({
 
   useEffect(() => {
     if (!open) return;
-    setLoading(true);
-    setError(null);
+    startTransition(() => {
+      setLoading(true);
+      setError(null);
+    });
     Promise.all([
       listResumes().then(setSavedResumes).catch(() => {}),
       listJobDescriptions().then(setSavedJds).catch(() => {}),
-    ]).finally(() => setLoading(false));
+    ]).finally(() => startTransition(() => setLoading(false)));
   }, [open, setSavedResumes, setSavedJds]);
 
   const toggleExpand = async (id: string, type: "resume" | "jd") => {

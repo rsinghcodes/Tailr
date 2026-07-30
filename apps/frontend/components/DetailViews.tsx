@@ -202,13 +202,11 @@ export function JdDetailView({ data }: { data: Record<string, unknown> }) {
   const title = data["title"] as string | undefined;
   const company = data["company"] as string | undefined;
   const raw = data["raw_extracted"] as Record<string, unknown> | undefined;
-  const reqs = data["parsed_requirements"] as Record<string, unknown> | undefined;
 
-  const reqSkills = (reqs?.["required_skills"] || raw?.["required_skills"]) as string[] | undefined;
-  const prefSkills = (reqs?.["preferred_skills"] || raw?.["preferred_skills"]) as string[] | undefined;
-  const responsibilities = (reqs?.["responsibilities"] || raw?.["responsibilities"]) as string[] | undefined;
-  const keywords = (reqs?.["keywords"] || raw?.["keywords"]) as string[] | undefined;
-  const softSkills = reqs?.["soft_skills"] as string[] | undefined;
+  const reqSkills = raw?.["required_skills"] as string[] | undefined;
+  const prefSkills = raw?.["preferred_skills"] as string[] | undefined;
+  const responsibilities = raw?.["responsibilities"] as string[] | undefined;
+  const keywords = raw?.["keywords"] as string[] | undefined;
   const seniority = raw?.["seniority"] as string | undefined;
 
   return (
@@ -217,12 +215,6 @@ export function JdDetailView({ data }: { data: Record<string, unknown> }) {
         <div className="text-sm font-medium text-[var(--text-primary)]">{title}</div>
         {company && <div className="text-xs text-[var(--text-muted)]">{company}</div>}
       </div>
-
-      {!reqs && raw && (
-        <div className="text-[10px] text-amber-400 flex items-center gap-1 bg-amber-950/20 border border-amber-900/30 px-2 py-1.5 rounded-lg">
-          <span>Extracted only — run LLM analysis to see enhanced results</span>
-        </div>
-      )}
 
       {seniority && (
         <div>
@@ -260,15 +252,6 @@ export function JdDetailView({ data }: { data: Record<string, unknown> }) {
               </li>
             ))}
           </ul>
-        </div>
-      )}
-
-      {softSkills && softSkills.length > 0 && (
-        <div>
-          <SectionTitle>Soft Skills</SectionTitle>
-          <div className="flex flex-wrap gap-1.5">
-            {softSkills.map((s, i) => <SkillTag key={i}>{s}</SkillTag>)}
-          </div>
         </div>
       )}
 

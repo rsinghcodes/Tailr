@@ -124,17 +124,17 @@ class VectorStoreService:
 
             query_vector = await self._embeddings.aembed_query(query)
 
-            results = await client.search(
+            response = await client.query_points(
                 collection_name=self._collection,
-                query_vector=query_vector,
+                query=query_vector,
                 limit=top_k,
             )
 
-            if not results:
+            if not response.points:
                 return "No relevant context found."
 
             parts = []
-            for r in results:
+            for r in response.points:
                 text = r.payload.get("text", "") if r.payload else ""
                 parts.append(f"[score: {r.score:.2f}] {text}")
             return "\n\n".join(parts)

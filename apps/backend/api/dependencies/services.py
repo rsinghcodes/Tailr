@@ -11,7 +11,6 @@ from infrastructure.repositories.job_description_repository import (
     JobDescriptionRepositoryImpl,
 )
 from application.job_description.service import JobDescriptionService
-from application.job_description.analyzer import JobDescriptionAnalyzer
 from domain.shared.llm_provider import LLMProvider
 from infrastructure.langchain.llm_provider import GeminiProvider
 from prompts.registry import PromptRegistry
@@ -68,18 +67,10 @@ async def get_job_description_repository(
     return JobDescriptionRepositoryImpl(session)
 
 
-async def get_job_description_analyzer(
-    llm: LLMProvider = Depends(get_llm_provider),
-    registry: PromptRegistry = Depends(get_prompt_registry),
-) -> JobDescriptionAnalyzer:
-    return JobDescriptionAnalyzer(llm, registry)
-
-
 async def get_job_description_service(
     repo: JobDescriptionRepository = Depends(get_job_description_repository),
-    analyzer: JobDescriptionAnalyzer = Depends(get_job_description_analyzer),
 ) -> JobDescriptionService:
-    return JobDescriptionService(repo, analyzer)
+    return JobDescriptionService(repo)
 
 
 async def get_workflow_repository(

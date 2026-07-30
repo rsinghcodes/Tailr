@@ -9,9 +9,6 @@ from api.dependencies.services import (
     get_llama_extractor,
 )
 from api.routes.job_description_schemas import (
-    AnalyzeRequest,
-    AnalyzeResponse,
-    AnalyzeResponseData,
     JobDescriptionCreateRequest,
     JobDescriptionListResponse,
     JobDescriptionListItem,
@@ -146,34 +143,6 @@ async def upload_job_description(
         ) from exc
 
 
-@router.post(
-    "/job-descriptions/{jd_id}/analyze", response_model=AnalyzeResponse, status_code=200
-)
-async def analyze_job_description(
-    jd_id: uuid.UUID,
-    payload: AnalyzeRequest,
-    service: JobDescriptionService = Depends(get_job_description_service),
-):
-    """Run LLM analysis on an already-extracted job description."""
-    try:
-        jd, reqs = await service.analyze_job_description(
-            jd_id=jd_id,
-            model=payload.model,
-        )
-        response_data = AnalyzeResponseData(
-            id=jd.id,
-            parsed_requirements=reqs,
-        )
-        return AnalyzeResponse(success=True, data=response_data)
-    except ValueError as exc:
-        raise HTTPException(status_code=404, detail=str(exc))
-    except Exception as exc:
-        logger.error("Failed to analyze job description: %s", str(exc))
-        raise HTTPException(
-            status_code=422, detail=f"Job description analysis failed: {str(exc)}"
-        ) from exc
-
-
 @router.get("/job-descriptions", response_model=JobDescriptionListResponse)
 async def list_job_descriptions(
     service: JobDescriptionService = Depends(get_job_description_service),
@@ -194,7 +163,7 @@ async def get_job_description(
     if not result:
         raise HTTPException(status_code=404, detail="Job description not found.")
 
-    jd, reqs = result
+    jd, _ = result
     response_data = JobDescriptionResponseData(
         id=jd.id,
         title=jd.title,
@@ -202,7 +171,6 @@ async def get_job_description(
         location=jd.location,
         employment_type=jd.employment_type,
         description=jd.description,
-        parsed_requirements=reqs,
         raw_extracted=jd.raw_extracted,
     )
     return JobDescriptionResponse(success=True, data=response_data)

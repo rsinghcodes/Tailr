@@ -5,7 +5,6 @@ import { useUIStore, FlowStep } from "@/lib/store";
 import {
   createJobDescription,
   uploadJobDescription,
-  analyzeJobDescription,
   getResumeDetails,
   getJobDescriptionDetails,
   streamWorkflow,
@@ -24,13 +23,12 @@ const FLOW_LABELS: Record<FlowStep, string> = {
   "upload-resume": "Upload",
   "resume-parsed": "Parsed",
   "input-jd": "Job Desc",
-  "jd-extracting": "Extracting",
-  "jd-parsed": "Analyzed",
+  "jd-ready": "JD Ready",
   "optimizing": "Optimizing",
   "done": "Done",
 };
 
-const FLOW_ORDER: FlowStep[] = ["upload-resume", "resume-parsed", "input-jd", "jd-extracting", "jd-parsed", "optimizing", "done"];
+const FLOW_ORDER: FlowStep[] = ["upload-resume", "resume-parsed", "input-jd", "jd-ready", "optimizing", "done"];
 
 function StepIndicator({ current }: { current: FlowStep }) {
   const currentIdx = FLOW_ORDER.indexOf(current);
@@ -67,18 +65,18 @@ export default function Home() {
     selectedResumeId, setSelectedResumeId,
     selectedJdId, setSelectedJdId,
     streamSteps, setStreamSteps,
-    isStreaming, setIsStreaming,
+    setIsStreaming,
     setStreamWorkflowId,
     setWorkflowResponse,
   } = useUIStore();
 
   const [resumeData, setResumeData] = useState<Record<string, unknown> | null>(null);
   const [jdData, setJdData] = useState<Record<string, unknown> | null>(null);
-  const [rawExtracted, setRawExtracted] = useState<Record<string, unknown> | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [jdTitle, setJdTitle] = useState("");
   const [jdCompany, setJdCompany] = useState("");
   const [jdText, setJdText] = useState("");
+  const [isSubmittingJd, setIsSubmittingJd] = useState(false);
   const [showData, setShowData] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -95,9 +93,8 @@ export default function Home() {
 
   const handleJdSubmit = async () => {
     if (!jdTitle.trim() || !jdText.trim()) return;
-    setFlowStep("jd-extracting");
+    setIsSubmittingJd(true);
     setErrorMsg(null);
-    setRawExtracted(null);
     try {
       const result = await createJobDescription({
         title: jdTitle.trim(),
@@ -105,50 +102,29 @@ export default function Home() {
         description: jdText.trim(),
       });
       setSelectedJdId(result.id);
-      setRawExtracted((result.raw_extracted as Record<string, unknown>) || null);
       setJdData(result as unknown as Record<string, unknown>);
+      setFlowStep("jd-ready");
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Failed to process JD");
-      setFlowStep("input-jd");
+    } finally {
+      setIsSubmittingJd(false);
     }
   };
 
   const handleJdFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setFlowStep("jd-extracting");
+    setIsSubmittingJd(true);
     setErrorMsg(null);
-    setRawExtracted(null);
     try {
       const result = await uploadJobDescription(file, jdTitle.trim() || undefined, jdCompany.trim() || undefined);
       setSelectedJdId(result.id);
-      setRawExtracted((result.raw_extracted as Record<string, unknown>) || null);
       setJdData(result as unknown as Record<string, unknown>);
+      setFlowStep("jd-ready");
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Failed to process JD file");
-      setFlowStep("input-jd");
-    }
-  };
-
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-
-  const handleAnalyzeJd = async () => {
-    if (!selectedJdId) return;
-    setIsAnalyzing(true);
-    setErrorMsg(null);
-    try {
-      const result = await analyzeJobDescription(selectedJdId);
-      if (result.parsed_requirements) {
-        setJdData((prev) => ({
-          ...(prev || {}),
-          parsed_requirements: result.parsed_requirements,
-        }));
-      }
-      setFlowStep("jd-parsed");
-    } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : "Failed to analyze JD");
     } finally {
-      setIsAnalyzing(false);
+      setIsSubmittingJd(false);
     }
   };
 
@@ -214,14 +190,7 @@ export default function Home() {
     try {
       const result = await getJobDescriptionDetails(id);
       setJdData(result as unknown as Record<string, unknown>);
-      setRawExtracted((result.raw_extracted as Record<string, unknown>) || null);
-      if (result.parsed_requirements) {
-        setFlowStep("jd-parsed");
-      } else if (result.raw_extracted) {
-        setFlowStep("jd-extracting");
-      } else {
-        setFlowStep("input-jd");
-      }
+      setFlowStep(result.raw_extracted ? "jd-ready" : "input-jd");
     } catch {
       setErrorMsg("Failed to load job description details");
     }
@@ -327,128 +296,28 @@ export default function Home() {
                 </label>
                 <button
                   onClick={handleJdSubmit}
-                  disabled={!jdTitle.trim() || !jdText.trim()}
+                  disabled={isSubmittingJd || !jdTitle.trim() || !jdText.trim()}
                   className="btn btn-primary disabled:opacity-40"
                 >
-                  <ExternalLink className="w-4 h-4" /> Extract JD
+                  {isSubmittingJd ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Extracting...</>
+                  ) : (
+                    <><ExternalLink className="w-4 h-4" /> Extract JD</>
+                  )}
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {flowStep === "jd-extracting" && (
-          <div className="card-3d p-6 space-y-5">
-            {!rawExtracted ? (
-              <>
-                <div>
-                  <h2 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 text-[var(--accent)] animate-spin" /> Extracting Job Description
-                  </h2>
-                  <p className="text-xs text-[var(--text-muted)] mt-0.5">LlamaExtract is parsing the job description...</p>
-                </div>
-                <div className="flex items-center gap-3 p-4 rounded-lg border border-[var(--border-subtle)]" style={{ background: 'var(--bg-surface)' }}>
-                  <Loader2 className="w-5 h-5 text-[var(--text-muted)] animate-spin shrink-0" />
-                  <div className="space-y-1 flex-1">
-                    <div className="text-xs text-[var(--text-secondary)]">Extracting structured data...</div>
-                    <div className="h-1 w-full rounded-full bg-[var(--border-subtle)] overflow-hidden">
-                      <div className="h-full w-1/2 rounded-full bg-[var(--accent)] animate-pulse" />
-                    </div>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-4">
-                  <div>
-                    <h2 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400" /> JD Extracted
-                    </h2>
-                    <p className="text-xs text-[var(--text-muted)] mt-0.5">Raw extraction complete. Run LLM analysis for enhanced results.</p>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  {(() => {
-                    const re = rawExtracted;
-                    const reqSkills = re["required_skills"] as string[] | undefined;
-                    const prefSkills = re["preferred_skills"] as string[] | undefined;
-                    const responsibilities = re["responsibilities"] as string[] | undefined;
-                    const seniority = re["seniority"] as string | undefined;
-                    const keywords = re["keywords"] as string[] | undefined;
-                    return (
-                      <>
-                        {seniority && (
-                          <div>
-                            <div className="section-label mb-1.5">Seniority</div>
-                            <span className="tag">{seniority}</span>
-                          </div>
-                        )}
-                        {reqSkills && reqSkills.length > 0 && (
-                          <div>
-                            <div className="section-label mb-1.5">Required Skills ({reqSkills.length})</div>
-                            <div className="flex flex-wrap gap-1.5">
-                              {reqSkills.map((s, i) => <span key={i} className="tag">{s}</span>)}
-                            </div>
-                          </div>
-                        )}
-                        {prefSkills && prefSkills.length > 0 && (
-                          <div>
-                            <div className="section-label mb-1.5">Preferred Skills ({prefSkills.length})</div>
-                            <div className="flex flex-wrap gap-1.5">
-                              {prefSkills.map((s, i) => <span key={i} className="tag">{s}</span>)}
-                            </div>
-                          </div>
-                        )}
-                        {responsibilities && responsibilities.length > 0 && (
-                          <div>
-                            <div className="section-label mb-1.5">Responsibilities</div>
-                            <ul className="space-y-1">
-                              {responsibilities.map((r, i) => (
-                                <li key={i} className="flex items-start gap-2 text-xs text-[var(--text-secondary)]">
-                                  <CheckCircle2 className="w-3.5 h-3.5 text-[var(--text-muted)] shrink-0 mt-px" />
-                                  <span>{r}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                        {keywords && keywords.length > 0 && (
-                          <div>
-                            <div className="section-label mb-1.5">Keywords ({keywords.length})</div>
-                            <div className="flex flex-wrap gap-1.5">
-                              {keywords.map((k, i) => <span key={i} className="tag">{k}</span>)}
-                            </div>
-                          </div>
-                        )}
-                      </>
-                    );
-                  })()}
-                </div>
-                <div className="flex justify-between pt-3 border-t border-[var(--border-subtle)]">
-                  <button onClick={() => { setFlowStep("input-jd"); setRawExtracted(null); setJdData(null); setSelectedJdId(null); }} className="btn btn-secondary">
-                    <ArrowLeft className="w-4 h-4" /> Change JD
-                  </button>
-                  <button onClick={handleAnalyzeJd} disabled={isAnalyzing} className="btn btn-primary disabled:opacity-40">
-                    {isAnalyzing ? (
-                      <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing...</>
-                    ) : (
-                      <>Run LLM Analysis <ArrowRight className="w-4 h-4" /></>
-                    )}
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
-        {flowStep === "jd-parsed" && jdData && (
+        {flowStep === "jd-ready" && jdData && (
           <div className="card-3d p-6 space-y-5">
             <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-4">
               <div>
                 <h2 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Job Description Analyzed
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Job Description Extracted
                 </h2>
-                <p className="text-xs text-[var(--text-muted)] mt-0.5">LLM analysis complete.</p>
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">LlamaExtract extracted structure from the job description.</p>
               </div>
             </div>
 
@@ -457,52 +326,65 @@ export default function Home() {
               <div className="text-xs text-[var(--text-muted)]">{jdData["company"] as string}</div>
             </div>
 
-            {(jdData["parsed_requirements"] as Record<string, unknown>) && (
-              <div className="space-y-4">
-                {(() => {
-                  const reqs = jdData["parsed_requirements"] as Record<string, unknown>;
-                  const reqSkills = reqs["required_skills"] as string[] | undefined;
-                  const prefSkills = reqs["preferred_skills"] as string[] | undefined;
-                  const responsibilities = reqs["responsibilities"] as string[] | undefined;
-                  return (
-                    <>
-                      {reqSkills && reqSkills.length > 0 && (
-                        <div>
-                          <div className="section-label mb-1.5">Required Skills ({reqSkills.length})</div>
-                          <div className="flex flex-wrap gap-1.5">
-                            {reqSkills.map((s, i) => <span key={i} className="tag">{s}</span>)}
-                          </div>
-                        </div>
-                      )}
-                      {prefSkills && prefSkills.length > 0 && (
-                        <div>
-                          <div className="section-label mb-1.5">Preferred Skills ({prefSkills.length})</div>
-                          <div className="flex flex-wrap gap-1.5">
-                            {prefSkills.map((s, i) => <span key={i} className="tag">{s}</span>)}
-                          </div>
-                        </div>
-                      )}
-                      {responsibilities && responsibilities.length > 0 && (
-                        <div>
-                          <div className="section-label mb-1.5">Core Responsibilities</div>
-                          <ul className="space-y-1">
-                            {responsibilities.map((r, i) => (
-                              <li key={i} className="flex items-start gap-2 text-xs text-[var(--text-secondary)]">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-[var(--text-muted)] shrink-0 mt-px" />
-                                <span>{r}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </>
-                  );
-                })()}
-              </div>
-            )}
+            {(() => {
+              const raw = jdData["raw_extracted"] as Record<string, unknown> | undefined;
+              if (!raw) return <p className="text-xs text-[var(--text-muted)]">No extracted data available.</p>;
+              const reqSkills = raw["required_skills"] as string[] | undefined;
+              const prefSkills = raw["preferred_skills"] as string[] | undefined;
+              const responsibilities = raw["responsibilities"] as string[] | undefined;
+              const seniority = raw["seniority"] as string | undefined;
+              const keywords = raw["keywords"] as string[] | undefined;
+              return (
+                <div className="space-y-4">
+                  {seniority && (
+                    <div>
+                      <div className="section-label mb-1.5">Seniority</div>
+                      <span className="tag">{seniority}</span>
+                    </div>
+                  )}
+                  {reqSkills && reqSkills.length > 0 && (
+                    <div>
+                      <div className="section-label mb-1.5">Required Skills ({reqSkills.length})</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {reqSkills.map((s, i) => <span key={i} className="tag">{s}</span>)}
+                      </div>
+                    </div>
+                  )}
+                  {prefSkills && prefSkills.length > 0 && (
+                    <div>
+                      <div className="section-label mb-1.5">Preferred Skills ({prefSkills.length})</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {prefSkills.map((s, i) => <span key={i} className="tag">{s}</span>)}
+                      </div>
+                    </div>
+                  )}
+                  {responsibilities && responsibilities.length > 0 && (
+                    <div>
+                      <div className="section-label mb-1.5">Responsibilities</div>
+                      <ul className="space-y-1">
+                        {responsibilities.map((r, i) => (
+                          <li key={i} className="flex items-start gap-2 text-xs text-[var(--text-secondary)]">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-[var(--text-muted)] shrink-0 mt-px" />
+                            <span>{r}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {keywords && keywords.length > 0 && (
+                    <div>
+                      <div className="section-label mb-1.5">Keywords ({keywords.length})</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {keywords.map((k, i) => <span key={i} className="tag">{k}</span>)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             <div className="flex justify-between pt-3 border-t border-[var(--border-subtle)]">
-              <button onClick={() => setFlowStep("input-jd")} className="btn btn-secondary">
+              <button onClick={() => { setFlowStep("input-jd"); setJdData(null); setSelectedJdId(null); }} className="btn btn-secondary">
                 <ArrowLeft className="w-4 h-4" /> Change JD
               </button>
               <button onClick={handleStartOptimization} className="btn btn-primary">

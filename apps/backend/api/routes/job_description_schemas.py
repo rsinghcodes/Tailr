@@ -1,7 +1,6 @@
 import uuid
 from typing import Any, Optional
 from pydantic import BaseModel
-from domain.job_description.models import JobRequirements
 
 
 class JobDescriptionCreateRequest(BaseModel):
@@ -20,7 +19,6 @@ class JobDescriptionResponseData(BaseModel):
     location: Optional[str] = None
     employment_type: Optional[str] = None
     description: str
-    parsed_requirements: Optional[JobRequirements] = None
     raw_extracted: Optional[dict[str, Any]] = None
 
 
@@ -43,17 +41,3 @@ class JobDescriptionListItem(BaseModel):
 class JobDescriptionListResponse(BaseModel):
     success: bool = True
     data: list[JobDescriptionListItem]
-
-
-class AnalyzeRequest(BaseModel):
-    model: Optional[str] = None
-
-
-class AnalyzeResponseData(BaseModel):
-    id: uuid.UUID
-    parsed_requirements: Optional[JobRequirements] = None
-
-
-class AnalyzeResponse(BaseModel):
-    success: bool = True
-    data: AnalyzeResponseData
