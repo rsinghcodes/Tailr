@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, startTransition, type ReactNode } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "@/lib/auth-store";
 
@@ -12,7 +12,7 @@ export function AuthGuard({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     useAuthStore.getState().hydrate();
-    setHydrated(true);
+    startTransition(() => setHydrated(true));
   }, []);
 
   useEffect(() => {
