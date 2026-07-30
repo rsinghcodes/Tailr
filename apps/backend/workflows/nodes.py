@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from typing import Any
 from workflows.state import WorkflowState
 from domain.shared.llm_provider import LLMProvider
@@ -30,6 +31,26 @@ def _safe_json(obj: Any) -> str:
         return json.dumps(obj, default=str)
     except (TypeError, ValueError):
         return str(obj)
+
+
+def _extract_json(text: str) -> dict | list | None:
+    if not text or not text.strip():
+        return None
+    cleaned = text.strip()
+    if cleaned.startswith("```"):
+        cleaned = re.sub(r"```(?:json)?\s*", "", cleaned).strip()
+        if cleaned.endswith("```"):
+            cleaned = cleaned[:-3].strip()
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        pass
+    cleaned = re.sub(r",\s*([\]}])", r"\1", cleaned)
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        pass
+    return None
 
 
 async def retrieve_context_node(state: WorkflowState) -> dict[str, Any]:
@@ -95,11 +116,11 @@ async def plan_node(state: WorkflowState) -> dict[str, Any]:
             system_prompt=system_prompt,
         )
 
-        parsed = json.loads(result) if isinstance(result, str) else result
+        parsed = _extract_json(result) if isinstance(result, str) else result
 
         rewrite_plan = {
-            "target_sections": parsed.get("target_sections", ["summary", "experience"]),
-            "strategy": parsed.get("strategy", "Optimize for job match"),
+            "target_sections": parsed.get("target_sections", ["summary", "experience"]) if parsed else ["summary", "experience"],
+            "strategy": parsed.get("strategy", "Optimize for job match") if parsed else "Default optimization strategy",
         }
 
         return {"rewrite_plan": rewrite_plan}
@@ -146,24 +167,15 @@ async def rewrite_node(state: WorkflowState) -> dict[str, Any]:
             system_prompt=system_prompt,
         )
 
-        parsed = json.loads(result) if isinstance(result, str) else result
+        parsed = _extract_json(result) if isinstance(result, str) else result
 
+        original = state.get("canonical_resume", {})
         rewritten_resume = {
-            "summary": parsed.get(
-                "summary", state.get("canonical_resume", {}).get("summary", "")
-            ),
-            "skills": parsed.get(
-                "skills", state.get("canonical_resume", {}).get("skills", [])
-            ),
-            "experience": parsed.get(
-                "experience", state.get("canonical_resume", {}).get("experience", [])
-            ),
-            "projects": parsed.get(
-                "projects", state.get("canonical_resume", {}).get("projects", [])
-            ),
-            "education": parsed.get(
-                "education", state.get("canonical_resume", {}).get("education", [])
-            ),
+            "summary": (parsed.get("summary", original.get("summary", "")) if parsed else original.get("summary", "")),
+            "skills": (parsed.get("skills", original.get("skills", [])) if parsed else original.get("skills", [])),
+            "experience": (parsed.get("experience", original.get("experience", [])) if parsed else original.get("experience", [])),
+            "projects": (parsed.get("projects", original.get("projects", [])) if parsed else original.get("projects", [])),
+            "education": (parsed.get("education", original.get("education", [])) if parsed else original.get("education", [])),
         }
 
         return {"rewritten_resume": rewritten_resume}
@@ -286,15 +298,15 @@ async def ats_node(state: WorkflowState) -> dict[str, Any]:
             system_prompt=system_prompt,
         )
 
-        parsed = json.loads(result) if isinstance(result, str) else result
+        parsed = _extract_json(result) if isinstance(result, str) else result
 
         ats_report = {
-            "score": parsed.get("score", 0),
-            "keyword_coverage": parsed.get("keyword_coverage", 0),
-            "strengths": parsed.get("strengths", []),
-            "weaknesses": parsed.get("weaknesses", []),
-            "missing_keywords": parsed.get("missing_keywords", []),
-            "recommendations": parsed.get("recommendations", []),
+            "score": parsed.get("score", 0) if parsed else 0,
+            "keyword_coverage": parsed.get("keyword_coverage", 0) if parsed else 0,
+            "strengths": parsed.get("strengths", []) if parsed else [],
+            "weaknesses": parsed.get("weaknesses", []) if parsed else [],
+            "missing_keywords": parsed.get("missing_keywords", []) if parsed else [],
+            "recommendations": parsed.get("recommendations", []) if parsed else [],
         }
 
         return {"ats_report": ats_report}

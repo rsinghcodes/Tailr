@@ -1,4 +1,6 @@
+import json
 import logging
+import re
 import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -88,9 +90,21 @@ async def plan_optimization(
             system_prompt=system_prompt,
         )
 
-        import json
-
-        plan_data = json.loads(plan) if isinstance(plan, str) else plan
+        plan_data = plan
+        if isinstance(plan, str):
+            cleaned = plan.strip()
+            if cleaned.startswith("```"):
+                cleaned = re.sub(r"```(?:json)?\s*", "", cleaned).strip()
+                if cleaned.endswith("```"):
+                    cleaned = cleaned[:-3].strip()
+            try:
+                plan_data = json.loads(cleaned)
+            except json.JSONDecodeError:
+                cleaned = re.sub(r",\s*([\]}])", r"\1", cleaned)
+                try:
+                    plan_data = json.loads(cleaned)
+                except json.JSONDecodeError:
+                    pass
         target_sections = (
             plan_data.get("target_sections", ["summary", "experience"])
             if isinstance(plan_data, dict)
