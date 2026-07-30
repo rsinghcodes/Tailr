@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "@/lib/auth-store";
 
 export function AuthGuard({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user } = useAuthStore();
   const [hydrated, setHydrated] = useState(false);
 
@@ -15,8 +16,10 @@ export function AuthGuard({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (hydrated && !user) router.push("/login");
-  }, [hydrated, user, router]);
+    if (hydrated && !user && pathname !== "/login") {
+      router.push("/login");
+    }
+  }, [hydrated, user, pathname, router]);
 
   if (!hydrated) {
     return (
@@ -29,5 +32,7 @@ export function AuthGuard({ children }: { children: ReactNode }) {
     );
   }
 
-  return user ? <>{children}</> : null;
+  if (!user && pathname !== "/login") return null;
+
+  return <>{children}</>;
 }
