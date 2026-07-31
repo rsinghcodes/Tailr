@@ -117,7 +117,7 @@ jobs:
   cd:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     needs: [backend-lint, backend-test, frontend-lint, frontend-build]
-    name: Build & push Docker images
+    name: Build & push backend image
     runs-on: ubuntu-latest
 
     steps:
@@ -138,14 +138,5 @@ jobs:
           context: apps/backend
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/tailr-backend:latest,${{ secrets.DOCKER_USERNAME }}/tailr-backend:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build & push frontend
-        uses: docker/build-push-action@v6
-        with:
-          context: apps/frontend
-          push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/tailr-frontend:latest,${{ secrets.DOCKER_USERNAME }}/tailr-frontend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
