@@ -3,9 +3,8 @@
 import { useState, FormEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth-store";
+import { API_BASE } from "@/lib/api";
 import { Loader2, AlertCircle } from "lucide-react";
-
-const API_BASE = "http://localhost:8000/api/v1";
 
 export default function LoginPage() {
   const router = useRouter();
