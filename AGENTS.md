@@ -69,7 +69,7 @@ npm run lint         # eslint
 npm run type-check   # tsc --noEmit
 ```
 
-- API base from `NEXT_PUBLIC_API_BASE` (default `http://localhost:8000/api/v1`); production is `https://tailr-backend.onrender.com/api/v1` via `netlify.toml`.
+- API base from `NEXT_PUBLIC_API_BASE` (default `http://localhost:8000/api/v1`); production is `https://tailr-qxn1.onrender.com/api/v1` via `netlify.toml`.
 - `NEXT_PUBLIC_API_BASE` is an `env.local`-style build-time var; set it before `npm run build`.
 
 ## Testing
