@@ -4,6 +4,7 @@ import uuid
 from typing import Any, AsyncGenerator, Optional
 from workflows.state import WorkflowState
 from workflows.graph import get_compiled_graph
+from workflows.diff import compute_bullet_diff
 from infrastructure.repositories.workflow_repository import WorkflowRepositoryImpl
 from infrastructure.repositories.guardrail_repository import GuardrailRepositoryImpl
 from config.settings import settings
@@ -55,6 +56,7 @@ class WorkflowApplicationService:
         user_id: str = "default_user",
         canonical_resume: dict[str, Any] | None = None,
         job_requirements: dict[str, Any] | None = None,
+        user_feedback: dict[str, Any] | None = None,
     ) -> WorkflowState:
         state: WorkflowState = {
             "request_id": str(uuid.uuid4()),
@@ -75,6 +77,8 @@ class WorkflowApplicationService:
             state["canonical_resume"] = canonical_resume
         if job_requirements:
             state["job_requirements"] = job_requirements
+        if user_feedback:
+            state["user_feedback"] = user_feedback
         return state
 
     async def start_workflow(
@@ -118,12 +122,14 @@ class WorkflowApplicationService:
         user_id: str = "default_user",
         canonical_resume: dict[str, Any] | None = None,
         job_requirements: dict[str, Any] | None = None,
+        user_feedback: dict[str, Any] | None = None,
     ) -> AsyncGenerator[dict[str, Any], None]:
         graph = get_compiled_graph()
         initial_state = self._build_initial_state(
             user_id,
             canonical_resume=canonical_resume,
             job_requirements=job_requirements,
+            user_feedback=user_feedback,
         )
         workflow_id = initial_state["workflow_id"]
 
@@ -178,12 +184,20 @@ class WorkflowApplicationService:
                     },
                 }
 
+        rewritten_resume = accumulated_state.get("rewritten_resume")
+        bullet_diff = (
+            compute_bullet_diff(canonical_resume or {}, rewritten_resume or {})
+            if isinstance(canonical_resume, dict)
+            else None
+        )
+
         yield {
             "event": "workflow_complete",
             "data": {
                 "workflow_id": workflow_id,
                 "status": "completed",
-                "rewritten_resume": accumulated_state.get("rewritten_resume"),
+                "rewritten_resume": rewritten_resume,
+                "bullet_diff": bullet_diff,
                 "ats_report": accumulated_state.get("ats_report"),
                 "guardrail_report": accumulated_state.get("guardrail_report"),
                 "validation_report": accumulated_state.get("validation_report"),

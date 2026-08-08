@@ -16,6 +16,7 @@ export interface StreamStepState {
   label: string;
   description: string;
   status: "pending" | "running" | "done";
+  duration_ms?: number;
 }
 
 interface UIState {

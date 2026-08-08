@@ -58,6 +58,26 @@ export interface WorkflowResponse {
   guardrail_report: Record<string, unknown> | null;
   ats_report: Record<string, unknown> | null;
   rewritten_resume: Record<string, unknown> | null;
+  bullet_diff: BulletDiff | null;
+}
+
+export type BulletChangeType = "modified" | "added" | "removed";
+
+export interface BulletChange {
+  change_type: BulletChangeType;
+  original: string | null;
+  updated: string | null;
+}
+
+export interface ExperienceDiff {
+  company: string | null;
+  role: string | null;
+  bullets: BulletChange[];
+}
+
+export interface BulletDiff {
+  summary: { original: string; updated: string } | null;
+  experience: ExperienceDiff[];
 }
 
 export interface WorkflowStreamEvent {
@@ -179,19 +199,6 @@ export async function getResumeDetails(id: string): Promise<Record<string, unkno
   return res.data;
 }
 
-export async function renderResumePdf(resume: Record<string, unknown>): Promise<Blob> {
-  const res = await fetch(`${API_BASE}/resumes/render-pdf`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
-    body: JSON.stringify({ resume }),
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body?.error?.message || body?.detail || `HTTP ${res.status}`);
-  }
-  return res.blob();
-}
-
 export async function getJobDescriptionDetails(id: string): Promise<JobDescriptionData> {
   return getJobDescription(id);
 }
@@ -263,6 +270,35 @@ export async function* streamWorkflow(requestBody: {
     headers: { "Content-Type": "application/json", ...getAuthHeaders() },
     body: JSON.stringify(requestBody),
   });
+  yield* readSSE(res);
+}
+
+export interface RefineFeedbackItem {
+  company?: string | null;
+  role?: string | null;
+  bullet: string;
+  comment: string;
+}
+
+export interface RefineRequest {
+  resume: Record<string, unknown>;
+  job_description_id?: string | null;
+  feedback: RefineFeedbackItem[];
+  global_comment?: string | null;
+}
+
+export async function* refineWorkflow(
+  requestBody: RefineRequest
+): AsyncGenerator<WorkflowStreamEvent> {
+  const res = await fetch(`${API_BASE}/workflows/refine`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+    body: JSON.stringify(requestBody),
+  });
+  yield* readSSE(res);
+}
+
+async function* readSSE(res: Response): AsyncGenerator<WorkflowStreamEvent> {
   if (!res.ok) throw new Error(`SSE request failed: ${res.status}`);
   const reader = res.body?.getReader();
   if (!reader) throw new Error("No response body");

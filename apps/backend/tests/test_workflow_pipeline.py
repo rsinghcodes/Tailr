@@ -154,6 +154,7 @@ async def test_stream_emits_final_state_in_workflow_complete(monkeypatch):
     assert data["workflow_id"]
     assert data["status"] == "completed"
     assert data["rewritten_resume"] is not None
+    assert data["bullet_diff"] is not None
     assert data["ats_report"] is not None
     assert data["guardrail_report"] is not None
     assert data["validation_report"] is not None
