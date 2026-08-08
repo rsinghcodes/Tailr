@@ -2,6 +2,7 @@ alembic==1.18.5
 asyncpg==0.31.0
 bcrypt==5.0.0
 fastapi[standard]==0.140.7
+fpdf2==2.8.7
 langchain==0.3.18
 langchain-google-genai==2.0.4
 langgraph==0.2.60

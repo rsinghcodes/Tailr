@@ -53,6 +53,142 @@ def _extract_json(text: str) -> dict | list | None:
     return None
 
 
+def _format_feedback(state: WorkflowState) -> str:
+    """Format user feedback into an instruction block for the rewrite prompt."""
+    if not isinstance(state, dict):
+        return ""
+    feedback = state.get("user_feedback")
+    if not isinstance(feedback, dict):
+        return ""
+
+    sections: list[str] = []
+    items = feedback.get("items") or []
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        comment = str(item.get("comment") or "").strip()
+        if not comment:
+            continue
+        bullet = str(item.get("bullet") or "").strip()
+        company = str(item.get("company") or "").strip()
+        role = str(item.get("role") or "").strip()
+        location = f" ({role} at {company})" if role and company else f" ({role})" if role else ""
+        sections.append(f"- \"{bullet}\"{location}: {comment}")
+
+    global_comment = str(feedback.get("global_comment") or "").strip()
+    if global_comment:
+        sections.append(f"- Overall: {global_comment}")
+
+    if not sections:
+        return ""
+
+    return (
+        "User Feedback — modify ONLY the content referenced below. Every other "
+        "bullet point, the summary, skills, projects, and education must stay "
+        "exactly as provided in the Resume: same text, same order. Do not reword, "
+        "reorder, add, or remove anything else:\n"
+        + "\n".join(sections)
+    )
+
+
+def _norm_lower(text: Any) -> str:
+    return " ".join(str(text or "").lower().split())
+
+
+def _experience_key(exp: dict[str, Any]) -> str:
+    company = str(exp.get("company") or "").strip().lower()
+    role = str(exp.get("role") or "").strip().lower()
+    return f"{company}|{role}"
+
+
+def _bullet_texts(bullets: Any) -> list[str]:
+    if not isinstance(bullets, list):
+        bullets = [bullets]
+    return [
+        b.get("text") if isinstance(b, dict) else str(b or "")
+        for b in bullets
+    ]
+
+
+def _apply_feedback_lock(
+    original: Any,
+    rewritten: Any,
+    feedback: Any,
+) -> Any:
+    """Restore every un-commented piece of content after a feedback rewrite.
+
+    When user feedback is present, the rewrite must touch ONLY the bullets the
+    user commented on. Everything else — the summary (unless a summary-level
+    comment exists), skills, projects, education, and every un-commented
+    experience bullet — is locked back to the canonical resume so re-optimizing
+    never rewrites bullets the user did not comment on.
+    """
+    if not isinstance(original, dict) or not isinstance(rewritten, dict):
+        return rewritten
+    if not isinstance(feedback, dict):
+        return rewritten
+
+    items = [it for it in (feedback.get("items") or []) if isinstance(it, dict)]
+    if not items:
+        return rewritten
+
+    has_summary_feedback = any(
+        not str(it.get("company") or "").strip()
+        and not str(it.get("role") or "").strip()
+        for it in items
+    )
+
+    commented_per_exp: dict[str, set[str]] = {}
+    for it in items:
+        company = str(it.get("company") or "").strip()
+        role = str(it.get("role") or "").strip()
+        if not company and not role:
+            continue
+        key = f"{company.lower()}|{role.lower()}"
+        commented_per_exp.setdefault(key, set()).add(_norm_lower(it.get("bullet")))
+
+    locked = json.loads(json.dumps(rewritten))
+
+    for section in ("skills", "projects", "education"):
+        locked[section] = original.get(section)
+
+    if not has_summary_feedback:
+        locked["summary"] = original.get("summary")
+
+    original_exp = [
+        e for e in (original.get("experience") or []) if isinstance(e, dict)
+    ]
+    rewritten_exp = [
+        e for e in (locked.get("experience") or []) if isinstance(e, dict)
+    ]
+    rewritten_by_key = {_experience_key(e): e for e in rewritten_exp}
+
+    locked_exp: list[dict[str, Any]] = []
+    for orig in original_exp:
+        key = _experience_key(orig)
+        exp = rewritten_by_key.get(key, orig)
+        canonical_bullets = _bullet_texts(orig.get("bullets"))
+        commented = commented_per_exp.get(key, set())
+
+        if not commented:
+            locked_exp.append(
+                {**exp, "bullets": [{"text": b} for b in canonical_bullets]}
+            )
+            continue
+
+        new_bullets = _bullet_texts(exp.get("bullets"))
+        rebuilt: list[dict[str, Any]] = []
+        for idx, canonical_bullet in enumerate(canonical_bullets):
+            if _norm_lower(canonical_bullet) in commented and idx < len(new_bullets):
+                rebuilt.append({"text": new_bullets[idx]})
+            else:
+                rebuilt.append({"text": canonical_bullet})
+        locked_exp.append({**exp, "bullets": rebuilt})
+
+    locked["experience"] = locked_exp
+    return locked
+
+
 async def retrieve_context_node(state: WorkflowState) -> dict[str, Any]:
     _record_step(state, "RETRIEVAL")
     logger.info("Retrieving context from vector store")
@@ -159,8 +295,11 @@ async def rewrite_node(state: WorkflowState) -> dict[str, Any]:
             f"Resume:\n{resume_json}\n\n"
             f"Rewrite Plan:\n{plan_json}\n\n"
             f"Retrieved Context:\n{context}\n\n"
-            "Rewrite the resume implementing the plan."
         )
+        feedback_text = _format_feedback(state)
+        if feedback_text:
+            user_prompt += f"{feedback_text}\n\n"
+        user_prompt += "Rewrite the resume implementing the plan."
 
         result = await llm.generate(
             prompt=user_prompt,
@@ -177,6 +316,9 @@ async def rewrite_node(state: WorkflowState) -> dict[str, Any]:
             "projects": (parsed.get("projects", original.get("projects", [])) if parsed else original.get("projects", [])),
             "education": (parsed.get("education", original.get("education", [])) if parsed else original.get("education", [])),
         }
+        rewritten_resume = _apply_feedback_lock(
+            original, rewritten_resume, state.get("user_feedback")
+        )
 
         return {"rewritten_resume": rewritten_resume}
 

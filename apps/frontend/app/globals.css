@@ -2,6 +2,7 @@
 
 @layer base {
   :root {
+    font-size: 17px;
     --bg-deep: #07070a;
     --bg-surface: #0c0c12;
     --bg-elevated: #111118;
@@ -38,14 +39,12 @@
     background: var(--bg-card);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius);
-    transform-style: preserve-3d;
-    perspective: 800px;
     transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
     box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
   }
 
   .card-3d:hover {
-    transform: translateY(-2px) scale(1.005);
+    transform: translateY(-2px);
     border-color: var(--border-mid);
     box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
   }

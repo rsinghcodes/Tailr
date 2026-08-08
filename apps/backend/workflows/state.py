@@ -8,6 +8,7 @@ class WorkflowState(TypedDict, total=False):
 
     canonical_resume: Optional[dict[str, Any]]
     job_requirements: Optional[dict[str, Any]]
+    user_feedback: Optional[dict[str, Any]]
     retrieved_context: Optional[str]
     rewrite_plan: Optional[dict[str, Any]]
     rewritten_resume: Optional[dict[str, Any]]
