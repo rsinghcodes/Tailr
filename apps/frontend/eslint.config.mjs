@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Netlify edge functions run on Deno, not the Next.js runtime.
+    "netlify/**",
   ]),
 ]);
 
