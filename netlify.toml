@@ -5,13 +5,7 @@
 
 [build.environment]
   NODE_VERSION = "24"
-  # Relative to this site's origin — proxied server-side to the real backend.
-  NEXT_PUBLIC_API_BASE = "/api/v1"
+  NEXT_PUBLIC_API_BASE = "https://tailr-qxn1.onrender.com/api/v1"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
-
-# Proxy /api/* to the backend without ever exposing its URL to the browser.
-[[edge_functions]]
-  path = "/api/*"
-  function = "proxy"
