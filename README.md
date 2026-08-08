@@ -10,7 +10,7 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=for-the-badge&logo=fastapi&logoColor=white)]()
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=nextdotjs)]()
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169E1?style=for-the-badge&logo=postgresql)]()
-[![Gemini](https://img.shields.io/badge/Gemini_2.5_Flash-4285F4?style=for-the-badge&logo=google&logoColor=white)]()
+[![Gemini](https://img.shields.io/badge/Gemini_3.6_Flash-4285F4?style=for-the-badge&logo=google&logoColor=white)]()
 [![Qdrant](https://img.shields.io/badge/Qdrant_Cloud-3A3A3A?style=for-the-badge&logo=qdrant&logoColor=white)]()
 
 </div>
@@ -39,7 +39,7 @@ flowchart TD
     C --> E["Semantic Retrieval"]
     D --> E
 
-    E --> F["Gemini 2.5 Flash LLM<br/>(LangGraph Workflow)"]
+    E --> F["Gemini 3.6 Flash LLM<br/>(LangGraph Workflow)"]
     F --> G["Optimized Resume Output"]
 ```
 
@@ -78,7 +78,7 @@ flowchart TD
 
 ## AI & Vector
 
-- **Google Gemini 2.5 Flash** (LLM)
+- **Google Gemini 3.6 Flash** (LLM)
 - **Google Gemini Embeddings** (`models/gemini-embedding-001`, 3072 dims)
 - **LlamaExtract** (structured data extraction from files)
 - **Qdrant Cloud** (vector database)

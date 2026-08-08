@@ -137,6 +137,7 @@ class WorkflowApplicationService:
         }
 
         step_index = 0
+        accumulated_state: dict[str, Any] = {}
         async for event in graph.astream(initial_state, stream_mode="updates"):
             for node_name, node_output in event.items():
                 step_index += 1
@@ -163,6 +164,9 @@ class WorkflowApplicationService:
                     except (TypeError, ValueError):
                         safe_output[k] = str(v)
 
+                if safe_output:
+                    accumulated_state.update(safe_output)
+
                 yield {
                     "event": "step_complete",
                     "data": {
@@ -176,7 +180,16 @@ class WorkflowApplicationService:
 
         yield {
             "event": "workflow_complete",
-            "data": {"workflow_id": workflow_id},
+            "data": {
+                "workflow_id": workflow_id,
+                "status": "completed",
+                "rewritten_resume": accumulated_state.get("rewritten_resume"),
+                "ats_report": accumulated_state.get("ats_report"),
+                "guardrail_report": accumulated_state.get("guardrail_report"),
+                "validation_report": accumulated_state.get("validation_report"),
+                "rewrite_plan": accumulated_state.get("rewrite_plan"),
+                "telemetry": initial_state.get("telemetry", {}),
+            },
         }
 
     async def get_workflow_state(self, workflow_id: str) -> dict[str, Any] | None:

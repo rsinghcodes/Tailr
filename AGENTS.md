@@ -29,7 +29,7 @@ uvicorn main:app --reload                     # dev server
 ### Configuration
 
 - `config/settings.py` (pydantic-settings, `case_sensitive=True`, reads `.env`) requires `DATABASE_URL` and `GEMINI_API_KEY`. Copy `apps/backend/.env.example` to `.env` for defaults.
-- Key defaults: `API_PREFIX=/api/v1`, `GEMINI_MODEL=gemini-2.5-flash`, `QDRANT_COLLECTION=tailr-documents`, CORS allows `http://localhost:3000`.
+- Key defaults: `API_PREFIX=/api/v1`, `GEMINI_MODEL=gemini-3.6-flash`, `QDRANT_COLLECTION=tailr-documents`, CORS allows `http://localhost:3000`.
 - On startup, `app/lifespan.py` runs readiness checks against PostgreSQL, Redis, Qdrant, and Gemini. All four services are required; the app logs warnings for offline services but does not crash.
 
 ### Architecture

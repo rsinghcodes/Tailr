@@ -1,6 +1,6 @@
 import logging
 import uuid
-from typing import Optional
+from typing import Any, Optional
 from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 
@@ -13,6 +13,7 @@ from api.routes.resume_schemas import (
     ResumeDetailsResponse,
     ResumeListResponse,
     ResumeListItem,
+    ResumeRenderRequest,
     ResumeUploadResponse,
     ResumeVersionItem,
     ResumeVersionsResponse,
@@ -74,6 +75,19 @@ async def upload_resume(
         ) from exc
 
 
+@router.post("/resumes/render-pdf")
+async def render_resume_pdf(payload: ResumeRenderRequest):
+    """Render a resume (JSON payload, e.g. an optimized rewrite) as a downloadable PDF."""
+    pdf_bytes = _render_pdf(payload.resume)
+    return StreamingResponse(
+        iter([pdf_bytes]),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": 'attachment; filename="optimized_resume.pdf"'
+        },
+    )
+
+
 @router.get("/resumes/{resume_id}/download")
 async def download_resume_pdf(
     resume_id: uuid.UUID,
@@ -89,7 +103,7 @@ async def download_resume_pdf(
     if not resume:
         raise HTTPException(status_code=404, detail="Resume version not found.")
 
-    pdf_bytes = _generate_pdf(resume)
+    pdf_bytes = _render_pdf(resume)
 
     return StreamingResponse(
         iter([pdf_bytes]),
@@ -100,64 +114,132 @@ async def download_resume_pdf(
     )
 
 
-def _generate_pdf(resume) -> bytes:
+def _sanitize(text: Any) -> str:
+    value = "" if text is None else str(text)
+    value = (
+        value.replace("\u2013", "-")
+        .replace("\u2014", "-")
+        .replace("\u2018", "'")
+        .replace("\u2019", "'")
+        .replace("\u201c", '"')
+        .replace("\u201d", '"')
+        .replace("\u2022", "-")
+    )
+    return value.encode("latin-1", "replace").decode("latin-1")
+
+
+def _as_list(value: Any) -> list[Any]:
+    if isinstance(value, list):
+        return value
+    if value is None:
+        return []
+    return [value]
+
+
+def _render_pdf(payload: Any) -> bytes:
     from fpdf import FPDF
+
+    data: dict[str, Any] = {}
+    if isinstance(payload, dict):
+        data = payload
+    else:
+        dumped = getattr(payload, "model_dump", None)
+        if callable(dumped):
+            data = payload.model_dump(exclude_none=True)
+        else:
+            data = payload
 
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
+    avail = pdf.w - pdf.l_margin - pdf.r_margin
 
     pdf.set_font("Helvetica", "B", 16)
+    pdf.x = pdf.l_margin
     pdf.cell(0, 10, "Resume", ln=True, align="C")
     pdf.ln(4)
 
-    if resume.summary:
+    summary = _sanitize(data.get("summary"))
+    if summary:
         pdf.set_font("Helvetica", "B", 12)
+        pdf.x = pdf.l_margin
         pdf.cell(0, 8, "Summary", ln=True)
         pdf.set_font("Helvetica", "", 10)
-        pdf.multi_cell(0, 6, resume.summary)
+        pdf.multi_cell(avail, 6, summary)
         pdf.ln(4)
 
-    if resume.skills:
+    skills = _as_list(data.get("skills"))
+    if skills:
         pdf.set_font("Helvetica", "B", 12)
+        pdf.x = pdf.l_margin
         pdf.cell(0, 8, "Skills", ln=True)
         pdf.set_font("Helvetica", "", 10)
-        skills_text = ", ".join(s.name for s in resume.skills if s.name)
-        pdf.multi_cell(0, 6, skills_text)
+        skill_names = []
+        for s in skills:
+            if isinstance(s, dict):
+                if s.get("name"):
+                    skill_names.append(_sanitize(s["name"]))
+            elif isinstance(s, str) and s.strip():
+                skill_names.append(_sanitize(s))
+        pdf.multi_cell(avail, 6, ", ".join(skill_names))
         pdf.ln(4)
 
-    if resume.experience:
+    experience = _as_list(data.get("experience"))
+    if experience:
         pdf.set_font("Helvetica", "B", 12)
+        pdf.x = pdf.l_margin
         pdf.cell(0, 8, "Experience", ln=True)
         pdf.set_font("Helvetica", "", 10)
-        for exp in resume.experience:
+        for exp in experience:
+            if not isinstance(exp, dict):
+                continue
+            role = _sanitize(exp.get("role"))
+            company = _sanitize(exp.get("company"))
+            start_date = _sanitize(exp.get("start_date"))
+            end_date = _sanitize(exp.get("end_date")) or "Present"
             pdf.set_font("Helvetica", "B", 10)
-            pdf.cell(0, 6, f"{exp.role} at {exp.company}", ln=True)
+            pdf.x = pdf.l_margin
+            pdf.cell(0, 6, f"{role} at {company}", ln=True)
             pdf.set_font("Helvetica", "I", 9)
-            pdf.cell(0, 5, f"{exp.start_date} - {exp.end_date or 'Present'}", ln=True)
+            pdf.cell(0, 5, f"{start_date} - {end_date}", ln=True)
             pdf.set_font("Helvetica", "", 10)
-            for bullet in exp.bullets:
-                pdf.multi_cell(0, 6, f"  - {bullet.text}")
+            for bullet in _as_list(exp.get("bullets")):
+                bullet_text = bullet.get("text") if isinstance(bullet, dict) else bullet
+                pdf.multi_cell(avail, 6, f"  - {_sanitize(bullet_text)}")
             pdf.ln(2)
 
-    if resume.projects:
+    projects = _as_list(data.get("projects"))
+    if projects:
         pdf.set_font("Helvetica", "B", 12)
+        pdf.x = pdf.l_margin
         pdf.cell(0, 8, "Projects", ln=True)
         pdf.set_font("Helvetica", "", 10)
-        for proj in resume.projects:
+        for proj in projects:
+            if not isinstance(proj, dict):
+                continue
+            title = _sanitize(proj.get("title"))
+            description = _sanitize(proj.get("description"))
             pdf.set_font("Helvetica", "B", 10)
-            pdf.cell(0, 6, proj.title, ln=True)
-            if proj.description:
+            pdf.x = pdf.l_margin
+            pdf.cell(0, 6, title, ln=True)
+            if description:
                 pdf.set_font("Helvetica", "", 10)
-                pdf.multi_cell(0, 6, proj.description)
+                pdf.multi_cell(avail, 6, description)
             pdf.ln(1)
 
-    if resume.education:
+    education = _as_list(data.get("education"))
+    if education:
         pdf.set_font("Helvetica", "B", 12)
+        pdf.x = pdf.l_margin
         pdf.cell(0, 8, "Education", ln=True)
         pdf.set_font("Helvetica", "", 10)
-        for edu in resume.education:
-            pdf.cell(0, 6, f"{edu.degree} - {edu.institution}", ln=True)
+        for edu in education:
+            if not isinstance(edu, dict):
+                continue
+            degree = _sanitize(edu.get("degree"))
+            institution = _sanitize(edu.get("institution"))
+            pdf.x = pdf.l_margin
+            pdf.cell(0, 6, f"{degree} - {institution}", ln=True)
 
     return bytes(pdf.output())
 

@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
 
     GEMINI_API_KEY: str
-    GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_MODEL: str = "gemini-3.6-flash"
 
     LLAMA_CLOUD_API_KEY: str = ""
     LLAMA_CLOUD_PIPELINE_NAME: str = "tailr-resumes"

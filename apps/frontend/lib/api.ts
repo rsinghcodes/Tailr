@@ -179,6 +179,19 @@ export async function getResumeDetails(id: string): Promise<Record<string, unkno
   return res.data;
 }
 
+export async function renderResumePdf(resume: Record<string, unknown>): Promise<Blob> {
+  const res = await fetch(`${API_BASE}/resumes/render-pdf`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+    body: JSON.stringify({ resume }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body?.error?.message || body?.detail || `HTTP ${res.status}`);
+  }
+  return res.blob();
+}
+
 export async function getJobDescriptionDetails(id: string): Promise<JobDescriptionData> {
   return getJobDescription(id);
 }

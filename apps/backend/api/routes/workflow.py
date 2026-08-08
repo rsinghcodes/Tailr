@@ -123,7 +123,9 @@ async def stream_workflow(
       - workflow_start  {workflow_id, total_steps}
       - step_start      {step, step_index, total_steps, label, description}
       - step_complete   {step, step_index, total_steps, label, output}
-      - workflow_complete {workflow_id}
+      - workflow_complete {workflow_id, status, rewritten_resume,
+                           ats_report, guardrail_report, validation_report,
+                           rewrite_plan, telemetry}
     """
     (
         canonical_resume,

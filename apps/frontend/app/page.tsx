@@ -8,6 +8,7 @@ import {
   getResumeDetails,
   getJobDescriptionDetails,
   streamWorkflow,
+  renderResumePdf,
 } from "@/lib/api";
 import { ResumeUploader } from "@/components/ResumeUploader";
 import { Navbar } from "@/components/Navbar";
@@ -16,7 +17,7 @@ import { ParsedResumeView } from "@/components/DetailViews";
 import {
   FileText, Briefcase, Cpu, CheckCircle2, AlertCircle,
   Loader2, ArrowRight, ArrowLeft, ShieldCheck, Upload, Play,
-  ExternalLink,
+  ExternalLink, Download,
 } from "lucide-react";
 
 const FLOW_LABELS: Record<FlowStep, string> = {
@@ -138,6 +139,7 @@ export default function Home() {
     try {
       abortRef.current = new AbortController();
       const accumulated: Record<string, unknown> = {};
+      let finalState: Record<string, unknown> | null = null;
       for await (const event of streamWorkflow({ resume_id: selectedResumeId, job_description_id: selectedJdId })) {
         if (event.event === "workflow_start") {
           setStreamWorkflowId(event.data.workflow_id as string);
@@ -154,16 +156,20 @@ export default function Home() {
           Object.assign(accumulated, event.data.output as Record<string, unknown>);
         } else if (event.event === "workflow_complete") {
           setStreamWorkflowId(event.data.workflow_id as string);
+          finalState = event.data as Record<string, unknown>;
+        } else if (event.event === "error") {
+          throw new Error((event.data?.message as string) || "Workflow stream failed");
         }
       }
 
+      const workflow_id = (finalState?.workflow_id as string) || (accumulated.workflow_id as string) || "";
       setWorkflowResponse({
-        workflow_id: accumulated.workflow_id as string || "",
-        status: "completed",
-        telemetry: (accumulated.telemetry as Record<string, unknown>) || {},
-        guardrail_report: (accumulated.guardrail_report as Record<string, unknown>) || null,
-        ats_report: (accumulated.ats_report as Record<string, unknown>) || null,
-        rewritten_resume: (accumulated.rewritten_resume as Record<string, unknown>) || null,
+        workflow_id,
+        status: (finalState?.status as string) || "completed",
+        telemetry: (finalState?.telemetry as Record<string, unknown>) || (accumulated.telemetry as Record<string, unknown>) || {},
+        guardrail_report: (finalState?.guardrail_report as Record<string, unknown>) || (accumulated.guardrail_report as Record<string, unknown>) || null,
+        ats_report: (finalState?.ats_report as Record<string, unknown>) || (accumulated.ats_report as Record<string, unknown>) || null,
+        rewritten_resume: (finalState?.rewritten_resume as Record<string, unknown>) || (accumulated.rewritten_resume as Record<string, unknown>) || null,
       });
       setFlowStep("done");
     } catch (err) {
@@ -465,6 +471,8 @@ export default function Home() {
 function ResultsView() {
   const { activeWorkflowResponse } = useUIStore();
   const [copied, setCopied] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
 
   if (!activeWorkflowResponse) {
     return (
@@ -491,6 +499,27 @@ function ResultsView() {
     }
   };
 
+  const handleDownloadPdf = async () => {
+    if (!rewritten_resume) return;
+    setPdfLoading(true);
+    setPdfError(null);
+    try {
+      const blob = await renderResumePdf(rewritten_resume);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `optimized-resume-${workflow_id?.slice(0, 8) ?? "output"}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setPdfError(err instanceof Error ? err.message : "PDF generation failed");
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -511,7 +540,23 @@ function ResultsView() {
       <div className="flex items-center gap-2 text-xs font-mono text-[var(--text-muted)]">
         <span>Workflow ID:</span>
         <span className="text-[var(--text-secondary)] font-bold">{workflow_id}</span>
+        <span className="flex-1" />
+        <button
+          onClick={handleDownloadPdf}
+          disabled={!rewritten_resume || pdfLoading}
+          className="btn btn-primary text-xs"
+        >
+          {pdfLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+          {pdfLoading ? "Rendering..." : "Download Optimized PDF"}
+        </button>
       </div>
+
+      {pdfError && (
+        <div className="flex items-center gap-2 rounded-lg p-2.5 border border-red-800/40 bg-red-950/20 text-xs text-red-400">
+          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+          <span>Failed to generate PDF: {pdfError}</span>
+        </div>
+      )}
 
       {summary && (
         <div className="space-y-1.5">

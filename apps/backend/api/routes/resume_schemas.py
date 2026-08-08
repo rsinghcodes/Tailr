@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 from pydantic import BaseModel
 from domain.resume.models import Resume
 
@@ -39,6 +39,10 @@ class ResumeVersionsResponse(BaseModel):
 class ResumeDetailsResponse(BaseModel):
     success: bool = True
     data: Resume
+
+
+class ResumeRenderRequest(BaseModel):
+    resume: dict[str, Any]
 
 
 class StandardError(BaseModel):
