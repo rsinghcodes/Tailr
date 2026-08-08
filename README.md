@@ -1,6 +1,6 @@
 <div align="center">
 
-# Tailr
+# [Tailr](https://tailrresume.netlify.app/)
 
 ### AI-Powered Resume Intelligence Platform
 
@@ -17,7 +17,7 @@
 
 # Overview
 
-Tailr is an AI-powered resume optimization platform. Unlike traditional resume generators, Tailr **never fabricates experience** — every optimization is grounded in the user's existing resume via RAG (Retrieval-Augmented Generation).
+Tailr is an AI-powered resume optimization SaaS. It rewrites a candidate's resume to match a target job description through a **7-stage pipeline** — context retrieval, planning, rewriting, guardrail checks, validation, ATS scoring, and rendering — while **never fabricating experience**. Every optimization is grounded in the user's actual resume.
 
 **Core flow:**
 
@@ -32,15 +32,19 @@ Tailr is an AI-powered resume optimization platform. Unlike traditional resume g
 ```mermaid
 flowchart TD
     A["Resume File<br/>(PDF / DOCX / TXT)"] --> B["LlamaExtract<br/>(Structured JSON)"]
-
+    A --> B
     B --> C["Section Embeddings<br/>(Qdrant Cloud)"]
     B --> D["Job Description<br/>(LlamaExtract)"]
 
     C --> E["Semantic Retrieval"]
     D --> E
 
-    E --> F["Gemini 3.6 Flash LLM<br/>(LangGraph Workflow)"]
-    F --> G["Optimized Resume Output"]
+    E --> F["LangGraph 7-Stage Pipeline"]
+    F --> G["Optimized Resume"]
+
+    G --> H["ATS Report + Bullet Diff"]
+    H --> I["User Feedback<br/>(commented bullets)"]
+    I --> F
 ```
 
 # Features
@@ -48,11 +52,15 @@ flowchart TD
 - **AI-Powered Extraction** — LlamaExtract converts PDF/DOCX/TXT into structured JSON (experience, education, skills, projects, certifications, achievements)
 - **Section-by-Section Embeddings** — Each section (summary, skills, experience, etc.) is independently embedded for precise retrieval
 - **Semantic RAG** — Qdrant Cloud vector search retrieves the most relevant sections for the target job
-- **Multi-Agent Workflow** — LangGraph orchestrates JD analysis, resume analysis, planning, rewriting, and optimization
-- **Streaming Results** — Frontend receives real-time SSE events as the workflow progresses
-- **Data Management** — View, use, or delete previously extracted resumes and job descriptions
-- **JWT Authentication** — Secure user accounts with bcrypt password hashing
-- **Clean Architecture** — Domain-driven design with repository pattern and dependency injection
+- **7-Stage Optimization Pipeline** — LangGraph orchestrates retrieval, planning, rewriting, guardrails, validation, ATS scoring, and rendering
+- **Enforced Guardrails** — custom guardrail engine with `rewrite_strict`, `analysis_standard`, and `validation_paranoid` profiles
+- **ATS Analysis** — score, keyword coverage, strengths, weaknesses, and missing keywords per job description
+- **Human-in-the-Loop Refinement** — comment on bullets and re-optimize with a feedback lock
+- **PDF Export** — render or download the optimized resume as PDF
+- **Streaming Results** — the frontend receives real-time SSE events with per-step timing
+- **Data Management** — view, use, or delete previously extracted resumes and job descriptions
+- **JWT Authentication** — secure accounts with bcrypt password hashing
+- **Clean Architecture** — layered backend with repository pattern and dependency injection
 
 # Tech Stack
 
@@ -73,7 +81,7 @@ flowchart TD
 - **SQLAlchemy 2.x** (async)
 - **Alembic**
 - **Pydantic v2**
-- **LangChain**
+- **LlamaIndex (LlamaExtract)**
 - **LangGraph**
 
 ## AI & Vector
@@ -129,7 +137,7 @@ alembic upgrade head
 Start the server:
 
 ```powershell
-uvicorn api.main:app --reload
+fastapi dev
 ```
 
 ## Frontend
@@ -140,43 +148,21 @@ npm install
 npm run dev
 ```
 
-# Project Structure
-
-```
-apps/
-├── backend/
-│   ├── api/
-│   │   ├── routes/          # FastAPI route handlers
-│   │   └── main.py          # App entrypoint
-│   ├── application/         # Use cases / service layer
-│   ├── domain/              # Business entities & repository interfaces
-│   ├── infrastructure/
-│   │   ├── database/        # SQLAlchemy models & session
-│   │   ├── llamaindex/      # LlamaExtract + Qdrant vector store
-│   │   └── repositories/    # SQLAlchemy repository implementations
-│   ├── workflows/           # LangGraph workflow nodes & graph
-│   └── alembic/             # Database migrations
-└── frontend/
-    ├── app/                 # Next.js App Router pages
-    ├── components/          # React components
-    └── lib/                 # Zustand stores & utilities
-```
-
 # Development Status
 
-| Module                  | Status      |
-| ----------------------- | ----------- |
-| User Auth (JWT)         | ✅ Complete |
-| Resume Upload & Extract | ✅ Complete |
-| JD Upload & Extract     | ✅ Complete |
-| Qdrant Indexing         | ✅ Complete |
-| Semantic Retrieval      | ✅ Complete |
-| LangGraph Workflow      | ✅ Complete |
-| SSE Streaming           | ✅ Complete |
-| Data Management         | ✅ Complete |
-| Guardrails              | ⏳ Planned  |
-| ATS Scoring             | ⏳ Planned  |
-| PDF Generation          | ⏳ Planned  |
+| Module                     | Status      |
+| -------------------------- | ----------- |
+| User Auth (JWT)            | ✅ Complete |
+| Resume Upload & Extract    | ✅ Complete |
+| JD Upload & Extract        | ✅ Complete |
+| Qdrant Indexing            | ✅ Complete |
+| Semantic Retrieval         | ✅ Complete |
+| 7-Stage LangGraph Workflow | ✅ Complete |
+| Guardrails                 | ✅ Complete |
+| ATS Scoring                | ✅ Complete |
+| Feedback Refinement        | ✅ Complete |
+| SSE Streaming              | ✅ Complete |
+| Data Management            | ✅ Complete |
 
 # License
 
