@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuthStore } from '@/lib/auth-store';
-import { Database, LogOut } from 'lucide-react';
+import { Database, LogOut, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export function Navbar({ onOpenData }: { onOpenData?: () => void }) {
@@ -10,37 +10,60 @@ export function Navbar({ onOpenData }: { onOpenData?: () => void }) {
 
   return (
     <header className="sticky top-0 z-50">
-      <div className="glass-panel-sm mx-4 md:mx-8 mt-3 px-5 h-12 flex items-center justify-between">
+      <div
+        className="glass-panel-sm mx-4 md:mx-6 mt-4 px-6 h-16 flex items-center justify-between"
+        style={{ borderRadius: '20px' }}
+      >
+        {/* Brand */}
         <div className="flex items-center gap-3">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center font-bold text-white text-xs shadow-lg shadow-indigo-500/20">
+          <div
+            className="w-9 h-9 rounded-2xl flex items-center justify-center font-bold text-sm"
+            style={{
+              background: '#18181b',
+              color: '#ffffff',
+            }}
+          >
             T
           </div>
-          <span className="font-semibold text-sm tracking-tight text-zinc-100">
-            Tailr
-          </span>
+          <div>
+            <div className="font-bold text-base tracking-tight" style={{ color: 'var(--md-on-bg)', letterSpacing: '-0.02em' }}>
+              Tailr
+            </div>
+            <div className="text-[11px] font-medium" style={{ color: 'var(--md-on-surface-v)', letterSpacing: '0.01em' }}>
+              AI Resume Intelligence
+            </div>
+          </div>
         </div>
 
+        {/* Actions */}
         <div className="flex items-center gap-2">
           {user && (
             <>
               <button
                 onClick={onOpenData}
-                className="btn-ghost px-2.5 py-1.5 text-xs rounded-lg flex items-center gap-1.5"
+                className="btn btn-secondary py-2 px-4 text-sm gap-2"
               >
-                <Database className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Saved Data</span>
+                <Database className="w-4 h-4" />
+                <span className="hidden sm:inline">My Data</span>
               </button>
-              <span className="text-xs text-zinc-600 hidden md:inline mx-1">
-                {user.email}
-              </span>
+
+              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full"
+                style={{ background: 'var(--md-surface-c3)', border: '1px solid var(--md-outline)' }}>
+                <div className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+                  style={{ background: 'var(--md-primary-c)', color: 'var(--md-on-primary-c)' }}>
+                  {user.email?.[0]?.toUpperCase() ?? 'U'}
+                </div>
+                <span className="text-xs font-medium" style={{ color: 'var(--md-on-surface-v)' }}>
+                  {user.email}
+                </span>
+              </div>
+
               <button
-                onClick={() => {
-                  logout();
-                  router.push('/login');
-                }}
-                className="btn-ghost px-2 py-1.5 text-xs rounded-lg"
+                onClick={() => { logout(); router.push('/login'); }}
+                className="btn btn-ghost p-2.5 rounded-xl"
+                title="Sign out"
               >
-                <LogOut className="w-3.5 h-3.5" />
+                <LogOut className="w-4 h-4" />
               </button>
             </>
           )}

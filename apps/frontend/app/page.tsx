@@ -33,24 +33,30 @@ import {
 function StepIndicator({ current }: { current: FlowStep }) {
   const currentIdx = FLOW_ORDER.indexOf(current);
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-2 flex-wrap">
       {FLOW_ORDER.map((step, idx) => {
         const isDone = idx < currentIdx;
         const isActive = idx === currentIdx;
         return (
-          <div key={step} className="flex items-center gap-1.5">
-            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono transition-all ${
-              isActive
-                ? "bg-[var(--accent)]/10 border border-[var(--accent)]/20 text-[var(--accent)]"
-                : isDone
-                ? "bg-emerald-950/20 border border-emerald-800/30 text-emerald-400"
-                : "text-[var(--text-muted)]"
-            }`}>
-              {isDone ? <CheckCircle2 className="w-3 h-3" /> : <span className="step-dot active" />}
+          <div key={step} className="flex items-center gap-2">
+            <div
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all duration-150"
+              style={
+                isActive
+                  ? { background: "var(--md-primary-c)", border: "1px solid var(--md-outline-v)", color: "var(--md-on-bg)" }
+                  : isDone
+                  ? { background: "var(--md-surface)", border: "1px solid var(--md-outline)", color: "var(--md-tertiary)" }
+                  : { color: "var(--md-on-surface-d)" }
+              }
+            >
+              {isDone ? <CheckCircle2 className="w-3.5 h-3.5" /> : <span className="step-dot active" />}
               <span className="hidden sm:inline">{FLOW_LABELS[step]}</span>
             </div>
             {idx < FLOW_ORDER.length - 1 && (
-              <div className={`w-3 h-px ${isDone ? "bg-emerald-800/40" : "bg-[var(--border-subtle)]"}`} />
+              <div
+                className="w-4 h-px rounded-full"
+                style={{ background: isDone ? "var(--md-outline-v)" : "var(--md-outline)" }}
+              />
             )}
           </div>
         );
@@ -235,31 +241,34 @@ export default function Home() {
         onUseResume={handleUseResume}
         onUseJd={handleUseJd}
       />
-      <div className="mx-auto w-full max-w-7xl flex-1 px-4 sm:px-6 lg:px-8 pt-6 pb-16">
-        <div className="flex flex-col lg:flex-row gap-6">
-          <aside className="w-full lg:w-72 shrink-0 lg:self-start lg:sticky lg:top-6">
+      <div className="mx-auto w-full max-w-7xl flex-1 px-4 sm:px-6 lg:px-8 pt-8 pb-20">
+        <div className="flex flex-col lg:flex-row gap-6 items-start">
+          <aside className="w-full lg:w-72 xl:w-80 shrink-0 lg:sticky lg:top-20">
             <PipelineSidebar />
           </aside>
 
-          <div className="flex-1 min-w-0 space-y-5">
+          <div className="flex-1 min-w-0 space-y-6">
             <StepIndicator current={flowStep} />
 
             {errorMsg && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-950/20 border border-rose-900/30 text-rose-400 text-xs">
+              <div className="flex items-center gap-2.5 p-3 rounded-2xl text-sm border" style={{ background: "var(--md-error-c)", borderColor: "rgba(220,38,38,0.2)", color: "var(--md-error)" }}>
                 <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{errorMsg}</span>
-                <button onClick={() => setErrorMsg(null)} className="ml-auto hover:text-rose-300">Dismiss</button>
+                <span className="font-medium">{errorMsg}</span>
+                <button onClick={() => setErrorMsg(null)} className="ml-auto font-bold opacity-75 hover:opacity-100">Dismiss</button>
               </div>
             )}
 
         {flowStep === "upload-resume" && (
-          <div className="space-y-5">
+          <div className="space-y-6">
             <div>
-              <h2 className="text-lg font-semibold text-[var(--text-primary)] flex items-center gap-2">
-                <FileText className="w-5 h-5 text-[var(--text-muted)]" /> Upload Your Resume
+              <h2 className="text-2xl font-bold tracking-tight flex items-center gap-3" style={{ color: "var(--md-on-bg)" }}>
+                <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: "var(--md-primary-c)", color: "var(--md-on-primary-c)" }}>
+                  <FileText className="w-5 h-5" />
+                </div>
+                Upload Your Resume
               </h2>
-              <p className="text-xs text-[var(--text-muted)] mt-1">
-                Upload a PDF, DOCX, or TXT file. Tailr will parse and extract structured data.
+              <p className="text-sm mt-1.5" style={{ color: "var(--md-on-surface-v)" }}>
+                Upload a PDF, DOCX, or TXT file. Tailr will extract and structure your skills and experiences.
               </p>
             </div>
             <ResumeUploader onSuccess={(resumeId) => handleResumeUploaded(resumeId)} />
@@ -268,19 +277,19 @@ export default function Home() {
         )}
 
         {flowStep === "resume-parsed" && resumeData && (
-          <div className="card-3d p-6 space-y-5">
-            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-4">
+          <div className="card-3d p-8 space-y-6">
+            <div className="flex items-center justify-between border-b pb-5" style={{ borderColor: "var(--md-outline)" }}>
               <div>
-                <h2 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Resume Parsed
+                <h2 className="text-xl font-bold flex items-center gap-2.5" style={{ color: "var(--md-on-bg)" }}>
+                  <CheckCircle2 className="w-5 h-5" style={{ color: "var(--md-tertiary)" }} /> Resume Parsed
                 </h2>
-                <p className="text-xs text-[var(--text-muted)] mt-0.5">Structured data extracted from your resume.</p>
+                <p className="text-sm mt-1" style={{ color: "var(--md-on-surface-v)" }}>Structured data extracted from your resume.</p>
               </div>
             </div>
             <ParsedResumeView data={resumeData} />
-            <div className="flex justify-end pt-3 border-t border-[var(--border-subtle)]">
-              <button onClick={() => setFlowStep("input-jd")} className="btn btn-primary">
-                Add Job Description <ArrowRight className="w-4 h-4" />
+            <div className="flex justify-end pt-4 border-t" style={{ borderColor: "var(--md-outline)" }}>
+              <button onClick={() => setFlowStep("input-jd")} className="btn btn-primary text-sm px-6 py-2.5">
+                Target Job Description <ArrowRight className="w-4 h-4 ml-1" />
               </button>
             </div>
           </div>
@@ -288,59 +297,71 @@ export default function Home() {
 
         {flowStep === "input-jd" && (
           <>
-            <div className="card-3d p-6 space-y-5">
+            <div className="card-3d p-8 space-y-6">
               <div>
-                <h2 className="text-lg font-semibold text-[var(--text-primary)] flex items-center gap-2">
-                  <Briefcase className="w-5 h-5 text-[var(--text-muted)]" /> Target Job Description
+                <h2 className="text-2xl font-bold tracking-tight flex items-center gap-3" style={{ color: "var(--md-on-bg)" }}>
+                  <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: "var(--md-primary-c)", color: "var(--md-on-primary-c)" }}>
+                    <Briefcase className="w-5 h-5" />
+                  </div>
+                  Target Job Description
                 </h2>
-                <p className="text-xs text-[var(--text-muted)] mt-1">
-                  Paste the job description or upload a file. Tailr will extract requirements and skills.
+                <p className="text-sm mt-1.5" style={{ color: "var(--md-on-surface-v)" }}>
+                  Provide the target role details or upload the job posting to analyze required qualifications.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <input
-                  type="text"
-                  placeholder="Job Title (e.g. Senior AI Engineer)"
-                  value={jdTitle}
-                  onChange={(e) => setJdTitle(e.target.value)}
-                  className="input"
-                />
-                <input
-                  type="text"
-                  placeholder="Company Name (optional)"
-                  value={jdCompany}
-                  onChange={(e) => setJdCompany(e.target.value)}
-                  className="input"
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--md-on-surface-v)" }}>Job Title</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Senior Machine Learning Engineer"
+                    value={jdTitle}
+                    onChange={(e) => setJdTitle(e.target.value)}
+                    className="input"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--md-on-surface-v)" }}>Company Name</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. DeepMind"
+                    value={jdCompany}
+                    onChange={(e) => setJdCompany(e.target.value)}
+                    className="input"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--md-on-surface-v)" }}>Job Description Content</label>
+                <textarea
+                  rows={8}
+                  placeholder="Paste complete job requirements, role responsibilities, and qualifications..."
+                  value={jdText}
+                  onChange={(e) => setJdText(e.target.value)}
+                  className="input font-mono text-sm leading-relaxed"
                 />
               </div>
 
-              <textarea
-                rows={8}
-                placeholder="Paste complete job description text here..."
-                value={jdText}
-                onChange={(e) => setJdText(e.target.value)}
-                className="input font-mono text-xs"
-              />
-
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between pt-2">
                 <button onClick={() => setFlowStep("resume-parsed")} className="btn btn-secondary">
                   <ArrowLeft className="w-4 h-4" /> Back
                 </button>
                 <div className="flex items-center gap-3">
                   <label className="btn btn-secondary cursor-pointer">
-                    <Upload className="w-4 h-4" /> Upload File
+                    <Upload className="w-4 h-4" /> Upload JD File
                     <input type="file" accept=".pdf,.docx,.txt" onChange={handleJdFileUpload} className="hidden" />
                   </label>
                   <button
                     onClick={handleJdSubmit}
                     disabled={isSubmittingJd || !jdTitle.trim() || !jdText.trim()}
-                    className="btn btn-primary disabled:opacity-40"
+                    className="btn btn-primary"
                   >
                     {isSubmittingJd ? (
-                      <><Loader2 className="w-4 h-4 animate-spin" /> Extracting...</>
+                      <><Loader2 className="w-4 h-4 animate-spin" /> Extracting Requirements...</>
                     ) : (
-                      <><ExternalLink className="w-4 h-4" /> Extract JD</>
+                      <><ExternalLink className="w-4 h-4" /> Extract Requirements</>
                     )}
                   </button>
                 </div>
@@ -351,60 +372,60 @@ export default function Home() {
         )}
 
         {flowStep === "jd-ready" && jdData && (
-          <div className="card-3d p-6 space-y-5">
-            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-4">
+          <div className="card-3d p-8 space-y-6">
+            <div className="flex items-center justify-between border-b pb-5" style={{ borderColor: "var(--md-outline)" }}>
               <div>
-                <h2 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Job Description Extracted
+                <h2 className="text-xl font-bold flex items-center gap-2.5" style={{ color: "var(--md-on-bg)" }}>
+                  <CheckCircle2 className="w-5 h-5" style={{ color: "var(--md-tertiary)" }} /> Job Description Extracted
                 </h2>
-                <p className="text-xs text-[var(--text-muted)] mt-0.5">LlamaExtract extracted structure from the job description.</p>
+                <p className="text-sm mt-1" style={{ color: "var(--md-on-surface-v)" }}>AI structured the core competencies and skills.</p>
               </div>
             </div>
 
-            <div>
-              <div className="text-sm font-medium text-[var(--text-primary)]">{jdData["title"] as string}</div>
-              <div className="text-xs text-[var(--text-muted)]">{jdData["company"] as string}</div>
+            <div className="rounded-2xl p-5 border" style={{ background: "var(--md-surface-c1)", borderColor: "var(--md-outline)" }}>
+              <div className="text-lg font-bold" style={{ color: "var(--md-on-bg)" }}>{jdData["title"] as string}</div>
+              <div className="text-sm font-medium mt-0.5" style={{ color: "var(--md-primary)" }}>{jdData["company"] as string}</div>
             </div>
 
             {(() => {
               const raw = jdData["raw_extracted"] as Record<string, unknown> | undefined;
-              if (!raw) return <p className="text-xs text-[var(--text-muted)]">No extracted data available.</p>;
+              if (!raw) return <p className="text-sm" style={{ color: "var(--md-on-surface-d)" }}>No extracted data available.</p>;
               const reqSkills = raw["required_skills"] as string[] | undefined;
               const prefSkills = raw["preferred_skills"] as string[] | undefined;
               const responsibilities = raw["responsibilities"] as string[] | undefined;
               const seniority = raw["seniority"] as string | undefined;
               const keywords = raw["keywords"] as string[] | undefined;
               return (
-                <div className="space-y-4">
+                <div className="space-y-5">
                   {seniority && (
                     <div>
-                      <div className="section-label mb-1.5">Seniority</div>
+                      <div className="section-label mb-2">Seniority</div>
                       <span className="tag">{seniority}</span>
                     </div>
                   )}
                   {reqSkills && reqSkills.length > 0 && (
                     <div>
-                      <div className="section-label mb-1.5">Required Skills ({reqSkills.length})</div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {reqSkills.map((s, i) => <span key={i} className="tag">{s}</span>)}
+                      <div className="section-label mb-2">Required Skills ({reqSkills.length})</div>
+                      <div className="flex flex-wrap gap-2">
+                        {reqSkills.map((s, i) => <span key={i} className="tag font-medium">{s}</span>)}
                       </div>
                     </div>
                   )}
                   {prefSkills && prefSkills.length > 0 && (
                     <div>
-                      <div className="section-label mb-1.5">Preferred Skills ({prefSkills.length})</div>
-                      <div className="flex flex-wrap gap-1.5">
+                      <div className="section-label mb-2">Preferred Skills ({prefSkills.length})</div>
+                      <div className="flex flex-wrap gap-2">
                         {prefSkills.map((s, i) => <span key={i} className="tag">{s}</span>)}
                       </div>
                     </div>
                   )}
                   {responsibilities && responsibilities.length > 0 && (
                     <div>
-                      <div className="section-label mb-1.5">Responsibilities</div>
-                      <ul className="space-y-1">
+                      <div className="section-label mb-2">Key Responsibilities</div>
+                      <ul className="space-y-2">
                         {responsibilities.map((r, i) => (
-                          <li key={i} className="flex items-start gap-2 text-xs text-[var(--text-secondary)]">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-[var(--text-muted)] shrink-0 mt-px" />
+                          <li key={i} className="flex items-start gap-2.5 text-sm leading-relaxed" style={{ color: "var(--md-on-surface-v)" }}>
+                            <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "var(--md-tertiary)" }} />
                             <span>{r}</span>
                           </li>
                         ))}
@@ -413,9 +434,9 @@ export default function Home() {
                   )}
                   {keywords && keywords.length > 0 && (
                     <div>
-                      <div className="section-label mb-1.5">Keywords ({keywords.length})</div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {keywords.map((k, i) => <span key={i} className="tag">{k}</span>)}
+                      <div className="section-label mb-2">Keywords ({keywords.length})</div>
+                      <div className="flex flex-wrap gap-2">
+                        {keywords.map((k, i) => <span key={i} className="tag opacity-75">{k}</span>)}
                       </div>
                     </div>
                   )}
@@ -423,26 +444,26 @@ export default function Home() {
               );
             })()}
 
-            <div className="flex justify-between pt-3 border-t border-[var(--border-subtle)]">
+            <div className="flex justify-between pt-4 border-t" style={{ borderColor: "var(--md-outline)" }}>
               <button onClick={() => { setFlowStep("input-jd"); setJdData(null); setSelectedJdId(null); }} className="btn btn-secondary">
                 <ArrowLeft className="w-4 h-4" /> Change JD
               </button>
-              <button onClick={handleStartOptimization} className="btn btn-primary">
-                <Play className="w-4 h-4" /> Start Optimization
+              <button onClick={handleStartOptimization} className="btn btn-primary px-6">
+                <Play className="w-4 h-4" /> Start AI Optimization
               </button>
             </div>
           </div>
         )}
 
         {flowStep === "optimizing" && (
-          <div className="card-3d p-6 space-y-5">
-            <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div className="card-3d p-8 space-y-6">
+            <div className="flex items-start justify-between gap-4 flex-wrap">
               <div>
-                <h2 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
-                  <Cpu className="w-5 h-5 text-[var(--accent)]" /> Running Multi-Agent Pipeline
+                <h2 className="text-xl font-bold flex items-center gap-3" style={{ color: "var(--md-on-bg)" }}>
+                  <Cpu className="w-6 h-6" style={{ color: "var(--md-primary)" }} /> Running Multi-Agent Pipeline
                 </h2>
-                <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                  LangGraph orchestrates context retrieval, rewriting, guardrail validation, and ATS scoring.
+                <p className="text-sm mt-1" style={{ color: "var(--md-on-surface-v)" }}>
+                  LangGraph orchestrates context retrieval, rewriting, guardrails, and ATS scoring.
                 </p>
               </div>
               {(() => {
@@ -455,22 +476,23 @@ export default function Home() {
                   : "";
                 return (
                   <div className="text-right shrink-0">
-                    <div className="text-sm font-mono font-bold text-[var(--text-primary)]">
+                    <div className="text-base font-mono font-bold" style={{ color: "var(--md-on-bg)" }}>
                       {Math.min(doneCount + (running ? 1 : 0), streamSteps.length)}
-                      <span className="text-[var(--text-muted)] font-normal"> / {streamSteps.length}</span>
+                      <span className="font-normal" style={{ color: "var(--md-on-surface-d)" }}> / {streamSteps.length}</span>
                     </div>
-                    <div className="text-[11px] text-[var(--text-muted)]">{label || "Waiting"}</div>
+                    <div className="text-xs font-semibold" style={{ color: "var(--md-primary)" }}>{label || "Waiting"}</div>
                   </div>
                 );
               })()}
             </div>
 
-            <div className="h-1 rounded-full bg-[var(--bg-elevated)] overflow-hidden">
+            <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--md-surface-c3)" }}>
               <div
                 className="h-full rounded-full transition-all duration-500"
                 style={{
                   width: `${(streamSteps.filter((s) => s.status !== "pending").length / Math.max(1, streamSteps.length)) * 100}%`,
-                  background: "var(--accent)",
+                  background: "var(--md-primary)",
+                  boxShadow: "0 0 12px rgba(187,179,255,0.6)",
                 }}
               />
             </div>
@@ -478,8 +500,8 @@ export default function Home() {
             <PipelineFlow steps={streamSteps} />
 
             {errorMsg && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-950/20 border border-rose-900/30 text-rose-400 text-xs">
-                <AlertCircle className="w-4 h-4 shrink-0" />
+              <div className="flex items-center gap-3 p-4 rounded-2xl text-sm" style={{ background: "rgba(255,180,171,0.08)", border: "1px solid rgba(255,180,171,0.25)", color: "var(--md-error)" }}>
+                <AlertCircle className="w-5 h-5 shrink-0" />
                 <span>{errorMsg}</span>
               </div>
             )}
@@ -487,16 +509,19 @@ export default function Home() {
         )}
 
         {flowStep === "done" && (
-          <div className="card-3d p-6 space-y-5">
-            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-4">
+          <div className="card-3d p-8 space-y-6">
+            <div className="flex items-center justify-between border-b pb-5" style={{ borderColor: "var(--md-outline)" }}>
               <div>
-                <h2 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Optimization Complete
+                <h2 className="text-xl font-bold flex items-center gap-2.5" style={{ color: "var(--md-on-bg)" }}>
+                  <CheckCircle2 className="w-6 h-6" style={{ color: "var(--md-tertiary)" }} /> Optimization Complete
                 </h2>
-                <p className="text-xs text-[var(--text-muted)] mt-0.5">Resume tailored for the target job description.</p>
+                <p className="text-sm mt-1" style={{ color: "var(--md-on-surface-v)" }}>Resume tailored for the target job description.</p>
               </div>
-              <button onClick={() => { setFlowStep("upload-resume"); setResumeData(null); setJdData(null); setSelectedResumeId(null); setSelectedJdId(null); }} className="btn btn-secondary text-xs">
-                <ArrowLeft className="w-3.5 h-3.5" /> New
+              <button
+                onClick={() => { setFlowStep("upload-resume"); setResumeData(null); setJdData(null); setSelectedResumeId(null); setSelectedJdId(null); }}
+                className="btn btn-secondary text-sm gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" /> New Optimization
               </button>
             </div>
             <ResultsDashboard>
@@ -541,68 +566,134 @@ function BulletRow({ change, text, comment, selected, onClick }: {
   return (
     <div
       onClick={onClick}
-      className={`group cursor-pointer rounded-lg transition-colors ${
-        selected
-          ? "ring-1 ring-[var(--accent)]/60"
-          : "ring-1 ring-transparent hover:ring-[var(--border-mid)]"
-      }`}
+      className="group cursor-pointer rounded-2xl transition-all p-1"
+      style={{
+        outline: selected ? "2px solid var(--md-primary)" : "2px solid transparent",
+      }}
     >
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         {change?.change_type === "added" && (
-          <div className="flex items-start gap-2 p-2.5 rounded-lg border border-emerald-800/30 bg-emerald-950/20">
-            <span className="text-[10px] font-semibold uppercase text-emerald-400 px-1.5 py-0.5 rounded bg-emerald-900/40 shrink-0 mt-0.5">New</span>
-            <span className="text-xs text-emerald-300">{change.updated}</span>
+          <div
+            className="flex items-start gap-3 p-3.5 rounded-2xl border"
+            style={{
+              background: "rgba(160,216,212,0.08)",
+              borderColor: "rgba(160,216,212,0.25)",
+            }}
+          >
+            <span
+              className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0 mt-0.5"
+              style={{ background: "rgba(160,216,212,0.20)", color: "var(--md-tertiary)" }}
+            >
+              Added
+            </span>
+            <span className="text-sm leading-relaxed" style={{ color: "var(--md-tertiary)" }}>
+              {change.updated}
+            </span>
           </div>
         )}
 
         {change?.change_type === "removed" && (
-          <div className="flex items-start gap-2 p-2.5 rounded-lg border border-rose-800/30 bg-rose-950/20">
-            <span className="text-[10px] font-semibold uppercase text-rose-400 px-1.5 py-0.5 rounded bg-rose-900/40 shrink-0 mt-0.5">Removed</span>
-            <span className="text-xs text-rose-300 line-through">{change.original}</span>
+          <div
+            className="flex items-start gap-3 p-3.5 rounded-2xl border"
+            style={{
+              background: "rgba(255,180,171,0.06)",
+              borderColor: "rgba(255,180,171,0.20)",
+            }}
+          >
+            <span
+              className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0 mt-0.5"
+              style={{ background: "rgba(255,180,171,0.18)", color: "var(--md-error)" }}
+            >
+              Removed
+            </span>
+            <span className="text-sm leading-relaxed line-through opacity-75" style={{ color: "var(--md-error)" }}>
+              {change.original}
+            </span>
           </div>
         )}
 
         {change?.change_type === "modified" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            <div className="flex items-start gap-2 p-2.5 rounded-lg border border-rose-800/30 bg-rose-950/20">
-              <span className="text-[10px] font-semibold uppercase text-rose-400 shrink-0 mt-0.5">Before</span>
-              <span className="text-xs text-rose-300 line-through">{change.original}</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div
+              className="flex items-start gap-3 p-3.5 rounded-2xl border"
+              style={{
+                background: "rgba(255,180,171,0.06)",
+                borderColor: "rgba(255,180,171,0.20)",
+              }}
+            >
+              <span
+                className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0 mt-0.5"
+                style={{ background: "rgba(255,180,171,0.18)", color: "var(--md-error)" }}
+              >
+                Before
+              </span>
+              <span className="text-sm leading-relaxed line-through opacity-75" style={{ color: "var(--md-error)" }}>
+                {change.original}
+              </span>
             </div>
-            <div className="flex items-start gap-2 p-2.5 rounded-lg border border-emerald-800/30 bg-emerald-950/20">
-              <span className="text-[10px] font-semibold uppercase text-emerald-400 shrink-0 mt-0.5">After</span>
-              <span className="text-xs text-emerald-300">{change.updated}</span>
+            <div
+              className="flex items-start gap-3 p-3.5 rounded-2xl border"
+              style={{
+                background: "rgba(160,216,212,0.08)",
+                borderColor: "rgba(160,216,212,0.25)",
+              }}
+            >
+              <span
+                className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0 mt-0.5"
+                style={{ background: "rgba(160,216,212,0.20)", color: "var(--md-tertiary)" }}
+              >
+                After
+              </span>
+              <span className="text-sm leading-relaxed" style={{ color: "var(--md-tertiary)" }}>
+                {change.updated}
+              </span>
             </div>
           </div>
         )}
 
         {!change && text && (
-          <div className="flex items-start gap-2 p-2.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-elevated)]">
-            <span className="text-[10px] font-semibold uppercase text-[var(--text-muted)] px-1.5 py-0.5 rounded bg-[var(--bg-card)] shrink-0 mt-0.5">Kept</span>
-            <span className="text-xs text-[var(--text-secondary)]">{text}</span>
+          <div
+            className="flex items-start gap-3 p-3.5 rounded-2xl border transition-colors"
+            style={{
+              background: "var(--md-surface-c1)",
+              borderColor: "var(--md-outline)",
+            }}
+          >
+            <span
+              className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0 mt-0.5"
+              style={{ background: "var(--md-surface-c3)", color: "var(--md-on-surface-d)" }}
+            >
+              Kept
+            </span>
+            <span className="text-sm leading-relaxed" style={{ color: "var(--md-on-surface-v)" }}>
+              {text}
+            </span>
           </div>
         )}
       </div>
 
       {comment && (
         <div
-          className="mt-1.5 flex items-start gap-2 px-2.5 py-2 rounded-lg border"
-          style={{ background: "var(--accent-glow)", borderColor: "rgba(108, 108, 240, 0.35)" }}
+          className="mt-2.5 flex items-start gap-3 px-4 py-3 rounded-2xl border"
+          style={{
+            background: "rgba(187,179,255,0.08)",
+            borderColor: "rgba(187,179,255,0.30)",
+          }}
         >
-          <MessageSquarePlus className="w-3.5 h-3.5 text-[var(--accent)] shrink-0 mt-0.5" />
-          <span className="text-xs text-[var(--text-secondary)]">{comment}</span>
+          <MessageSquarePlus className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "var(--md-primary)" }} />
+          <span className="text-sm leading-snug" style={{ color: "var(--md-on-bg)" }}>{comment}</span>
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-2 pt-1.5">
-        <span className="text-[11px] text-[var(--text-muted)]">
-          {comment ? "Click to edit comment" : "Click to add a comment"}
+      <div className="flex items-center justify-between gap-2 px-1 pt-2">
+        <span className="text-xs" style={{ color: "var(--md-on-surface-d)" }}>
+          {comment ? "Click to edit specific feedback" : "Click to leave targeted feedback"}
         </span>
         <MessageSquarePlus
-          className={`w-3.5 h-3.5 ${
-            comment
-              ? "text-[var(--accent)]"
-              : "text-[var(--text-muted)] group-hover:text-[var(--text-secondary)]"
-          }`}
+          className="w-4 h-4 transition-colors"
+          style={{
+            color: comment ? "var(--md-primary)" : "var(--md-on-surface-d)",
+          }}
         />
       </div>
     </div>
@@ -617,21 +708,28 @@ function FloatingCommentBox({ value, onChange, onSave, onClose }: {
 }) {
   return (
     <div
-      className="absolute left-0 right-0 top-full mt-1 z-20 rounded-lg border border-[var(--border-mid)] p-2.5 space-y-2 shadow-2xl"
-      style={{ background: "var(--bg-surface)" }}
+      className="absolute left-0 right-0 top-full mt-2 z-30 rounded-2xl border p-4 space-y-3 shadow-2xl"
+      style={{
+        background: "var(--md-surface-c2)",
+        borderColor: "var(--md-outline-v)",
+      }}
       onClick={(e) => e.stopPropagation()}
     >
       <textarea
         autoFocus
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        rows={2}
-        placeholder="Comment for this bullet — only this bullet will change on re-optimization..."
-        className="w-full px-2.5 py-1.5 rounded-lg border border-[var(--border-subtle)] bg-transparent text-xs text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent)]/50 placeholder:text-[var(--text-muted)]/60"
+        rows={3}
+        placeholder="Provide guidance for this specific bullet point during re-optimization..."
+        className="w-full px-3.5 py-2.5 rounded-xl border bg-transparent text-sm leading-relaxed focus:outline-none"
+        style={{
+          borderColor: "var(--md-outline)",
+          color: "var(--md-on-bg)",
+        }}
       />
-      <div className="flex items-center justify-end gap-2">
-        <button onClick={onClose} className="btn btn-secondary text-xs">Cancel</button>
-        <button onClick={onSave} disabled={!value.trim()} className="btn btn-primary text-xs">Save comment</button>
+      <div className="flex items-center justify-end gap-2.5">
+        <button onClick={onClose} className="btn btn-secondary text-xs px-3.5 py-1.5">Cancel</button>
+        <button onClick={onSave} disabled={!value.trim()} className="btn btn-primary text-xs px-4 py-1.5">Save Comment</button>
       </div>
     </div>
   );
@@ -780,31 +878,35 @@ function ResultsView({ onRefine }: {
     Object.keys(comments).length > 0 || globalComment.trim().length > 0;
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div className="section-label">Changes to Apply</div>
-        <span className="text-xs font-mono text-[var(--text-secondary)] font-bold">
-          {totalChanges} change{totalChanges === 1 ? "" : "s"}
+    <div className="space-y-6">
+      <div className="flex items-center justify-between pb-2 border-b" style={{ borderColor: "var(--md-outline)" }}>
+        <div className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--md-primary)" }}>
+          Changes to Apply
+        </div>
+        <span className="text-sm font-mono font-bold px-3 py-1 rounded-full" style={{ background: "var(--md-surface-c3)", color: "var(--md-on-bg)" }}>
+          {totalChanges} {totalChanges === 1 ? "change" : "changes"}
         </span>
       </div>
 
-      <div className="flex items-center gap-2 text-xs font-mono text-[var(--text-muted)]">
+      <div className="flex items-center gap-2 text-xs font-mono" style={{ color: "var(--md-on-surface-d)" }}>
         <span>Workflow ID:</span>
-        <span className="text-[var(--text-secondary)] font-bold">{workflow_id}</span>
+        <span className="font-semibold" style={{ color: "var(--md-on-surface-v)" }}>{workflow_id}</span>
       </div>
 
       {totalChanges === 0 && (
         <div
-          className="rounded-lg p-4 border border-[var(--border-subtle)] text-xs text-[var(--text-muted)]"
-          style={{ background: "var(--bg-surface)" }}
+          className="rounded-2xl p-5 border text-sm"
+          style={{ background: "var(--md-surface-c1)", borderColor: "var(--md-outline)", color: "var(--md-on-surface-d)" }}
         >
           No changes detected — the optimized resume matches the original content.
         </div>
       )}
 
       {summaryModel && (
-        <div className="space-y-2">
-          <div className="section-label">Professional Summary</div>
+        <div className="space-y-3">
+          <div className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--md-primary)" }}>
+            Professional Summary
+          </div>
           <div className="relative">
             <BulletRow
               change={summaryModel.kind === "change" ? summaryModel.change : undefined}
@@ -826,65 +928,78 @@ function ResultsView({ onRefine }: {
       )}
 
       {experiences.length > 0 && (
-        <div className="space-y-3 pt-1">
-          <div className="section-label">Work Experience</div>
+        <div className="space-y-4 pt-2">
+          <div className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--md-primary)" }}>
+            Work Experience
+          </div>
           {experiences.map((exp, expIdx) => (
             <div
               key={expIdx}
-              className="rounded-lg p-4 border border-[var(--border-subtle)] space-y-2"
-              style={{ background: "var(--bg-surface)" }}
+              className="rounded-2xl p-5 border space-y-3"
+              style={{ background: "var(--md-surface-c1)", borderColor: "var(--md-outline)" }}
             >
-              <h4 className="font-medium text-[var(--text-primary)] text-xs">
+              <h4 className="font-bold text-base" style={{ color: "var(--md-on-bg)" }}>
                 {typeof exp.role === "string" ? exp.role : ""}
-                {typeof exp.company === "string" && exp.company ? ` · ${exp.company}` : ""}
+                {typeof exp.company === "string" && exp.company ? (
+                  <span className="font-medium text-sm ml-2" style={{ color: "var(--md-primary)" }}>· {exp.company}</span>
+                ) : ""}
               </h4>
-              {rowsFor(exp).map((row, rowIdx) => {
-                const key = `${expIdx}:${rowIdx}`;
-                return (
-                  <div key={rowIdx} className="relative">
-                    <BulletRow
-                      change={row.kind === "change" ? row.change : undefined}
-                      text={row.kind === "text" ? row.text : undefined}
-                      comment={comments[key] ?? ""}
-                      selected={activeKey === key}
-                      onClick={() => openComment(key)}
-                    />
-                    {activeKey === key && (
-                      <FloatingCommentBox
-                        value={draftComment}
-                        onChange={setDraftComment}
-                        onSave={() => saveComment(key)}
-                        onClose={closeComment}
+              <div className="space-y-2">
+                {rowsFor(exp).map((row, rowIdx) => {
+                  const key = `${expIdx}:${rowIdx}`;
+                  return (
+                    <div key={rowIdx} className="relative">
+                      <BulletRow
+                        change={row.kind === "change" ? row.change : undefined}
+                        text={row.kind === "text" ? row.text : undefined}
+                        comment={comments[key] ?? ""}
+                        selected={activeKey === key}
+                        onClick={() => openComment(key)}
                       />
-                    )}
-                  </div>
-                );
-              })}
+                      {activeKey === key && (
+                        <FloatingCommentBox
+                          value={draftComment}
+                          onChange={setDraftComment}
+                          onSave={() => saveComment(key)}
+                          onClose={closeComment}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           ))}
         </div>
       )}
 
-      <div className="space-y-2 pt-3 border-t border-[var(--border-subtle)]">
-        <div className="section-label">General Feedback</div>
+      <div className="space-y-3 pt-4 border-t" style={{ borderColor: "var(--md-outline)" }}>
+        <div className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--md-primary)" }}>
+          General Feedback
+        </div>
         <textarea
           value={globalComment}
           onChange={(e) => setGlobalComment(e.target.value)}
-          rows={2}
-          placeholder="Overall direction for the next optimization (e.g. keep it under one page, add more quantified impact)..."
-          className="w-full px-2.5 py-1.5 rounded-lg border border-[var(--border-subtle)] bg-transparent text-xs text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent)]/50 placeholder:text-[var(--text-muted)]/60"
+          rows={3}
+          placeholder="Overall direction for next iteration (e.g. keep under one page, emphasize cloud architecture impact)..."
+          className="w-full px-4 py-3 rounded-2xl border text-sm leading-relaxed focus:outline-none"
+          style={{
+            background: "var(--md-surface-c1)",
+            borderColor: "var(--md-outline)",
+            color: "var(--md-on-bg)",
+          }}
         />
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-          <p className="text-[11px] text-[var(--text-muted)]">
-            Click any bullet to comment on it — only commented bullets change when re-optimizing.
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+          <p className="text-xs" style={{ color: "var(--md-on-surface-d)" }}>
+            Click any bullet point to leave comment — only commented items change on re-optimization.
           </p>
           <button
             onClick={handleSubmit}
             disabled={!hasFeedback}
-            className="btn btn-primary text-xs"
+            className="btn btn-primary px-5 py-2.5 text-sm gap-2"
           >
-            <RefreshCw className="w-3.5 h-3.5" />
-            Re-optimize with feedback
+            <RefreshCw className="w-4 h-4" />
+            Re-optimize with Feedback
           </button>
         </div>
       </div>

@@ -4,7 +4,7 @@ import { useState, FormEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth-store";
 import { API_BASE } from "@/lib/api";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, Sparkles } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -31,9 +31,10 @@ export default function LoginPage() {
 
     try {
       const endpoint = mode === "login" ? "/auth/login" : "/auth/signup";
-      const body = mode === "login"
-        ? { email, password }
-        : { email, password, full_name: fullName };
+      const body =
+        mode === "login"
+          ? { email, password }
+          : { email, password, full_name: fullName };
 
       const res = await fetch(`${API_BASE}${endpoint}`, {
         method: "POST",
@@ -42,83 +43,140 @@ export default function LoginPage() {
       });
 
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.detail || data.message || "Request failed");
-      }
+      if (!res.ok) throw new Error(data.detail || data.message || "Request failed");
 
       setAuth(data.access_token, data.user);
       router.push("/");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Something went wrong";
-      setError(msg);
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="w-full max-w-sm space-y-6 p-8">
-        <div className="text-center space-y-2">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center font-bold text-white text-sm mx-auto shadow-lg shadow-indigo-500/20">
+    <div
+      className="min-h-screen flex items-center justify-center px-4"
+      style={{
+        background:
+          "radial-gradient(ellipse 80% 60% at 50% -10%, rgba(79,70,229,0.06) 0%, transparent 60%)",
+      }}
+    >
+      <div className="w-full max-w-sm space-y-8">
+        {/* Hero lockup */}
+        <div className="text-center space-y-4">
+          <div
+            className="w-16 h-16 rounded-3xl mx-auto flex items-center justify-center font-bold text-2xl shadow-md"
+            style={{
+              background: "linear-gradient(135deg, var(--md-primary) 0%, #6366f1 100%)",
+              color: "#ffffff",
+            }}
+          >
             T
           </div>
-          <h1 className="text-lg font-semibold text-zinc-100">Tailr</h1>
-          <p className="text-xs text-zinc-500">AI-Powered Resume Optimization</p>
+          <div>
+            <h1
+              className="text-3xl font-bold tracking-tight"
+              style={{ color: "var(--md-on-bg)", letterSpacing: "-0.03em" }}
+            >
+              Tailr
+            </h1>
+            <p className="text-base mt-1" style={{ color: "var(--md-on-surface-v)" }}>
+              AI-Powered Resume Intelligence
+            </p>
+          </div>
         </div>
 
-        <div className="card-3d p-6 space-y-4">
-          <div className="flex rounded-lg overflow-hidden text-xs font-medium border border-[var(--border-subtle)]">
-            <button
-              onClick={() => { setMode("login"); setError(null); }}
-              className={`flex-1 py-2 text-center transition-all ${
-                mode === "login" ? "bg-[var(--accent)] text-white" : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
-              }`}
-            >
-              Sign In
-            </button>
-            <button
-              onClick={() => { setMode("register"); setError(null); }}
-              className={`flex-1 py-2 text-center transition-all ${
-                mode === "register" ? "bg-[var(--accent)] text-white" : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
-              }`}
-            >
-              Register
-            </button>
+        {/* Card */}
+        <div
+          className="rounded-3xl p-8 space-y-6 border shadow-sm"
+          style={{
+            background: "var(--md-surface)",
+            borderColor: "var(--md-outline)",
+          }}
+        >
+          {/* Mode toggle */}
+          <div
+            className="flex rounded-2xl overflow-hidden p-1 gap-1"
+            style={{ background: "var(--md-surface-c3)" }}
+          >
+            {(["login", "register"] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() => { setMode(m); setError(null); }}
+                className="flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200"
+                style={
+                  mode === m
+                    ? {
+                        background: "var(--md-primary-c)",
+                        color: "var(--md-on-primary-c)",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
+                      }
+                    : { color: "var(--md-on-surface-v)" }
+                }
+              >
+                {m === "login" ? "Sign In" : "Register"}
+              </button>
+            ))}
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-3">
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
             {mode === "register" && (
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium" style={{ color: "var(--md-on-surface-v)" }}>
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="Jane Doe"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                  className="input"
+                />
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium" style={{ color: "var(--md-on-surface-v)" }}>
+                Email
+              </label>
               <input
-                type="text"
-                placeholder="Full Name"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
                 className="input"
               />
-            )}
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="input"
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              className="input"
-            />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium" style={{ color: "var(--md-on-surface-v)" }}>
+                Password
+              </label>
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                className="input"
+              />
+            </div>
 
             {error && (
-              <div className="flex items-center gap-2 p-2.5 rounded-lg bg-rose-950/30 border border-rose-900/50 text-rose-400 text-xs">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              <div
+                className="flex items-start gap-3 p-4 rounded-2xl text-sm"
+                style={{
+                  background: "rgba(255,180,171,0.08)",
+                  border: "1px solid rgba(255,180,171,0.25)",
+                  color: "var(--md-error)",
+                }}
+              >
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                 <span>{error}</span>
               </div>
             )}
@@ -126,16 +184,26 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="btn btn-primary w-full"
+              className="btn btn-primary w-full mt-2"
             >
               {loading ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> {mode === "login" ? "Signing in..." : "Creating account..."}</>
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  {mode === "login" ? "Signing in…" : "Creating account…"}
+                </>
+              ) : mode === "login" ? (
+                "Sign In"
               ) : (
-                mode === "login" ? "Sign In" : "Create Account"
+                "Create Account"
               )}
             </button>
           </form>
         </div>
+
+        {/* Footer hint */}
+        <p className="text-center text-sm" style={{ color: "var(--md-on-surface-d)" }}>
+          FastAPI · Next.js · LangGraph · LlamaIndex
+        </p>
       </div>
     </div>
   );
