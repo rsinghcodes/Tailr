@@ -50,79 +50,99 @@ export function SavedList({
         setSavedJds(savedJds.filter((j) => j.id !== id));
       }
     } catch {
-      // ignore delete errors for now
+      // ignore
     } finally {
       setDeleting(null);
     }
   };
 
   return (
-    <div className="card-3d p-4 space-y-3">
+    <div className="card-3d p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <div className="section-label flex items-center gap-1.5">
-          <Database className="w-3.5 h-3.5" />
+        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider" style={{ color: "var(--md-primary)" }}>
+          <Database className="w-4 h-4" />
           {isResume ? "Saved Resumes" : "Saved Job Descriptions"}
         </div>
-        <span className="text-[11px] font-mono text-[var(--text-muted)]">{items.length}</span>
+        <span
+          className="text-xs font-mono font-semibold px-2.5 py-0.5 rounded-full"
+          style={{ background: "var(--md-surface-c3)", color: "var(--md-on-surface-v)" }}
+        >
+          {items.length}
+        </span>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-4 h-4 animate-spin text-[var(--text-muted)]" />
+          <Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--md-primary)" }} />
         </div>
       ) : items.length === 0 ? (
-        <p className="text-xs text-[var(--text-muted)]">
+        <p className="text-sm py-2" style={{ color: "var(--md-on-surface-d)" }}>
           {isResume
-            ? "No saved resumes yet. Upload one on the left to begin."
-            : "No saved job descriptions yet. Add one below to begin."}
+            ? "No saved resumes yet. Upload one above to begin."
+            : "No saved job descriptions yet. Add one to begin."}
         </p>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           {items.map((item) => {
             const subtitle = isResume
               ? `v${(item as ResumeListItem).current_version} · ${new Date((item as ResumeListItem).updated_at).toLocaleDateString()}`
               : ((item as JobDescriptionData).company ?? "");
+            const isSelected = selectedId === item.id;
             return (
               <div
                 key={item.id}
-                className="card-3d-sm px-3 py-2.5 flex items-center justify-between gap-2"
+                className="rounded-2xl p-3.5 flex items-center justify-between gap-3 border transition-all duration-200"
+                style={{
+                  background: isSelected ? "rgba(187,179,255,0.08)" : "var(--md-surface-c1)",
+                  borderColor: isSelected ? "var(--md-primary)" : "var(--md-outline)",
+                }}
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  {isResume ? (
-                    <FileText className="w-4 h-4 shrink-0 text-[var(--text-muted)]" />
-                  ) : (
-                    <Briefcase className="w-4 h-4 shrink-0 text-[var(--text-muted)]" />
-                  )}
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <div
+                    className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                    style={{
+                      background: isSelected ? "var(--md-primary-c)" : "var(--md-surface-c3)",
+                      color: isSelected ? "var(--md-on-primary-c)" : "var(--md-on-surface-v)",
+                    }}
+                  >
+                    {isResume ? <FileText className="w-4.5 h-4.5" /> : <Briefcase className="w-4.5 h-4.5" />}
+                  </div>
                   <div className="min-w-0">
-                    <div className="text-sm font-medium text-[var(--text-primary)] truncate">
+                    <div className="text-sm font-semibold truncate" style={{ color: "var(--md-on-bg)" }}>
                       {item.title}
                     </div>
                     {subtitle && (
-                      <div className="text-[11px] text-[var(--text-muted)] mt-px">{subtitle}</div>
+                      <div className="text-xs mt-0.5" style={{ color: "var(--md-on-surface-d)" }}>
+                        {subtitle}
+                      </div>
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  {selectedId === item.id && (
-                    <span className="flex items-center gap-1 text-[11px] font-mono text-emerald-400">
+                <div className="flex items-center gap-2 shrink-0">
+                  {isSelected && (
+                    <span className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: "rgba(160,216,212,0.15)", color: "var(--md-tertiary)" }}>
                       <Check className="w-3.5 h-3.5" /> Selected
                     </span>
                   )}
-                  {selectedId !== item.id && (
-                    <button onClick={() => onUse(item.id)} className="btn btn-secondary px-2.5 py-1 text-[11px]">
-                      <Play className="w-3 h-3" /> {isResume ? "Use Resume" : "Use JD"}
+                  {!isSelected && (
+                    <button
+                      onClick={() => onUse(item.id)}
+                      className="btn btn-secondary py-1.5 px-3 text-xs gap-1.5"
+                    >
+                      <Play className="w-3 h-3" /> Use
                     </button>
                   )}
                   <button
                     onClick={() => handleDelete(item.id)}
                     disabled={deleting === item.id}
                     title={isResume ? "Delete resume" : "Delete job description"}
-                    className="btn btn-ghost p-1.5 text-[var(--text-muted)] hover:text-rose-400 disabled:opacity-40"
+                    className="btn btn-ghost p-2 text-xs rounded-xl hover:text-red-400"
+                    style={{ color: "var(--md-on-surface-d)" }}
                   >
                     {deleting === item.id ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-4 h-4" />
                     )}
                   </button>
                 </div>
