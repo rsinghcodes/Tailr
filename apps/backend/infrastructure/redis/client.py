@@ -15,7 +15,10 @@ class RedisClient:
         Args:
             redis_url: Optional Redis connection URL. Defaults to settings.REDIS_URL.
         """
-        self.redis_url = redis_url or settings.REDIS_URL
+        url = redis_url or settings.REDIS_URL
+        if url.startswith("redis://") and "upstash.io" in url:
+            url = f"rediss://{url[len('redis://'):]}"
+        self.redis_url = url
         self._pool: Optional[redis.ConnectionPool] = None
         self._client: Optional[redis.Redis] = None
 

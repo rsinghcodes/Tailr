@@ -279,27 +279,31 @@ async def rewrite_node(state: WorkflowState) -> dict[str, Any]:
 
     resume_json = _safe_json(state.get("canonical_resume", {}))
     plan_json = _safe_json(state.get("rewrite_plan", {}))
+    jd_json = _safe_json(state.get("job_requirements", {}))
     context = state.get("retrieved_context", "")
 
     try:
         system_prompt = (
             "You are a professional technical resume writer. "
-            "Rewrite the candidate's resume based on the provided optimization plan. "
+            "Rewrite the candidate's resume to be optimally targeted at the provided job requirements. "
             "Do NOT invent any skills, technologies, projects, or metrics. "
             "Preserve all employment dates, titles, and company names exactly. "
-            "Improve readability, action verbs, and keyword alignment. "
-            "Return valid JSON matching the resume schema."
+            "Improve readability, action verbs, and keyword alignment to match the job requirements. "
+            "Incorporate relevant keywords from the job description naturally into bullet points and summary. "
+            "Return ONLY valid JSON matching the resume schema with keys: "
+            "summary, skills, experience, projects, education. No other text."
         )
 
         user_prompt = (
             f"Resume:\n{resume_json}\n\n"
+            f"Job Requirements (optimize the resume for this role):\n{jd_json}\n\n"
             f"Rewrite Plan:\n{plan_json}\n\n"
             f"Retrieved Context:\n{context}\n\n"
         )
         feedback_text = _format_feedback(state)
         if feedback_text:
             user_prompt += f"{feedback_text}\n\n"
-        user_prompt += "Rewrite the resume implementing the plan."
+        user_prompt += "Rewrite the resume implementing the plan and targeting the job requirements above."
 
         result = await llm.generate(
             prompt=user_prompt,
