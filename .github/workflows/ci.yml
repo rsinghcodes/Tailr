@@ -119,6 +119,8 @@ jobs:
     needs: [backend-lint, backend-test, frontend-lint, frontend-build]
     name: Build & push backend image
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
